@@ -19,7 +19,7 @@
   }
 
   Throttle instproc add_statistics { type requestor ip_adress url query } {
-    set furl [expr {$query != "" ? "$url?$query" : $url}]
+    set furl [expr {$query ne "" ? "$url?$query" : $url}]
     my incr ${type}s
     #my log "++++ add_statistics   -type $type -user_id $requestor "
     set entry [ThrottleStat new -childof [self]::stats \
@@ -73,7 +73,7 @@
     # issued; if yes, block this request. Caveat: some html-pages
     # use the same image in many places, so we can't block it. This
     # will make the sttistics for images look better than they are.
-    set is_image_request [string match image/* $content_type]
+    set is_image_request [string match "image/*" $content_type]
     if {[my exists $var] && !$is_image_request && !$off} {
       my log "### already $var"
       return [list 0 0 1]
@@ -822,6 +822,7 @@ throttle proc community_access {community_id} {
     my users community_access [my set requestor] $community_id
   }
 }
+throttle proc {} args {my eval $args}
 
 ad_proc string_truncate_middle {{-ellipsis ...} {-len 100} string} {
   cut middle part of a string in case it is to long

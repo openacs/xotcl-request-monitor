@@ -39,8 +39,13 @@ bgdelivery ad_forward nr_running {
   @return number of currently running background deliveries
 } %self do array size running
 
+if {[ns_info name] eq "NaviServer"} {
+  bgdelivery forward write_headers ns_headers
+} else {
+  bgdelivery forward write_headers ns_headers DUMMY
+}
 
-ad_proc -public ad_returnfile_background {statuscode mime_type filename} {
+bgdelivery ad_proc returnfile {statuscode mime_type filename} {
   Deliver the given file to the requestor in the background. This proc uses the
   background delivery thread to send the file in an event-driven manner without
   blocking a request thread. This is especially important when large files are 
@@ -48,12 +53,21 @@ ad_proc -public ad_returnfile_background {statuscode mime_type filename} {
 } {
   #ns_log notice "statuscode = $statuscode, filename=$filename"
   set size [file size $filename]
-  if {[ns_headers xxx $statuscode $mime_type $size]} {
+  if {[my write_headers $statuscode $mime_type $size]} {
     set ch [ns_conn channel]
-    thread::transfer [bgdelivery get_tid] $ch
+    thread::transfer [my get_tid] $ch
     throttle get_context
-    bgdelivery do -async deliver $ch $filename \
+    my do -async deliver $ch $filename \
 	[list [throttle set requestor],[throttle set url] [ns_conn start]]
-    ns_conn contentsentlength $size;      #maybe overly optimistic
+    ns_conn contentsentlength $size       ;# maybe overly optimistic
   }
+}
+
+ad_proc -public ad_returnfile_background {statuscode mime_type filename} {
+  Deliver the given file to the requestor in the background. This proc uses the
+  background delivery thread to send the file in an event-driven manner without
+  blocking a request thread. This is especially important when large files are 
+  requested over slow (e.g. dial-ip) connections.
+} {
+  bgdelivery returnfile $statuscode $mime_type $filename
 }

@@ -41,7 +41,7 @@ proc currentSystemLoad {} {
 proc currentResponseTime {} {
   set tm [throttle trend response_time_minutes]
   set hours [throttle trend response_time_hours]
-  if { $tm == "" } { 
+  if { $tm eq "" } { 
     set ::server_running "seconds"
     return "NO DATA" 
   }
@@ -79,7 +79,7 @@ proc currentResponseTime {} {
 proc currentViews {} {
   set vm [throttle trend minutes]
   set um [throttle trend user_count_minutes]
-  if { $vm == "" } { return "NO DATA" }
+  if { $vm eq "" } { return "NO DATA" }
   set views_per_sec [expr {[lindex $vm end]/60.0}]
   ns_log notice "um='$um' vm='$vm' expr {60.0*$views_per_sec/[lindex $um end]}"
   set views_per_min_per_user [expr {60.0*$views_per_sec/[lindex $um end]}]
@@ -239,7 +239,7 @@ if {![catch {ns_conn contentsentlength}]} {
   append running /[bgdelivery nr_running]
 }
 
-if {[string compare "" [info command ::tlf::system_activity]]} {
+if {[info command ::tlf::system_activity] ne ""} {
   array set server_stats [::tlf::system_activity]
   set current_exercise_activity $server_stats(activity)
   set current_system_activity "$server_stats(activity) exercises last 15 mins, "
