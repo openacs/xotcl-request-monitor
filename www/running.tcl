@@ -25,7 +25,7 @@ set nr_req [expr {[llength $running_requests]/2}]
 set title "Currently Running Requests ($nr_req/$nr_bg)"
 set context [list "Running Requests"]
 
-TableWidget t1 \
+TableWidget create t1 -volatile \
     -actions [subst {
       Action new -label Refresh -url [ad_conn url] -tooltip "Reload current page"
     }] \
@@ -45,7 +45,7 @@ foreach {key elapsed} $running_requests {
     set user_string $requestor 
   } else {
     acs_user::get -user_id $requestor -array user
-    set user_string "$user(first_names) $user(last_name)"
+    set user_string "$user(first_names) $user(last_name) - $elapsed ms=$ms"
   }
   set user_url "last-requests?request_key=$requestor"
   lappend sortable_requests [list $user_string $user_url $url $ms ""]
@@ -66,7 +66,7 @@ foreach {index entry} $background_requests {
 
 foreach r [lsort -decreasing -real -index 3 $sortable_requests] {
   foreach {user_string user_url url ms mode} $r break
-  if {$ms<0} {set ms [expr {-$ms}]}
+  if {$ms<0} {set ms [expr {-1*$ms}]}
   t1 add \
       -user $user_string -user.href $user_url \
       -url $url -elapsed $ms -background $mode

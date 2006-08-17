@@ -48,7 +48,7 @@ switch -glob $orderby {
 }
 
 
-TableWidget t1 \
+TableWidget t1 -volatile \
     -actions [subst {
       Action new -label "$label($all)" -url $url -tooltip "$tooltip($all)"
       Action new -label "Delete Statistics" -url flush-url-statistics \

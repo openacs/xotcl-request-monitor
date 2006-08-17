@@ -59,7 +59,6 @@
   }
 
 
-
   Throttle instproc running {} {
     my array get running_url
   }
@@ -75,7 +74,7 @@
     # will make the sttistics for images look better than they are.
     set is_image_request [string match "image/*" $content_type]
     if {[my exists $var] && !$is_image_request && !$off} {
-      my log "### already $var"
+      #my log "### already $var"
       return [list 0 0 1]
     } else {
       my set $var $conn_time
@@ -148,7 +147,7 @@
 
   Throttle instproc add_url_stat {url time_used key pa} {
     catch {my unset running_url($key,$url)}
-    #my log "### unset running_url($key,$url)"
+    #my log "### unset running_url($key,$url) $errmsg"
     response_time_minutes add_url_stat $url $time_used $key
   }
   Throttle instforward report_url_stats response_time_minutes %proc
@@ -656,82 +655,49 @@ throttle proc ms {-start_time} {
     set start_time [ns_conn start]
   }
   set t [ns_time diff [ns_time get] $start_time]
+  #my log "+++ $t [ns_conn url]"
   set ms [expr {[ns_time seconds $t]*1000 + [ns_time microseconds $t]/1000}]
   return $ms
 }
 
 throttle proc get_context {} {
   my instvar url query requestor user pa
+  #my log "--t [my exists context_initialized] url=[ns_conn url]"
   if {[my exists context_initialized]} return
-  set pa [ad_conn peeraddr]
-  my set community_id 0
 
+  set url [ns_conn url]
+
+  my set community_id 0
   if {[info exists ::ad_conn(user_id)]} {
+    #my log "--t we have a user_id"
     # ordinary request, ad_conn is initialized
-    set requestor $::ad_conn(user_id)
     set package_id [ad_conn package_id]
+    ::xo::ConnectionContext require -package_id $package_id -url $url
     if {[info command dotlrn_community::get_community_id] ne "" &&
       $package_id ne ""} {
       my set community_id [dotlrn_community::get_community_id \
 			       -package_id $package_id]
     }
   } else {
-    # for requests bypassing the ordinary connection setup (resources in oacs 5.2)
-    # we have to get the user_id by ourselves
-    if { [catch {
-      if {[info command ad_cookie] ne ""} {
-	# we have the xotcl-based cookie code
-	set cookie_list [ad_cookie get_signed_with_expr "ad_session_id"]
-      } else {
-	set cookie_list [ad_get_signed_cookie_with_expr "ad_session_id"]
-      }
-      set cookie_data [split [lindex $cookie_list 0] {,}]
-      set untrusted_user_id [lindex $cookie_data 1]
-      set requestor $untrusted_user_id
-    } errmsg] } {
-      set requestor 0
-    }
+    #my log "--t we have no user_id and cannot use ad_conn package_id" 
+    ::xo::ConnectionContext require -url $url
+    # semi initialized, we are called from .../www/resources, drop it after this proc
+    #::xo::cc volatile
   }
-  #my log "get_context, user_id = $requestor"
 
-  # if user not authorized, use peer address as user id
-  if {$requestor == 0} {
-    set requestor $pa
-    set user "client from $pa"
-  } else {
-    set user "<a href='/acs-admin/users/one?user_id=$requestor'>$requestor</a>"
-  }
-  set url [ad_conn url]
-  set query [ad_conn query]
+  set requestor [::xo::cc requestor]
+  set user      [::xo::cc user]
+  set query     [ad_conn query]
+  set pa        [ad_conn peeraddr]
   if {$query ne ""} {
      append url ?$query
   }
-  #my log "+++ setting url to $url"
-  #show_stack
+  #my log "### setting url to $url"
+  #xo::show_stack
   my set context_initialized 1
+  #my log "--i leaving [ns_conn url] vars=[lsort [info vars]]"
 }
 
-proc show_stack {{m 100}} {
-  if {[::info exists ::template::parse_level]} {
-    set parse_level $::template::parse_level
-  } else {
-    set parse_level ""
-  }
-  set msg "### tid=[::thread::id] <$parse_level> connected=[ns_conn isconnected] "
-  if {[ns_conn isconnected]} {
-    append msg "flags=[ad_conn flags] status=[ad_conn status] req=[ad_conn request]"
-  }
-  my log $msg
-  set max [info level]  
-  if {$m<$max} {set max $m}
-  my log "### Call Stack (level: command)"
-  for {set i 0} {$i < $max} {incr i} {
-    if {[catch {set s [uplevel $i self]} msg]} {
-      set s ""
-    }
-    my log "### [format %5d -$i]:\t$s [info level [expr {-$i}]]"
-  }
-}
 
 throttle ad_proc check {} {
   This method should be called once per request that is monitored.
@@ -740,6 +706,7 @@ throttle ad_proc check {} {
 } {
   my instvar url requestor user pa query community_id
   my get_context
+  #my log "### check"
 
   foreach {toMuch ms repeat} \
       [my throttle_check $requestor $pa $url \
@@ -822,7 +789,8 @@ throttle proc community_access {community_id} {
     my users community_access [my set requestor] $community_id
   }
 }
-throttle proc {} args {my eval $args}
+#throttle proc {} args {my eval $args}
+
 
 ad_proc string_truncate_middle {{-ellipsis ...} {-len 100} string} {
   cut middle part of a string in case it is to long

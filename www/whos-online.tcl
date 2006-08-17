@@ -32,8 +32,6 @@ set url [export_vars -base [ad_conn url] {request_key all}]
 TableWidget t1 \
     -actions [subst {
       Action new -label "$label($all)" -url $url -tooltip "$tooltip($all)"
-      Action new -label "Delete Statistics" -url flush-url-statistics \
-	  -tooltip "Delete URL Statistics"
     }] \
     -columns [subst {
       AnchorField name  -label "User" -orderby name

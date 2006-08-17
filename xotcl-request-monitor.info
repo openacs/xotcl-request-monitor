@@ -8,10 +8,10 @@
     <singleton-p>t</singleton-p>
     <auto-mount>request-monitor</auto-mount>
 
-    <version name="0.37" url="http://media.wu-wien.ac.at/download/xotcl-request-monitor-0.37.apm">
+    <version name="0.38" url="http://media.wu-wien.ac.at/download/xotcl-request-monitor-0.38.apm">
         <owner url="mailto:neumann@wu-wien.ac.at">Gustaf Neumann</owner>
         <summary>Request Monitor with user tracking functionality</summary>
-        <release-date>2005-12-29</release-date>
+        <release-date>2006-08-16</release-date>
         <description format="text/html">This package provides a Request Monitor for OACS applications.
 It computes performance summary information such as requests/views per
 seconds, average response time, number of users connected,
@@ -22,11 +22,11 @@ repeated requests (impatient reloads), tracks switching of IP-adresses from user
 as well overall url statistics with performance measures.
 Updated for cirumventing handler calls openacs 5.2 for /resources/*. 0.28 provides calles for listing active communities and users active in these communities. 0.30 provides a nice graphical chats (many thanks to Nima) and
 a new interface to the background thread. In addition, 
-ns_returnfile_background is included</description>
+ns_returnfile_background is included; 0.38 using context form xotcl-core</description>
         <maturity>0</maturity>
 
-        <provides url="xotcl-request-monitor" version="0.37"/>
-        <requires url="xotcl-core" version="0.27"/>
+        <provides url="xotcl-request-monitor" version="0.38"/>
+        <requires url="xotcl-core" version="0.43"/>
 
         <callbacks>
         </callbacks>

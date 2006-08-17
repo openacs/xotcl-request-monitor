@@ -6,7 +6,7 @@ ad_page_contract {
 } -query {
   request_key
   {all:optional 1}
-  {orderby:optional}
+  {orderby:optional "last_modified,desc"}
 } -properties {
     title:onevalue
     context:onevalue

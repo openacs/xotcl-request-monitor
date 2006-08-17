@@ -3,7 +3,7 @@ ad_page_contract {
 
     @author Gustaf Neumann 
 
-    @cvs-id $id
+    @cvs-id $Id$
 } -query {
     {orderby:optional "time,desc"}
 } -properties {
@@ -20,7 +20,7 @@ Class CustomField -volatile \
     -instproc render-data {row} {
       html::div -style {
 	border: 1px solid #a1a5a9; padding: 0px 5px 0px 5px; background: #e2e2e2} {
-	  html::t  [$row set [my name]] 
+	  html::t  [$row set [my name]]
 	}
     }
 
