@@ -29,7 +29,7 @@ TableWidget t1 -volatile \
       Field time       -label "Time" -orderby time -mixin ::template::CustomField
       AnchorField user -label "Userid" -orderby user
       Field ms         -label "Ms" -orderby ms
-      Field url        -label "URL" -orderby url
+      AnchorField url  -label "URL" -orderby url
     }
 
 foreach {att order} [split $orderby ,] break
@@ -47,7 +47,8 @@ foreach l $stat {
       -user $user_string \
       -user.href [export_vars -base last-requests {{request_key $requestor}}] \
       -ms $ms \
-      -url $url
+      -url $url \
+      -url.href "[ad_url]$url"
 }
 set t1 [t1 asHTML]
 
