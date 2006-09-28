@@ -55,7 +55,7 @@ TableWidget t1 -volatile \
 	  -tooltip "Delete URL Statistics"
     }] \
     -columns {
-      Field url   -label "Request" -orderby url
+      AnchorField url   -label "Request" -orderby url
       Field totaltime -label "Total Time" -html { align right } -orderby totaltime
       Field cnt   -label "Count"          -html { align right } -orderby cnt
       Field avg   -label "Ms"             -html { align right } -orderby avg
@@ -81,6 +81,7 @@ TableWidget t1 -volatile \
       if {$exclude} continue
     }
     t1 add 	-url [string_truncate_middle -len 80 $url] \
+  	        -url.href "[ad_url]$url" \
 		-totaltime [lindex $l 1] \
 		-cnt [lindex $l 2] \
 		-avg $avg \

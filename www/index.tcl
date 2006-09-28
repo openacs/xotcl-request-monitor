@@ -34,7 +34,9 @@ proc avg_last_n {list n var} {
 
 # collect current system statistics
 proc currentSystemLoad {} {
-  return [exec "/usr/bin/uptime"]
+    if {[catch {return [exec "/usr/bin/uptime"]}]} {
+	return ""
+    }
 }
 
 # collect current response time (per minute and hour)
