@@ -108,8 +108,8 @@ switch -glob $orderby {
 } 
 switch -glob $orderby {
   name,*         {set index 0; set type -dictionary}
-  online_time,*  {set index 2; set type -integer}
-  activity,*     {set index 4; set type -real}
+  online_time,*  {set index 4; set type -real}
+  activity,*     {set index 5; set type -integer}
   hits,*         {set index 5; set type -dictionary}
   switches,*     {set index 8; set type -integer}
   peer_address,* {set index 9; set type -dictionary}
