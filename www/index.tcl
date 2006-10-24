@@ -237,9 +237,12 @@ set response_trend [counterTable "Avg. Response <br>Time" \
 
 set current_response [join [currentResponseTime] " "]
 set current_load [currentSystemLoad]
-set running [throttle nr_running]
+set running_requests [throttle running]
+set background_requests [bgdelivery running]
+set background  [expr {[llength $background_requests]/2}]
+set running [expr {[llength $running_requests]/2}]
 if {![catch {ns_conn contentsentlength}]} {
-  append running /[bgdelivery nr_running]
+  append running /$background
 }
 
 if {[info command ::tlf::system_activity] ne ""} {
