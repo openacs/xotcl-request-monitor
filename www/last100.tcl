@@ -51,4 +51,4 @@ foreach l $stat {
       -url.href "[ad_url]$url"
 }
 set t1 [t1 asHTML]
-
+set last_url [ad_return_url]
