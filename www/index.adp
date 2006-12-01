@@ -8,7 +8,10 @@
 
 
 <table style="border: 0px solid blue; padding: 10px;">
-  <tr><td><b>Active Users:</b></td><td>@active_user_string;noquote@</td></tr>
+  <tr><td><b>Active Users:</b></td><td>@active_user_string;noquote@</td><if @param_url@ ne "">
+<td align="right"><a class="button" href="@param_url@">#acs-subsite.parameters#</a></td>
+</if>
+</tr>
   <tr><td><b>Current System Activity:</b></td><td>@current_system_activity@</td></tr>
   <tr><td><b>Current System Load:</b></td><td>@current_load@</td></tr>
   <tr><td><b>Current Avg Response Time/sec:</b></td><td>@current_response@</td></tr>

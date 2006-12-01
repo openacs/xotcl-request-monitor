@@ -272,3 +272,12 @@ set active_user_string "<A href='./whos-online'>$active_users_10 users</a> $acti
 set jsGraph [expr {!$jsGraph}]
 set toggle_graphics_url [export_vars -base [ad_conn url] {jsGraph}]
 set jsGraph [expr {!$jsGraph}]
+
+# Parameters URL
+if {[acs_user::site_wide_admin_p]} {
+    set return_url [ad_return_url]
+    set package_id [ad_conn package_id]
+    set param_url [export_vars -base "/shared/parameters" -url {package_id return_url}]
+} else {
+    set param_url ""
+}
