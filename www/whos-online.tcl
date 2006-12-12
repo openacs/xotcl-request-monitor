@@ -79,7 +79,7 @@ foreach element [throttle users active -full] {
 				       [list ::template::my_hostname $pa]]]}
     set match 0
     foreach cat $peer_groups {
-      if {[string match $cat $peer]} {
+      if {[string match "$cat *" $peer]} {
 	incr peer_cat_count($cat)
 	set match 1
 	break
