@@ -389,6 +389,18 @@
   } {
     return [my array size pa]
   }
+
+  Users ad_proc nr_users_time_window {} {
+    @return number of different ip addresses and authenticated users (in time window)
+  } {
+    set ip 0; set auth 0
+    foreach i [my array names pa] {
+      if {[string match *.* $i]} {incr ip} {incr auth}
+    }
+    return [list $ip $auth]
+  }
+
+
   Users ad_proc hits {uid} {
     @param uid request key
     @return Number of hits by this user (in time window)

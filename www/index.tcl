@@ -256,6 +256,9 @@ append current_system_activity \n[currentViews]
 
 set active_users_10 [throttle users nr_active]
 set throttle_stats  [throttle statistics]
+set active10        [throttle users nr_users_time_window]
+set activeUsers10   [lindex $active10 1]
+set activeIP10      [lindex $active10 0]
 set active24        [throttle users perDay]
 set activeUsers24   [lindex $active24 1]
 set activeIP24      [lindex $active24 0]
@@ -268,7 +271,7 @@ if {[info command ::dotlrn_community::get_community_id] ne ""} {
   set active_community_string ""
 }
 
-set active_user_string "<A href='./whos-online'>$active_users_10 users</a> $active_community_string active in last 10 minutes, $activeUsers24 in last $::server_running ($activeTotal24 total)"
+set active_user_string "<A href='./whos-online'>$active_users_10 users ($activeUsers10 + $activeIP10)</a> $active_community_string active in last 10 minutes, $activeTotal24 ($activeUsers24 + $activeIP24) in last $::server_running"
 set jsGraph [expr {!$jsGraph}]
 set toggle_graphics_url [export_vars -base [ad_conn url] {jsGraph}]
 set jsGraph [expr {!$jsGraph}]
