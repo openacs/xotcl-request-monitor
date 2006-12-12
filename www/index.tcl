@@ -238,10 +238,10 @@ set response_trend [counterTable "Avg. Response <br>Time" \
 set current_response [join [currentResponseTime] " "]
 set current_load [currentSystemLoad]
 set running_requests [throttle running]
-set background_requests [bgdelivery running]
-set background  [expr {[llength $background_requests]/2}]
 set running [expr {[llength $running_requests]/2}]
 if {![catch {ns_conn contentsentlength}]} {
+  set background_requests [bgdelivery running]
+  set background  [expr {[llength $background_requests]/2}]
   append running /$background
 }
 

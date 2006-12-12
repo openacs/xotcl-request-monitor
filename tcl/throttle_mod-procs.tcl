@@ -681,8 +681,6 @@ throttle proc get_context {} {
   } else {
     #my log "--t we have no user_id and cannot use ad_conn package_id" 
     ::xo::ConnectionContext require -url $url
-    # semi initialized, we are called from .../www/resources, drop it after this proc
-    #::xo::cc volatile
   }
 
   set requestor [::xo::cc requestor]
@@ -742,7 +740,7 @@ throttle forward last100                 %self do throttler %proc
 throttle forward off                     %self do throttler set off 1
 throttle forward on                      %self do throttler set off 0
 throttle forward running                 %self do throttler %proc
-throttle forward nr_running              %self do array size running_url
+throttle forward nr_running              %self do throttler array size running_url
 throttle forward trend                   %self do %1 set trend
 throttle forward max_values              %self do %1 set stats
 throttle forward purge_access_stats      %self do Users %proc
@@ -769,6 +767,7 @@ throttle proc postauth args {
       Please slow down your requests...<p>"
     return filter_return
   } else {
+    #my log "-- filter_ok"
     return filter_ok
   }
 }
