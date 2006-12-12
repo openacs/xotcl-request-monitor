@@ -271,7 +271,7 @@ if {[info command ::dotlrn_community::get_community_id] ne ""} {
   set active_community_string ""
 }
 
-set active_user_string "<A href='./whos-online'>$active_users_10 users ($activeUsers10 + $activeIP10)</a> $active_community_string active in last 10 minutes, $activeTotal24 ($activeUsers24 + $activeIP24) in last $::server_running"
+set active_user_string "<A href='./whos-online'>$active_users_10 users ($activeUsers10 authenticated)</a> $active_community_string active in last 10 minutes, $activeTotal24 ($activeUsers24 authenticated) in last $::server_running"
 set jsGraph [expr {!$jsGraph}]
 set toggle_graphics_url [export_vars -base [ad_conn url] {jsGraph}]
 set jsGraph [expr {!$jsGraph}]
