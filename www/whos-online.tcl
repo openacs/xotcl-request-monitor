@@ -5,12 +5,14 @@ ad_page_contract {
   
   @cvs-id $id: whos-online.tcl,v 1.1.1.1 2004/03/16 16:11:51 nsadmin exp $
 } -query {
-  {orderby:optional "name,asc"}
+  {orderby:optional "activity,desc"}
   {all:optional 1}
 } -properties {
   title:onevalue
   context:onevalue
 }
+
+#  {orderby:optional "name,asc"}
 
 set title "Who's online?"
 set context [list "Who's online"]

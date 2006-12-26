@@ -46,10 +46,10 @@ TableWidget t1 \
       Action new -label "$label($all)" -url $url -tooltip "$tooltip($all)"
     }] \
     -columns {
-      Field time -label "Time"
-      Field timediff -label "Seconds ago" -html { align right }
-      Field url -label "Url"
-      Field pa -label "Peer Address"
+      Field time      -label "Time"
+      Field timediff  -label "Seconds ago" -html { align right }
+      AnchorField url -label "URL"
+      Field pa        -label "Peer Address"
     } \
     -no_data "no requests for this user recorded" 
 
@@ -75,7 +75,8 @@ foreach element [lsort -index 0 -decreasing $requests] {
   set url [string_truncate_middle -len 70 $url]
   t1 add       -time [clock format $timestamp] \
 	       -timediff $diff \
-	       -url $url \
+      	       -url $url \
+      	       -url.href "[ad_url]$url" \
 	       -pa $pa
 }
 
