@@ -6,7 +6,7 @@ ad_page_contract {
   @cvs-id $id: whos-online.tcl,v 1.1.1.1 2004/03/16 16:11:51 nsadmin exp $
 } -query {
   {orderby:optional "activity,desc"}
-  {all:optional 1}
+  {all:optional 0}
 } -properties {
   title:onevalue
   context:onevalue
@@ -129,12 +129,14 @@ if {$admin} {
   set summarize_categories ""
 }
 
+
+
 foreach e [lsort $type $order -index $index $users] {
   if {$admin} {
     t1 add 	-name [lindex $e 0] \
 		-name.href [lindex $e 1] \
-		-online_time [lindex $e 4] \
-		-activity [lindex $e 5] \
+		-online_time [lindex $e 3] \
+		-activity [lindex $e 4] \
 		-hits [lindex $e 6] \
 		-hits.href [lindex $e 7] \
 		-switches [lindex $e 8] \
@@ -142,7 +144,7 @@ foreach e [lsort $type $order -index $index $users] {
   } else {
     t1 add 	-name [lindex $e 0] \
 		-name.href [lindex $e 1] \
-		-online_time [lindex $e 4]
+		-online_time [lindex $e 3]
   }
 }
 
