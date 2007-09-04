@@ -625,8 +625,10 @@
   }
 
 
-  set ::package_id [::Generic::package_id_from_package_key \
-			xotcl-request-monitor]
+  if {[catch {set ::package_id [::xo::package_id_from_package_key xotcl-request-monitor]}]} {
+    # old style
+    set ::package_id [::Generic::package_id_from_package_key xotcl-request-monitor]
+  }
   ns_log notice "+++ package_id of xotcl-request-monitor is $::package_id"
 
   set logdir [parameter::get -package_id $::package_id \
