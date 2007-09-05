@@ -522,10 +522,16 @@
 	close $f
       }
     }
-    if {[catch {my incr active($key)}]} {
-      my set active($key) 1
+    set counter active($key)
+    if {[catch {my incr $counter}]} {
+      my set $counter 1
+    }
+    if {[my set $counter] == 1} {
+      # we could combine this test with the incr, but in
+      # Tcl 8.5, incr on unknown variables does not throw errors
       $class incrRefCount $key $pa
     }
+
     my community_access $key $community_id
     set entry [list [my point_in_time] $url $pa]
     if {[catch {my lappend urls($key) $entry}]} {
