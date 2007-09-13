@@ -30,6 +30,9 @@ set logdir [parameter::get_from_package_key -package_key xotcl-request-monitor \
 		-parameter log-dir \
 		-default [file dirname [file root [ns_config ns/parameters ServerLog]]]]
 
+set max_urls [parameter::get_from_package_key -package_key "xotcl-request-monitor" -parameter max-url-stats -default 13]
+set time_window [parameter::get_from_package_key -package_key "xotcl-request-monitor" -parameter "time-window" -default 13]
+
 set nr_trend_elements [parameter::get_from_package_key -package_key "xotcl-request-monitor" -parameter "trend-elements" -default 48]
 incr nr_trend_elements
 
