@@ -162,8 +162,25 @@
   Class create Counter -parameter { 
     report timeoutMs 
     {stats ""} {last ""} {trend ""} {c 0} {logging 0}
-    {nr_trend_elements 48} {nr_stats_elements 5} 
+      {nr_trend_elements [parameter::get_from_package_key -package_key "xotcl-request-monitor" -parameter "trend-elements" -default 48]} {nr_stats_elements [parameter::get_from_package_key -package_key "xotcl-request-monitor" -parameter "max-stats-elements" -default 5]} 
+  } -ad_doc {
+      This class holds the counted statistics so they do not have to be computed
+      all the time from the list of requests.
+
+      The statistics holding objects are instances of this class and initialized and called after
+      the timeoutMS
+
+      @param report Report type of the instance. This could e.g. be hours and minutes
+      @param timeoutMS How often are the statistics for this report computed
+      @param stats stats keeps nr_stats_elements highest values with time stamp. These hold a list of lists of the actual stats in the form {time value}. Time is given like "Thu Sep 13 09:17:30 CEST 2007". This is used for displaying the Max values
+      @param last
+      @param trend  trend keeps nr_trend_elements most recent values. This is used for displaying the graphics 
+      @param c
+      @param logging If set to 1 the instance current value is logged to the counter.log file
+      @param nr_trend_elements Number of data points that are used for the trend calculation. The default of 48 translates into "48 minutes" for the Views per minute or 48 hours for the views per hour.
+      @param nr_stats_elements Number of data points for the stats values. The default of 5 will give you the highest datapoints over the whole period.
   }
+
   Counter instproc ++ {} {
     my incr c
   }
@@ -197,7 +214,7 @@
     #
     set now [clock format [clock seconds]]
     lappend stats [list $now $n]
-    set stats [lrange [lsort -real -decreasing -index 1 $stats] 0 [my nr_stats_elements]]
+      set stats [lrange [lsort -real -decreasing -index 1 $stats] 0 [expr {[my nr_stats_elements] - 1}]]
     #
     # log if necessary
     #
@@ -231,7 +248,6 @@
 
   MaxCounter user_count_hours -timeoutMs [expr {60000*60}] -logging 1
   MaxCounter user_count_minutes -timeoutMs 60000 -report user_count_hours -logging 1
-
 
   Class create AvgCounter -superclass Counter \
       -parameter {{t 0} {atleast 1}} -instproc end {} {
@@ -630,11 +646,7 @@
      return $_
   }
 
-
-  if {[catch {set ::package_id [::xo::package_id_from_package_key xotcl-request-monitor]}]} {
-    # old style
-    set ::package_id [::Generic::package_id_from_package_key xotcl-request-monitor]
-  }
+  set ::package_id [apm_package_id_from_key "xotcl-request-monitor"]
   ns_log notice "+++ package_id of xotcl-request-monitor is $::package_id"
 
   set logdir [parameter::get -package_id $::package_id \
