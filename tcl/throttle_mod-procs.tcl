@@ -674,7 +674,7 @@
   <li><em>startThrottle:</em> If user requests more than this #, he is throttled</li>
   <li><em>toMuch:</em> If user requests more than this #, he is kicked out</li>
   </ul>
-  The throttler is defined as a class running in a detached thread.
+  The throttler is defined as a class running in a detached thread. See <a href='/api-doc/procs-file-view?path=packages/xotcl-core/tcl/40-thread-mod-procs.tcl'>XOTcl API for Thread management</a> for more details.
   It can be subclassed to define e.g. different kinds of throttling policies for
   different kind of request keys. Note that the throttle thread itself
   does not block, only the connection thread blocks if necessary (on throttles).
