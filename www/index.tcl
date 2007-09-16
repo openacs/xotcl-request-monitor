@@ -115,6 +115,8 @@ if {$jsGraph} {
 
     set end   [clock format [clock seconds] -format "%Y,%m,%d,%H,%M,%S"]
     set begin [clock format [clock scan "-$size $type"] -format "%Y,%m,%d,%H,%M,%S"]
+    regsub -all {,0} $begin , begin
+    regsub -all {,0} $end , end
     #ns_log Notice "begin: $begin, end: $end, $size $type"
 
     set diagram [subst {<SCRIPT Language='JavaScript'>
@@ -140,7 +142,9 @@ if {$jsGraph} {
       incr index
       set val [clock format [clock scan "[expr {$index-$size}] $type"] -format "%Y,%m,%d,%H,%M,%S"]
       #ns_log notice "--- $label $index $val // [expr {$index-$size}] $type = $v"
+      regsub -all {,0} $val , val
       set x1 "Date.UTC($val)"
+      ns_log notice "--- X1 = $x1"
       set y1 $v
       append diagram [subst {
 	i=D.ScreenX(Date.UTC($val));
@@ -190,7 +194,7 @@ if {$jsGraph} {
   proc graph values {
     set max 1
     foreach v $values {if {$v>$max} {set max $v}}
-    set graph "<table cellpadding=0 cellspacing=1 style='background: #EAF2FF'>\n"
+    set graph "<table cellpadding=0 cellspacing=1 style='background: #EAF2FF;'>\n"
     foreach v $values {
       set bar "<div style='height: 2px; background-color: #859db8; width: [expr {340*$v/$max}]px;'>"
       append graph "<tr><td width='350'>$bar</td></tr>\n"

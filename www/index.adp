@@ -2,7 +2,10 @@
 <property name="title">@title@</property>
 <if @jsGraph@ eq 1> 
   <property name="header_stuff">
-  <SCRIPT Language="JavaScript" src="/resources/xotcl-request-monitor/diagram/diagram.js"></SCRIPT>
+    <SCRIPT Language="JavaScript" src="/resources/xotcl-request-monitor/diagram/diagram.js"></SCRIPT>
+  </property>
+  <property name="head">
+    <SCRIPT Language="JavaScript" src="/resources/xotcl-request-monitor/diagram/diagram.js"></SCRIPT>
   </property>
 </if>
 
