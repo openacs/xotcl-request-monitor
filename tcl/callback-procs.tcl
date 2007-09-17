@@ -32,15 +32,17 @@ ad_proc -public -callback subsite::parameter_changed -impl xotcl-request-monitor
 	
 	if {$parameter eq "trend-elements"} {
 	    set slot_name "nr_trend_elements"
-	} elsif {$parameter eq "max-stats-elements"} {
+	} elseif {$parameter eq "max-stats-elements"} {
 	    set slot_name "nr_stats_elements"
 	} else {
-	    return
+	    set slot_name ""
 	}
 
-	throttle do eval {
-	    ::Counter set $slot_name $value
-	    foreach object [Counter allinstances] {$object set $slot_name $value}
+	if {$slot_name ne ""} {
+	    throttle do eval {
+		::Counter set $slot_name $value
+		foreach object [Counter allinstances] {$object set $slot_name $value}
+	    }
 	}
     }
 }
