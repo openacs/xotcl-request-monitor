@@ -28,21 +28,12 @@ ad_proc -public -callback subsite::parameter_changed -impl xotcl-request-monitor
 } {
     
     if {$package_id == [apm_package_id_from_key "xotcl-request-monitor"]} {
-	ns_log Debug "subsite::parameter_changed -impl xotcl-request-monitor changing $parameter to $value"
-	
-	if {$parameter eq "trend-elements"} {
-	    set slot_name "nr_trend_elements"
-	} elseif {$parameter eq "max-stats-elements"} {
-	    set slot_name "nr_stats_elements"
-	} else {
-	    set slot_name ""
-	}
-
-	if {$slot_name ne ""} {
-	    throttle do eval {
-		::Counter set $slot_name $value
-		foreach object [Counter allinstances] {$object set $slot_name $value}
-	    }
-	}
+      ns_log debug "subsite::parameter_changed -impl xotcl-request-monitor changing $parameter to $value"
+      #
+      # Just update these parameters, which are defined in the throttle thread.
+      #
+      if {[throttle do info command $parameter] ne ""} {
+        throttle do $parameter update $value
+      }
     }
 }

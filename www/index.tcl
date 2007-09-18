@@ -144,7 +144,7 @@ if {$jsGraph} {
       #ns_log notice "--- $label $index $val // [expr {$index-$size}] $type = $v"
       regsub -all {,0} $val , val
       set x1 "Date.UTC($val)"
-      ns_log notice "--- X1 = $x1"
+      #ns_log notice "--- X1 = $x1"
       set y1 $v
       append diagram [subst {
 	i=D.ScreenX(Date.UTC($val));

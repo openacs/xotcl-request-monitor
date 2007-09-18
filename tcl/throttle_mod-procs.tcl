@@ -1,8 +1,59 @@
 #############################################################################
 ::xotcl::THREAD create throttle {
 
-  Class create ThrottleStat -parameter { type requestor timestamp ip_adress url }
+  #
+  # A simple helper class to provide a faster an easier-to-use interface to
+  # package parameters. Eventually, this will move in a more general
+  # way into xotcl-core.
+  #
+  Class package_parameter \
+      -parameter {{default ""} value name} \
+      -instproc defaultmethod {} {my value} \
+      -instproc update {value} {my value $value} \
+      -instproc init {} {
+        my name [namespace tail [self]]
+        my value [parameter::get_from_package_key \
+                      -package_key "xotcl-request-monitor" \
+                      -parameter [my name] \
+                      -default [my default]]
+      }
 
+  package_parameter log-dir \
+      -default [file dirname [file root [ns_config ns/parameters ServerLog]]]
+
+  package_parameter max-url-stats  -default 13
+  package_parameter time-window    -default 13
+  package_parameter trend-elements -default 48 
+  package_parameter max-stats-elements -default 5
+
+  #
+  # When updates happen on 
+  #   - max-stats-elements or
+  #   - trend-elements
+  # Propagate changes of values to all instances of 
+  # counters.
+  # 
+  max-stats-elements proc update {value} {
+    next
+    Counter set_in_all_instances nr_stats_elements $value
+  }
+  trend-elements proc update {value} {
+    next
+    Counter set_in_all_instances nr_trend_elements $value
+  }
+  
+  # get the value from the logdir parameter
+  set ::logdir [log-dir]
+  if {![file isdirectory $logdir]} {file mkdir $logdir}
+  
+  #
+  # A class to keep simple statistics
+  #
+  Class create ThrottleStat -parameter { type requestor timestamp ip_adress url }
+  
+  #
+  # class for throtteling eager requestors or to block duplicate requests
+  #
   Class create Throttle -parameter {
     {timeWindow 10}
     {timeoutMs 2000}
@@ -162,7 +213,8 @@
   Class create Counter -parameter { 
     report timeoutMs 
     {stats ""} {last ""} {trend ""} {c 0} {logging 0}
-      {nr_trend_elements [parameter::get_from_package_key -package_key "xotcl-request-monitor" -parameter "trend-elements" -default 48]} {nr_stats_elements [parameter::get_from_package_key -package_key "xotcl-request-monitor" -parameter "max-stats-elements" -default 5]} 
+    {nr_trend_elements [trend-elements]}
+    {nr_stats_elements [max-stats-elements]} 
   } -ad_doc {
       This class holds the counted statistics so they do not have to be computed
       all the time from the list of requests.
@@ -180,6 +232,16 @@
       @param nr_trend_elements Number of data points that are used for the trend calculation. The default of 48 translates into "48 minutes" for the Views per minute or 48 hours for the views per hour.
       @param nr_stats_elements Number of data points for the stats values. The default of 5 will give you the highest datapoints over the whole period.
   }
+  
+  Counter ad_proc set_in_all_instances {var value} {
+    A helper function to set in all (direct or indirect) instances 
+    an instance variable to the same value. This is used here 
+    in combination with changing parameters 
+  } {
+    foreach object [my allinstances] {
+      $object set $var $value
+    }
+  }
 
   Counter instproc ++ {} {
     my incr c
@@ -191,16 +253,16 @@
     my finalize [my c]
     my c 0
   }
+
   Counter instproc log_to_file {timestamp label value} {
     if {![my logging]} return
     set server [ns_info server]
     set f [open $::logdir/counter.log a]
     puts $f "$timestamp -- $server $label $value"
     close $f
-  } 
-  Counter instproc finalize {n} {
-    after cancel [my set to]
-    my instvar stats trend
+  }
+  Counter instproc add_value {timestamp n} {
+    my instvar trend stats
     #
     # trend keeps nr_trend_elements most recent values
     #
@@ -212,9 +274,16 @@
     #
     # stats keeps nr_stats_elements highest values with time stamp
     #
+    lappend stats [list $timestamp $n]
+    set stats [lrange [lsort -real -decreasing -index 1 $stats] 0 [expr {[my nr_stats_elements] - 1}]]
+  }
+  Counter instproc finalize {n} {
+    after cancel [my set to]
+    # 
+    # update statistics
+    #
     set now [clock format [clock seconds]]
-    lappend stats [list $now $n]
-      set stats [lrange [lsort -real -decreasing -index 1 $stats] 0 [expr {[my nr_stats_elements] - 1}]]
+    my add_value $now $n
     #
     # log if necessary
     #
@@ -235,7 +304,7 @@
   Counter hours -timeoutMs [expr {60000*60}] -logging 1
   Counter minutes -timeoutMs 60000 -report hours -logging 1
   Counter seconds -timeoutMs 1000 -report minutes 
-
+    
   Class create MaxCounter -superclass Counter -instproc end {} {
     my c [Users nr_active]
     if {[my exists report]} {
@@ -305,17 +374,13 @@
     return $result
   } -instproc check_truncate_stats {} {
     # truncate statistics if necessary
-    if {[info exists ::package_id]} {
-      # get values from package parameters
-      my max_urls [parameter::get -package_id $::package_id \
-		       -parameter max-url-stats -default 13]
-      # we use the timer to check other parameters as well here
-      set time_window [parameter::get -package_id $::package_id \
-			   -parameter time-window -default 10]
-      if {$time_window != [throttler timeWindow]} {
-	throttler timeWindow $time_window
-	after 0 [list Users purge_access_stats]
-      }
+    # get values from package parameters
+    my max_urls [max-url-stats]
+    # we use the timer to check other parameters as well here
+    set time_window [time-window]
+    if {$time_window != [throttler timeWindow]} {
+      throttler timeWindow $time_window
+      after 0 [list Users purge_access_stats]
     }
     set max [my max_urls]
     if {$max>1} {
@@ -641,65 +706,30 @@
  
   # for debugging purposes: return all running timers
   proc showTimers {} {
-     set _ ""
-     foreach t [after info] { append _ "$t [after info $t]\n" }
-     return $_
+    set _ ""
+    foreach t [after info] { append _ "$t [after info $t]\n" }
+    return $_
   }
 
-  if {[catch {set ::package_id [::xo::package_id_from_package_key xotcl-request-monitor]}]} {
-    # old style
-      if {[catch {set ::package_id [::Generic::package_id_from_package_key xotcl-request-monitor]}]} {
-	  set ::package_id [apm_package_id_from_key "xotcl-request-monitor"]
-      }
+  #
+  # Populate the counters from log file
+  #
+  ns_log notice "+++ initialize conters"
+  
+  # Create the file to load. This is per hour = 60*3 + 2 lines
+  set number_of_lines [expr {182 * [trend-elements]}]
+  exec /usr/bin/tail -n $number_of_lines ${logdir}/counter.log >${logdir}/counter-new.log
+
+  set f [open $logdir/counter-new.log]
+  while {-1 != [gets $f line]} {
+    regexp {(.*) -- (.*) ::(.*) (.*)} $line match timestamp server counter value
+    ns_log notice "$counter add_value $timestamp $value"
+    $counter add_value $timestamp $value
   }
 
-  ns_log notice "+++ package_id of xotcl-request-monitor is $::package_id"
-
-  set logdir [parameter::get -package_id $::package_id \
-		  -parameter log-dir \
-		  -default [file dirname [file root [ns_config ns/parameters ServerLog]]]]
-  if {![file isdirectory $logdir]} {file mkdir $logdir}
-
-
-#   ns_log notice "+++ initialize conters"
-#   # Populate the counters
-#   # Initialize from the old counters
+  close $f
+  unset f
   
-#   set logdir [parameter::get_from_package_key -package_key xotcl-request-monitor \
-#                   -parameter log-dir \
-#                   -default [file dirname [file root [ns_config ns/parameters ServerLog]]]]
-  
-#   set max_urls [parameter::get_from_package_key \
-#                     -package_key "xotcl-request-monitor" \
-#                     -parameter max-url-stats -default 13]
-#   set time_window [parameter::get_from_package_key \
-#                        -package_key "xotcl-request-monitor" \
-#                        -parameter "time-window" -default 13]
-  
-#   set nr_trend_elements [parameter::get_from_package_key \
-#                              -package_key "xotcl-request-monitor" \
-#                              -parameter "trend-elements" -default 48]
-#   incr nr_trend_elements
-  
-#   # Create the file to load. This is per hour = 60*3 + 2 lines
-#   set number_of_lines [expr {182 * $nr_trend_elements}]
-#   exec /usr/bin/tail -n $number_of_lines ${logdir}/counter.log >${logdir}/counter-new.log
-#   set f [open $logdir/counter-new.log]
-  
-#   while {-1 != [gets $f line]} {
-#     regexp {(.*) -- (.*) ::(.*) (.*)} $line match timestamp server label value
-#     set nr_stats_elements [parameter::get_from_package_key \
-#                                -package_key "xotcl-request-monitor" \
-#                                -parameter "max-stats-elements" -default 48]
-#     ns_log notice "throttle do $label lappend trend $value"
-#     $label lappend trend $value
-#     set stats [$label lappend stats [list $timestamp $value]]
-#     set stats [lrange [lsort -real -decreasing -index 1 $stats] 0 [expr {$nr_stats_elements - 1}]]
-#     $label set stats $stats
-#   }
-#   close $f
-  
-
 } -persistent 1 -ad_doc {
   This is a small request-throttle application that handles simple 
   DOS-attracks on an AOL-server.  A user (request key) is identified 
@@ -709,7 +739,7 @@
   href='/xotcl/show-object?object=%3a%3athrottle+do+%3a%3aThrottle'>Throttle</a>:
   <ul>
   <li><em>timeWindow:</em>Time window for computing detailed statistics; can 
-     be configured via OACS parameter <code>time-window</code></li>
+     be configured via OACS package parameter <code>time-window</code></li>
   <li><em>timeoutMs:</em> Time window to keep statistics for a user</li>
   <li><em>startThrottle:</em> If user requests more than this #, he is throttled</li>
   <li><em>toMuch:</em> If user requests more than this #, he is kicked out</li>
