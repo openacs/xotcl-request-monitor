@@ -1,6 +1,8 @@
 #############################################################################
 ::xotcl::THREAD create throttle {
-
+  #
+  #set package_id [::xo::parameter get_package_id_from_package_key \
+  #                    -package_key "xotcl-request-monitor"]
   #
   # A simple helper class to provide a faster an easier-to-use interface to
   # package parameters. Eventually, this will move in a more general
@@ -25,6 +27,7 @@
   package_parameter time-window    -default 13
   package_parameter trend-elements -default 48 
   package_parameter max-stats-elements -default 5
+  package_parameter request-blocking-off -default 0
 
   #
   # When updates happen on 
@@ -42,6 +45,10 @@
     Counter set_in_all_instances nr_trend_elements $value
   }
   
+  request-blocking-off proc update {value} {
+    throttler set off $value
+  }
+
   # get the value from the logdir parameter
   set ::logdir [log-dir]
   if {![file isdirectory $logdir]} {file mkdir $logdir}
@@ -63,7 +70,7 @@
   }
 
   Throttle instproc init {} {
-    my set off 0
+    my set off [request-blocking-off]
     Object create [self]::stats
     Object create [self]::users
     next
@@ -714,7 +721,7 @@
   #
   # Populate the counters from log file
   #
-  ns_log notice "+++ initialize conters"
+  ns_log notice "+++ request-monitor: initialize counters"
   
   # Create the file to load. This is per hour = 60*3 + 2 lines
   set number_of_lines [expr {182 * [trend-elements]}]
@@ -723,7 +730,7 @@
   set f [open $logdir/counter-new.log]
   while {-1 != [gets $f line]} {
     regexp {(.*) -- (.*) ::(.*) (.*)} $line match timestamp server counter value
-    ns_log notice "$counter add_value $timestamp $value"
+    #ns_log notice "$counter add_value $timestamp $value"
     $counter add_value $timestamp $value
   }
 
