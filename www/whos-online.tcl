@@ -43,6 +43,7 @@ TableWidget t1 \
 	Field activity -label "Activity" -html { align right } -orderby activity
 	AnchorField hits -label "Hits" -orderby hits
 	Field switches  -label "Switches" -html { align center } -orderby switches
+	Field vpm       -label "Views per min" -html { align center } -orderby vpm
 	Field peer_address -label "Peer" -orderby peer_address
       }
     }] \
@@ -101,7 +102,9 @@ foreach element [throttle users active -full] {
 		     [format %.2f [lindex $smooth 0]] \
 		     $hits $loadparam $detail_url \
 		     $switches \
-		     $peer]
+		     $peer \
+		     $user_id \
+		    ]
 }
 
 switch -glob $orderby {
@@ -140,6 +143,7 @@ foreach e [lsort $type $order -index $index $users] {
 		-hits [lindex $e 6] \
 		-hits.href [lindex $e 7] \
 		-switches [lindex $e 8] \
+		-vpm [throttle views_per_minute [lindex $e 10]] \
 		-peer_address [lindex $e 9]
   } else {
     t1 add 	-name [lindex $e 0] \

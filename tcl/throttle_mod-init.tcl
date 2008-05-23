@@ -8,7 +8,7 @@ if {[ns_server connections]==0} {
   #
   ns_register_filter trace GET * throttle 
   ns_register_filter trace POST * throttle
-
+  
   #ns_register_filter postauth GET * throttle 
   #ns_register_filter postauth POST * throttle 
   ad_register_filter -priority 1000 postauth GET * throttle

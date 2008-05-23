@@ -27,7 +27,7 @@
   package_parameter time-window    -default 13
   package_parameter trend-elements -default 48 
   package_parameter max-stats-elements -default 5
-  package_parameter request-blocking-off -default 0
+  package_parameter do_throttle    -default on
 
   #
   # When updates happen on 
@@ -44,11 +44,11 @@
     next
     Counter set_in_all_instances nr_trend_elements $value
   }
-  
-  request-blocking-off proc update {value} {
+  do_throttle proc update {value} {
+    next
     throttler set off $value
   }
-
+  
   # get the value from the logdir parameter
   set ::logdir [log-dir]
   if {![file isdirectory $logdir]} {file mkdir $logdir}
@@ -70,7 +70,7 @@
   }
 
   Throttle instproc init {} {
-    my set off [request-blocking-off]
+    my set off [do_throttle]
     Object create [self]::stats
     Object create [self]::users
     next
@@ -203,15 +203,43 @@
     return [my array get active]
   }
 
-  Throttle instproc add_url_stat {url time_used key pa} {
+  Throttle instproc add_url_stat {url time_used key pa content_type} {
     catch {my unset running_url($key,$url)}
     #my log "### unset running_url($key,$url) $errmsg"
-    response_time_minutes add_url_stat $url $time_used $key
+    if {[string match text/html* $content_type]} {
+      [Users current_object] add_view $key
+    }
+    response_time_minutes add_url_stat $url $time_used $key $content_type
   }
   Throttle instforward report_url_stats response_time_minutes %proc
   Throttle instforward flush_url_stats  response_time_minutes %proc
   Throttle instforward last100          response_time_minutes %proc
   Throttle create throttler
+
+
+  Class create ThrottleTrace
+  ThrottleTrace instproc log {msg} {
+    if {![my exists traceFile]} {
+      set file $::logdir/calls
+      my set traceFile [open $file w]
+      my set traceCounter 0
+    }
+    puts [my set traceFile] $msg
+  }
+  ThrottleTrace instproc throttle_check args {
+    catch {
+      if {[my exists traceCounter]} {my incr traceCounter} {my set traceCounter 0}
+      my incr traceCounter
+      my log "CALL [my set traceCounter] [self args]"
+    }
+    next
+  }
+  ThrottleTrace instproc add_url_stat args {
+    catch {my log "END [my set traceCounter] [self args]"}
+    next
+  }
+  
+  #throttle do throttler mixin ThrottleTrace
 
   ############################
   # A simple counter class, which is able to aggregate values in some
@@ -630,6 +658,31 @@
     }
   }
 
+  Users instproc add_view {uid} {
+    #my log "#### add_view $uid"
+    set key views($uid)
+    if {[my exists $key]} {
+      my incr $key
+    } else {
+      my set $key 1
+    }
+  }
+  Users proc views_per_minute {uid} {
+    set mins 0
+    set views 0
+    set key views($uid)
+    foreach i [Users info instances] {
+      if {[$i exists $key]} {
+	incr mins
+	incr views [$i set $key]
+      }
+    }
+    if {$mins > 0} {
+      return [expr {$views*1.0/$mins}]
+    }
+    return 0
+  }
+
   Users instproc destroy {} {
     foreach key [my array names active] {
       [self class] decrRefCount $key [my set active($key)]
@@ -717,6 +770,29 @@
     foreach t [after info] { append _ "$t [after info $t]\n" }
     return $_
   }
+
+  #
+  # define a class value, which refreshes itself all "refresh" ms.  
+  #
+  Class Value -parameter {{value ""} {refresh 10000}}
+  Value instproc updateValue {} {my set handle [after [my refresh] [list [self] updateValue]]}
+
+  #
+  # define a object loadAvg.
+  #
+  # query with: "throttle do loadAvg value"
+  #
+  Value create loadAvg
+  loadAvg proc updateValue {} {
+    set procloadavg /proc/loadavg
+    if {[file readable $procloadavg]} {
+      set f [open $procloadavg]; 
+      my value [lrange [read $f] 0 2]; 
+      close $f
+    }
+    next
+  }
+  loadAvg updateValue
 
   #
   # Populate the counters from log file
@@ -860,6 +936,7 @@ throttle forward trend                   %self do %1 set trend
 throttle forward max_values              %self do %1 set stats
 throttle forward purge_access_stats      %self do Users %proc
 throttle forward users                   %self do Users
+throttle forward views_per_minute        %self do Users %proc
 
 ####
 # the next procs are for the filters (registered from the -init file)
@@ -892,7 +969,9 @@ throttle proc trace args {
   # in these cases pre- or postauth are not called, but only trace.
   # So we have to make sure we have the needed context here
   my get_context
-  my add_url_stat [my set url] [my ms] [my set requestor] [my set pa]
+  #my log "CT=[ns_set array [ns_conn outputheaders]] -- [my set url]"
+  my add_url_stat [my set url] [my ms] [my set requestor] [my set pa] \
+      [ns_set get [ns_conn outputheaders] Content-Type]
   my unset context_initialized
   return filter_ok
 }
@@ -911,9 +990,9 @@ ad_proc string_truncate_middle {{-ellipsis ...} {-len 100} string} {
 } {
   set string [string trim $string]
   if {[string length $string]>$len} {
-    set half [expr {($len-2)/2}]
+    set half  [expr {($len-2)/2}]
     set left  [string trimright [string range $string 0 $half]]
-    set right [string trimleft [string range $string end-$half end]]
+    set right [string trimleft  [string range $string end-$half end]]
     return $left$ellipsis$right
   }
   return $string
