@@ -209,7 +209,7 @@
     if {[string match text/html* $content_type]} {
       [Users current_object] add_view $key
     }
-    response_time_minutes add_url_stat $url $time_used $key $content_type
+    response_time_minutes add_url_stat $url $time_used $key
   }
   Throttle instforward report_url_stats response_time_minutes %proc
   Throttle instforward flush_url_stats  response_time_minutes %proc
