@@ -104,6 +104,7 @@ foreach element [throttle users active -full] {
 		     $switches \
 		     $peer \
 		     $user_id \
+		     [throttle views_per_minute $user_id] \
 		    ]
 }
 
@@ -118,6 +119,7 @@ switch -glob $orderby {
   hits,*         {set index 5; set type -dictionary}
   switches,*     {set index 8; set type -integer}
   peer_address,* {set index 9; set type -dictionary}
+  vpm,*          {set index 11; set type -real}
 }
 
 if {$admin} {
@@ -133,22 +135,21 @@ if {$admin} {
 }
 
 
-
 foreach e [lsort $type $order -index $index $users] {
   if {$admin} {
-    t1 add 	-name [lindex $e 0] \
-		-name.href [lindex $e 1] \
-		-online_time [lindex $e 3] \
-		-activity [lindex $e 4] \
-		-hits [lindex $e 6] \
-		-hits.href [lindex $e 7] \
-		-switches [lindex $e 8] \
-		-vpm [throttle views_per_minute [lindex $e 10]] \
+    t1 add 	-name         [lindex $e 0] \
+		-name.href    [lindex $e 1] \
+		-online_time  [lindex $e 3] \
+		-activity     [lindex $e 4] \
+		-hits         [lindex $e 6] \
+		-hits.href    [lindex $e 7] \
+		-switches     [lindex $e 8] \
+	        -vpm          [lindex $e 11] \
 		-peer_address [lindex $e 9]
   } else {
-    t1 add 	-name [lindex $e 0] \
-		-name.href [lindex $e 1] \
-		-online_time [lindex $e 3]
+    t1 add 	-name         [lindex $e 0] \
+		-name.href    [lindex $e 1] \
+		-online_time  [lindex $e 3]
   }
 }
 
