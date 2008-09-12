@@ -63,16 +63,16 @@ proc my_hostname pa {
 set users [list]
 foreach element [throttle users active -full] {
   foreach {user_id pa timestamp hits smooth switches} $element break
-  if {[string first . $user_id] > 0} {
+  if {[string is integer $user_id]} {
+    acs_user::get -user_id $user_id -array user
+    set user_label "$user(last_name), $user(first_names)" 
+    set user_url [acs_community_member_url -user_id $user_id]
+  } else {
     if {$all} continue
     # it was an IP address
     set user_label $user_id
     set user_url ""
-  } else {
-    acs_user::get -user_id $user_id -array user
-    set user_label "$user(last_name), $user(first_names)" 
-    set user_url [acs_community_member_url -user_id $user_id]
-  }
+  } 
   set timestamp [lindex $smooth 2]
   set last_request_minutes [expr {[clock seconds]/60 - $timestamp}]
   
