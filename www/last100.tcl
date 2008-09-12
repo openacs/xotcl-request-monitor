@@ -37,11 +37,11 @@ t1 orderby -order [expr {$order eq "asc" ? "increasing" : "decreasing"}] $att
 
 foreach l $stat {
   foreach {timestamp c url ms requestor} $l break
-  if {[string first . $requestor] > 0} {
-    set user_string $requestor
-  } else {
+  if {[string is integer $requestor]} {
     acs_user::get -user_id $requestor -array user
     set user_string "$user(first_names) $user(last_name)"
+  } else {
+    set user_string $requestor
   }
   t1 add -time [clock format $timestamp -format "%H:%M:%S"] \
       -user $user_string \

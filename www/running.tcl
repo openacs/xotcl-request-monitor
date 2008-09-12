@@ -41,11 +41,11 @@ set sortable_requests [list]
 foreach {key elapsed} $running_requests {
   foreach {requestor url} [split $key ,] break
   set ms [format %.2f [expr {[throttle ms -start_time $elapsed]/1000.0}]]
-  if {[string first . $requestor] > 0} {
-    set user_string $requestor 
-  } else {
+  if {[string is integer $requestor]} {
     acs_user::get -user_id $requestor -array user
-    set user_string "$user(first_names) $user(last_name) - $elapsed ms=$ms"
+    set user_string "$user(first_names) $user(last_name)"
+  } else {
+    set user_string $requestor
   }
   set user_url "last-requests?request_key=$requestor"
   lappend sortable_requests [list $user_string $user_url $url $ms ""]
@@ -54,11 +54,11 @@ foreach {index entry} $background_requests {
   foreach {key elapsed} $entry break
   foreach {requestor url} [split $key ,] break
   set ms [format %.2f [expr {[throttle ms -start_time $elapsed]/1000.0}]]
-  if {[string first . $requestor] > 0} {
-    set user_string $requestor 
-  } else {
+  if {[string is integer $requestor]} {
     acs_user::get -user_id $requestor -array user
     set user_string "$user(first_names) $user(last_name)"
+  } else {
+    set user_string $requestor
   }
   set user_url "last-requests?request_key=$requestor"
   lappend sortable_requests [list $user_string $user_url $url -$ms "background"]

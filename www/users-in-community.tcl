@@ -27,11 +27,11 @@ foreach e [lsort -decreasing -index 0 \
   foreach {timestamp requestor} $e break
   if {[info exists listed($requestor)]} continue
   set listed($requestor) 1
-  if {[string first . $requestor] > 0} {
-    set user_string $requestor
-  } else {
+  if {[string is integer $requestor]} {
     acs_user::get -user_id $requestor -array user
     set user_string "$user(first_names) $user(last_name)"
+  } else {
+    set user_string $requestor
   }
   set time [clock format $timestamp -format "%H:%M"]
   t1 add -time $time -user $user_string
