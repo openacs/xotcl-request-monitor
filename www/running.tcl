@@ -19,7 +19,11 @@ if {!$admin_p} {
 }
 
 set running_requests [throttle running]
-set background_requests [bgdelivery running]
+if {[info command bgdelivery] ne ""} {
+   set background_requests [bgdelivery running]
+} else {
+   set background_requests [list]
+}
 set nr_bg  [expr {[llength $background_requests]/2}]
 set nr_req [expr {[llength $running_requests]/2}]
 set title "Currently Running Requests ($nr_req/$nr_bg)"
