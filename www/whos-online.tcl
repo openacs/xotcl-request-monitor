@@ -39,11 +39,11 @@ TableWidget t1 \
       AnchorField name  -label "User" -orderby name
       Field online_time -label "Last Activity" -html { align right } \
 	  -orderby online_time
+      Field vpm       -label "Views per min" -html { align center } -orderby vpm
       if {$admin} {
 	Field activity -label "Activity" -html { align right } -orderby activity
 	AnchorField hits -label "Hits" -orderby hits
 	Field switches  -label "Switches" -html { align center } -orderby switches
-	Field vpm       -label "Views per min" -html { align center } -orderby vpm
 	Field peer_address -label "Peer" -orderby peer_address
       }
     }] \
@@ -114,7 +114,7 @@ switch -glob $orderby {
 } 
 switch -glob $orderby {
   name,*         {set index 0; set type -dictionary}
-  online_time,*  {set index 4; set type -real}
+  online_time,*  {set index 3; set type -dictionary}
   activity,*     {set index 5; set type -integer}
   hits,*         {set index 5; set type -dictionary}
   switches,*     {set index 8; set type -integer}
@@ -144,12 +144,13 @@ foreach e [lsort $type $order -index $index $users] {
 		-hits         [lindex $e 6] \
 		-hits.href    [lindex $e 7] \
 		-switches     [lindex $e 8] \
-	        -vpm          [lindex $e 11] \
+	        -vpm          [format %.2f [lindex $e 11]] \
 		-peer_address [lindex $e 9]
   } else {
     t1 add 	-name         [lindex $e 0] \
 		-name.href    [lindex $e 1] \
-		-online_time  [lindex $e 3]
+		-online_time  [lindex $e 3] \
+        	-vpm 	      [format %.2f [lindex $e 11]]
   }
 }
 

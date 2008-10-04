@@ -221,7 +221,7 @@
   ThrottleTrace instproc log {msg} {
     if {![my exists traceFile]} {
       set file $::logdir/calls
-      my set traceFile [open $file w]
+      my set traceFile [open $file a]
       my set traceCounter 0
     }
     puts [my set traceFile] $msg
@@ -240,6 +240,25 @@
   }
   
   #throttle do throttler mixin ThrottleTrace
+
+
+  Class create TraceLongCalls
+  TraceLongCalls set count 0
+  TraceLongCalls instproc log {msg} {
+    set traceFile [open $::logdir/long-calls.log a]
+    puts $traceFile "[clock format [clock seconds]] -- $msg"
+    close $traceFile
+    [self class] append log "[clock format [clock seconds]] -- $msg\n"
+    [self class] incr count
+  }
+  TraceLongCalls instproc add_url_stat {url time_used key pa content_type} {
+    if {$time_used > 5000} {
+      catch {my log [self args]}
+    }
+    next
+  }
+
+  throttle do throttler mixin TraceLongCalls
 
   ############################
   # A simple counter class, which is able to aggregate values in some
@@ -290,12 +309,13 @@
   }
 
   Counter instproc log_to_file {timestamp label value} {
-    if {![my logging]} return
     set server [ns_info server]
+    ::xotcl::Object log "[self] log-to-file [my logging] - $::logdir/counter.log"
     set f [open $::logdir/counter.log a]
     puts $f "$timestamp -- $server $label $value"
     close $f
   }
+
   Counter instproc add_value {timestamp n} {
     my instvar trend stats
     #
@@ -322,7 +342,7 @@
     #
     # log if necessary
     #
-    catch {my log_to_file $now [self] $n}
+    catch {if {[my logging]} {my log_to_file $now [self] $n}}
     #
     my set to [after [my timeoutMs] [list [self] end]]
   }
@@ -339,7 +359,25 @@
   Counter hours -timeoutMs [expr {60000*60}] -logging 1
   Counter minutes -timeoutMs 60000 -report hours -logging 1
   Counter seconds -timeoutMs 1000 -report minutes 
-    
+   
+  # The counter user_count_day just records the number of active user
+  # per day. It differs from other counters by keeping track of a pair
+  # of values (authenticated and non-authenticated).
+  
+  Counter user_count_day -timeoutMs [expr {60000*60}] -logging 1
+  user_count_day proc end {} {
+    ::xotcl::Object log XXX
+    foreach {auth ip} [throttle users perDay] break
+    set now [clock format [clock seconds]]
+    # The counter logs its intrinsic value (c) anyhow, which are the
+    # authenticated users. We also want to record the number of
+    # unauthenticated users, and do this here manually.
+    my log_to_file $now [self]-non-auth $ip
+    my set c $auth
+    Users perDayCleanup
+    next
+  }
+
   Class create MaxCounter -superclass Counter -instproc end {} {
     my c [Users nr_active]
     if {[my exists report]} {
@@ -756,11 +794,10 @@
 	my unset timestamp($i)
       }
     }
-    after [expr {60000*60}] [list [self] [self proc]]
   }
   
   # initialization of Users class object
-  Users perDayCleanup
+  #Users perDayCleanup
   Object create Users::users
   Users set last_mkey ""
  
@@ -807,7 +844,11 @@
   while {-1 != [gets $f line]} {
     regexp {(.*) -- (.*) ::(.*) (.*)} $line match timestamp server counter value
     #ns_log notice "$counter add_value $timestamp $value"
-    $counter add_value $timestamp $value
+    if {[::xotcl::Object isobject $counter]} {
+      $counter add_value $timestamp $value
+    } else {
+      ns_log notice "ignore reload of value $value for counter $counter"
+    }
   }
 
   close $f
