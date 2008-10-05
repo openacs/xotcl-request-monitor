@@ -310,7 +310,6 @@
 
   Counter instproc log_to_file {timestamp label value} {
     set server [ns_info server]
-    ::xotcl::Object log "[self] log-to-file [my logging] - $::logdir/counter.log"
     set f [open $::logdir/counter.log a]
     puts $f "$timestamp -- $server $label $value"
     close $f
@@ -366,7 +365,6 @@
   
   Counter user_count_day -timeoutMs [expr {60000*60}] -logging 1
   user_count_day proc end {} {
-    ::xotcl::Object log XXX
     foreach {auth ip} [throttle users perDay] break
     set now [clock format [clock seconds]]
     # The counter logs its intrinsic value (c) anyhow, which are the
