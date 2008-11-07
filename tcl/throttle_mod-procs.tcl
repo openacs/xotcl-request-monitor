@@ -829,27 +829,31 @@
   }
   loadAvg updateValue
 
-  #
-  # Populate the counters from log file
-  #
-  ns_log notice "+++ request-monitor: initialize counters"
-  
-  # Create the file to load. This is per hour = 60*3 + 2 lines
-  set number_of_lines [expr {182 * [trend-elements]}]
-  exec /usr/bin/tail -n $number_of_lines ${logdir}/counter.log >${logdir}/counter-new.log
 
-  set f [open $logdir/counter-new.log]
-  while {-1 != [gets $f line]} {
-    regexp {(.*) -- (.*) ::(.*) (.*)} $line match timestamp server counter value
-    #ns_log notice "$counter add_value $timestamp $value"
-    if {[::xotcl::Object isobject $counter]} {
-      $counter add_value $timestamp $value
-    } else {
-      ns_log notice "ignore reload of value $value for counter $counter"
+  if {[file readable ${logdir}/counter.log]} {
+    #
+    # Populate the counters from log file
+    #
+    ns_log notice "+++ request-monitor: initialize counters"
+    
+    # Create the file to load. This is per hour = 60*3 + 2 lines
+    set number_of_lines [expr {182 * [trend-elements]}]
+    exec /usr/bin/tail -n $number_of_lines ${logdir}/counter.log >${logdir}/counter-new.log
+    
+    set f [open $logdir/counter-new.log]
+    while {-1 != [gets $f line]} {
+      regexp {(.*) -- (.*) ::(.*) (.*)} $line match timestamp server counter value
+      #ns_log notice "$counter add_value $timestamp $value"
+      if {[::xotcl::Object isobject $counter]} {
+        $counter add_value $timestamp $value
+      } elseif {![info exists complain($counter)]} {
+        ns_log notice "ignore reload of value $value for counter $counter"
+        set complain($counter) 1
+      }
     }
+    close $f
   }
 
-  close $f
   unset f
   
 } -persistent 1 -ad_doc {
