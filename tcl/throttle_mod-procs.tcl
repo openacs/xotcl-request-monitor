@@ -852,9 +852,9 @@
       }
     }
     close $f
+    unset f
   }
 
-  unset f
   
 } -persistent 1 -ad_doc {
   This is a small request-throttle application that handles simple 
