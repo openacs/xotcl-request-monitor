@@ -829,8 +829,8 @@
   }
   loadAvg updateValue
 
-
-  if {[file readable ${logdir}/counter.log]} {
+  set tail [::util::which tail]
+  if {[file readable ${logdir}/counter.log] && $tail ne ""} {
     #
     # Populate the counters from log file
     #
@@ -838,7 +838,7 @@
     
     # Create the file to load. This is per hour = 60*3 + 2 lines
     set number_of_lines [expr {182 * [trend-elements]}]
-    exec /usr/bin/tail -n $number_of_lines ${logdir}/counter.log >${logdir}/counter-new.log
+    exec $tail -n $number_of_lines ${logdir}/counter.log >${logdir}/counter-new.log
     
     set f [open $logdir/counter-new.log]
     while {-1 != [gets $f line]} {
