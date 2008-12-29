@@ -365,7 +365,7 @@
   
   Counter user_count_day -timeoutMs [expr {60000*60}] -logging 1
   user_count_day proc end {} {
-    foreach {auth ip} [throttle users perDay] break
+    foreach {auth ip} [throttle users nr_users_per_day] break
     set now [clock format [clock seconds]]
     # The counter logs its intrinsic value (c) anyhow, which are the
     # authenticated users. We also want to record the number of
@@ -768,14 +768,22 @@
       my log "+++ cannot decrement refcount for '$key' by $hitcount"
     }
   }
-  Users proc perDay {} {
+  Users proc nr_users_per_day {} {
     set ip 0; set auth 0
     foreach i [my array names timestamp] {
       if {[string match *.* $i]} {incr ip} {incr auth}
     }
     return [list $ip $auth]
   }
-  
+  Users proc users_per_day {} {
+    my instvar timestamp
+    set ip [list]; set auth [list]
+    foreach i [array names timestamp] {
+      if {[string match *.* $i]} {lappend ip [list $i $timestamp($i)]} {lappend auth [list $i $timestamp($i)]}
+    }
+    return [list $ip $auth]
+  }  
+
   Users proc perDayCleanup {} {
     set secsPerDay [expr {3600*24}]
     foreach i [lsort [my array names timestamp]] {
