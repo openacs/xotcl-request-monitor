@@ -42,6 +42,8 @@ foreach {ip auth} [throttle users users_per_day] break
 if {!$all} {set elements [concat $ip $auth]} {set elements $auth}
 set summary "We noticed in [expr {[llength $ip]+[llength $auth]}] users in total, containing [llength $auth] authenticated users"
 
+set now_ansi  [clock_to_ansi [clock seconds]]
+
 foreach element $elements {
   foreach {user_id timestamp} $element break
   if {[string is integer $user_id]} {
@@ -57,7 +59,10 @@ foreach element $elements {
   lappend users [list $user_label \
 		     $user_url \
 		     $timestamp \
-		     [clock format $timestamp] \
+                     [util::age_pretty \
+                          -timestamp_ansi [clock_to_ansi $timestamp] \
+                          -sysdate_ansi $now_ansi \
+                          -mode_3_fmt "%d %b %Y, at %X"] \
 		    ]
 }
 
