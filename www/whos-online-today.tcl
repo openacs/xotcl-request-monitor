@@ -39,7 +39,8 @@ TableWidget t1 \
 
 set users [list]
 foreach {ip auth} [throttle users users_per_day] break
-if {$all} {set elements [concat $ip $auth]} {set elements $auth}
+if {!$all} {set elements [concat $ip $auth]} {set elements $auth}
+set summary "We noticed in [expr {[llength $ip]+[llength $auth]}] users in total, containing [llength $auth] authenticated users"
 
 foreach element $elements {
   foreach {user_id timestamp} $element break
