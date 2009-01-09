@@ -800,6 +800,18 @@
 	my unset timestamp($i)
       }
     }
+    dump write
+  }
+
+  Object create dump
+  dump set file ${logdir}/throttle-data.dump
+  dump proc read {} {
+    if {[file readable [my set file]]} {source [my set file]}
+  }
+  dump proc write {} {
+    set dumpFile [open [my set file] w]
+    puts $dumpFile [list Users array set timestamp [Users array get timestamp]]
+    close $dumpFile
   }
   
   # initialization of Users class object
@@ -862,6 +874,11 @@
     close $f
     unset f
   }
+
+  #
+  # Read in the last dump data
+  #
+  dump read
 
   
 } -persistent 1 -ad_doc {
