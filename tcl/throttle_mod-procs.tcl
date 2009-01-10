@@ -816,6 +816,8 @@
   Object create dump
   dump set file ${logdir}/throttle-data.dump
   dump proc read {} {
+    # make sure, timestamp exists as an array
+    array set Users::timestamp [list]
     if {[file readable [my set file]]} {source [my set file]}
     # In case, we are loading an old dump file with less date, 
     # make sure we keep have after the load the aggregated values
