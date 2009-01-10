@@ -807,7 +807,7 @@
 	my log "--- $i expired $d days $h hours $m minutes ago"
 	my unset timestamp($i)
       }
-      if {[string match *.* $i]} {my incr ip24} {incr my auth24}
+      if {[string match *.* $i]} {my incr ip24} {my incr auth24}
     }
     dump write
   }
@@ -828,10 +828,10 @@
     # dump all variables of the object ::Users
     set o ::Users
     foreach var [$o info vars] {
-      if {[$o array exists $v]} {
-        append cmd [list $o array set $v [$o array get $v]] \n
+      if {[$o array exists $var]} {
+        append cmd [list $o array set $var [$o array get $var]] \n
       } else {
-        append cmd [list $o set $v [$o set $v]] \n
+        append cmd [list $o set $var [$o set $var]] \n
       }
     }
     puts $dumpFile $cmd
