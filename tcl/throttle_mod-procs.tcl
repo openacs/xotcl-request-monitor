@@ -910,6 +910,14 @@
   #
   dump read
 
+  #
+  # Add an exit handler to write out the dump, when this thread goes
+  # down.
+  #
+  ::xotcl::Object setExitHandler {
+    dump write
+  }
+
   
 } -persistent 1 -ad_doc {
   This is a small request-throttle application that handles simple 
