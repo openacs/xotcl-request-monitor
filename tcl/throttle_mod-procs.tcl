@@ -829,6 +829,9 @@
     # dump all variables of the object ::Users
     set o ::Users
     foreach var [$o info vars] {
+      # last_mkey is just for interal purposes
+      if {$var eq "last_mkey"} continue
+      # the remainder are primarily runtime statistics
       if {[$o array exists $var]} {
         append cmd [list $o array set $var [$o array get $var]] \n
       } else {
