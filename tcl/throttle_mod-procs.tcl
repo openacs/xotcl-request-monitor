@@ -797,17 +797,18 @@
     foreach i [lsort [my array names timestamp]] {
       set secs [expr {[clock seconds]-[my set timestamp($i)]}]
       # my log "--- $i: last click $secs secs ago"
-      if {$secs>$secsPerDay} {
-	foreach {d h m s} [clock format [expr {$secs-$secsPerDay}] \
-			       -format {%j %H %M %S}] break
-	regexp {^[0]+(.*)$} $d match d
-	regexp {^[0]+(.*)$} $h match h
-	incr d -1
-	incr h -1
-	my log "--- $i expired $d days $h hours $m minutes ago"
+      if {$secs > $secsPerDay} {
+	#foreach {d h m s} [clock format [expr {$secs-$secsPerDay}] \
+	#		       -format {%j %H %M %S}] break
+	#regexp {^[0]+(.*)$} $d match d
+	#regexp {^[0]+(.*)$} $h match h
+	#incr d -1
+	#incr h -1
+	#my log "--- $i expired $d days $h hours $m minutes ago"
 	my unset timestamp($i)
+      } else {
+        if {[string match *.* $i]} {my incr ip24} {my incr auth24}
       }
-      if {[string match *.* $i]} {my incr ip24} {my incr auth24}
     }
     dump write
   }
