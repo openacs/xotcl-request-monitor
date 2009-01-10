@@ -488,7 +488,7 @@
   #
   # Class for the user tracking
 
-  Class create Users -parameter { point_in_time } -ad_doc {
+  Class create Users -parameter {point_in_time {ip24 0} {auth24 0}} -ad_doc {
     This class is responsible for the user tracking and is defined only
     in a separate Tcl thread named <code>throttle</code>. 
     For each minute within the specified <code>time-window</code> an instance
@@ -750,6 +750,7 @@
       my incr refcount($key)
     } else {
       my set refcount($key) 1
+      if {[string match *.* $key]} {my incr ip24} {my incr auth24}
     }
     my set pa($key) $pa
     my set timestamp($key) [clock seconds]
@@ -768,12 +769,18 @@
       my log "+++ cannot decrement refcount for '$key' by $hitcount"
     }
   }
-  Users proc nr_users_per_day {} {
-    set ip 0; set auth 0
+  Users proc compute_nr_users_per_day {} {
+    #
+    # this method is just for maintenance issues and updates the
+    # aggregated values of the visitors
+    #
+    my set ip24 0; my set auth24 0
     foreach i [my array names timestamp] {
-      if {[string match *.* $i]} {incr ip} {incr auth}
+      if {[string match *.* $i]} {my incr ip24} {my incr auth24}
     }
-    return [list $ip $auth]
+  }
+  Users proc nr_users_per_day {} {
+    return [list [my set ip24] [my set auth24]]
   }
   Users proc users_per_day {} {
     my instvar timestamp
@@ -785,6 +792,7 @@
   }  
 
   Users proc perDayCleanup {} {
+    my set ip24 0; my set auth24 0
     set secsPerDay [expr {3600*24}]
     foreach i [lsort [my array names timestamp]] {
       set secs [expr {[clock seconds]-[my set timestamp($i)]}]
@@ -799,6 +807,7 @@
 	my log "--- $i expired $d days $h hours $m minutes ago"
 	my unset timestamp($i)
       }
+      if {[string match *.* $i]} {my incr ip24} {incr my auth24}
     }
     dump write
   }
@@ -807,10 +816,25 @@
   dump set file ${logdir}/throttle-data.dump
   dump proc read {} {
     if {[file readable [my set file]]} {source [my set file]}
+    # In case, we are loading an old dump file with less date, 
+    # make sure we keep have after the load the aggregated values
+    if {![Users exists ip24] || [Users set ip24] == 0} {
+      Users compute_nr_users_per_day
+    }
   }
   dump proc write {} {
     set dumpFile [open [my set file] w]
-    puts $dumpFile [list Users array set timestamp [Users array get timestamp]]
+    set cmd ""
+    # dump all variables of the object ::Users
+    set o ::Users
+    foreach var [$o info vars] {
+      if {[$o array exists $v]} {
+        append cmd [list $o array set $v [$o array get $v]] \n
+      } else {
+        append cmd [list $o set $v [$o set $v]] \n
+      }
+    }
+    puts $dumpFile $cmd
     close $dumpFile
   }
   
