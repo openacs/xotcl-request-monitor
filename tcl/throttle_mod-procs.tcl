@@ -766,6 +766,9 @@
         catch {my unset switches($key)}
       }
     } else {
+      catch {my unset pa($key)}
+      catch {my unset expSmooth($key)}
+      catch {my unset switches($key)}
       my log "+++ cannot decrement refcount for '$key' by $hitcount"
     }
   }
@@ -790,6 +793,40 @@
     }
     return [list $ip $auth]
   }  
+
+  Users proc time_window_cleanup {} {
+    # purge stale entries (maintenance only)
+    throttler instvar timeWindow
+    set now [clock seconds]
+    set maxdiff [expr {$timeWindow*60}]
+    foreach i [lsort [my array names pa]] {
+      set purge 0
+      if {![my exists timestamp($i)]} {
+        ns_log notice "throttle: no timestamp for $i"
+        set purge 1
+      } else {
+        set age [expr {$now-[my set timestamp($i)]}]
+        if {$age > $maxdiff} {
+          if {[my exists pa($i)]} {
+            ns_log notice "throttle: entry stale $i => [my exists pa($i)], age=$age"
+            set purge 1
+          }
+        }
+      }
+      if {$purge} {
+        my unset pa($i)
+        catch {my unset refcount($i)}
+        catch {my unset expSmooth($i)}
+        catch {my unset switches($i)}
+      }
+    }
+    foreach i [lsort [my array names refcount]] {
+      if {![my exists pa($i)]} {
+        ns_log notice "throttle: void refcount for $i"
+        my unset refcount($i)
+      }
+    }
+  }
 
   Users proc perDayCleanup {} {
     my set ip24 0; my set auth24 0
@@ -819,11 +856,10 @@
     # make sure, timestamp exists as an array
     array set Users::timestamp [list]
     if {[file readable [my set file]]} {source [my set file]}
-    # In case, we are loading an old dump file with less date, 
-    # make sure we keep have after the load the aggregated values
-    if {![Users exists ip24] || [Users set ip24] == 0} {
-      Users compute_nr_users_per_day
-    }
+    # The dump file data is merged with maybe preexisting data
+    # make sure to adjust the counters and timings
+    Users time_window_cleanup
+    Users compute_nr_users_per_day
   }
   dump proc write {} {
     set dumpFile [open [my set file] w]
