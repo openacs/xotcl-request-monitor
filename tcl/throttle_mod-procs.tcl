@@ -855,7 +855,13 @@
   dump proc read {} {
     # make sure, timestamp exists as an array
     array set Users::timestamp [list]
-    if {[file readable [my set file]]} {source [my set file]}
+    if {[file readable [my set file]]} {
+      # in case of disk-full, the file might be damaged, so make sure,
+      # we can continue
+      if {[catch {source [my set file]} errorMsg]} {
+        ns_log error "during source of [my set file]:\n$errorMsg"
+      }
+    }
     # The dump file data is merged with maybe preexisting data
     # make sure to adjust the counters and timings
     Users time_window_cleanup
