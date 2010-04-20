@@ -37,12 +37,13 @@ proc currentSystemLoad {} {
   #    if {[catch {return [exec "/usr/bin/uptime"]}]} {
   #	return ""
   #    }
+  set threads "- threads: [ns_server threads]"
   set procloadavg /proc/loadavg
   if {[file readable $procloadavg]} {
     set f [open $procloadavg]; set c [read $f]; close $f
-    return $c
+    return "$c $threads"
   }
-  return [exec "/usr/bin/uptime"]
+  return "[exec /usr/bin/uptime] $threads"
 }
 
 # collect current response time (per minute and hour)
@@ -253,6 +254,7 @@ if {![catch {ns_conn contentsentlength}]} {
   set background  [expr {[llength $background_requests]/2}]
   append running /$background
 }
+array set thread_avgs [throttle thread_avgs]
 
 if {[info command ::tlf::system_activity] ne ""} {
   array set server_stats [::tlf::system_activity]

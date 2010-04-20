@@ -1,5 +1,6 @@
 #############################################################################
 ::xotcl::THREAD create throttle {
+
   #
   #set package_id [::xo::parameter get_package_id_from_package_key \
   #                    -package_key "xotcl-request-monitor"]
@@ -121,10 +122,33 @@
     my array get running_url
   }
 
+  #
+  # Global variables in the thread to calculate thread 
+  # statistics of the server
+  #
+  set ::threads_busy 0
+  set ::threads_current 0
+  set ::threads_datapoints 0 ;# make sure, we never divide by 0
+
+  Throttle instproc update_threads_state {} {
+    array set threadInfo [ns_server threads]
+    incr ::threads_busy [expr {$threadInfo(current) - $threadInfo(idle)}]
+    incr ::threads_current $threadInfo(current)
+    incr ::threads_datapoints
+  }
+
+  Throttle instproc thread_avgs {} {
+    return [list \
+                busy [format %.2f [expr {1.0 * $::threads_busy / $::threads_datapoints}]] \
+                current [format %.2f [expr {1.0 * $::threads_current / $::threads_datapoints}]]]
+  }
+
   Throttle instproc throttle_check {requestKey pa url conn_time content_type community_id} {
     my instvar off
     seconds ++
-      
+    
+    my update_threads_state
+
     set var running_url($requestKey,$url)
     # check first, whether the same user has already the same request
     # issued; if yes, block this request. Caveat: some html-pages
@@ -1007,8 +1031,8 @@ throttle proc get_context {} {
   set url [ns_conn url]
 
   my set community_id 0
-  if {[info exists ::ad_conn(user_id)]} {
-    #my log "--t we have a user_id"
+  if {[info exists ::ad_conn(package_id)]} {
+    #my log "--t we have a package_id"
     # ordinary request, ad_conn is initialized
     set package_id [ad_conn package_id]
     ::xo::ConnectionContext require -package_id $package_id -url $url
@@ -1076,6 +1100,7 @@ throttle forward report_url_stats        %self do throttler %proc
 throttle forward add_statistics          %self do throttler %proc
 throttle forward throttle_check          %self do throttler %proc
 throttle forward last100                 %self do throttler %proc
+throttle forward thread_avgs             %self do throttler %proc
 throttle forward off                     %self do throttler set off 1
 throttle forward on                      %self do throttler set off 0
 throttle forward running                 %self do throttler %proc
