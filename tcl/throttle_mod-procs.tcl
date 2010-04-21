@@ -130,8 +130,17 @@
   set ::threads_current 0
   set ::threads_datapoints 0 ;# make sure, we never divide by 0
 
+  if {[ns_info name] eq "NaviServer"} {
+    Throttle instproc server_threads {} {ns_server threads}
+  } else {
+    Throttle instproc server_threads {} {
+      set l [list]
+      foreach e [ns_server threads] {lappend l [lindex $e 0] [lindex $e 1]} 
+      return $l
+    }
+  }
   Throttle instproc update_threads_state {} {
-    array set threadInfo [ns_server threads]
+    array set threadInfo [my server_threads]
     incr ::threads_busy [expr {$threadInfo(current) - $threadInfo(idle)}]
     incr ::threads_current $threadInfo(current)
     incr ::threads_datapoints
