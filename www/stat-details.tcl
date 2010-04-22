@@ -178,8 +178,9 @@ TableWidget t1 -volatile \
       }
       if {$exclude} continue
     }
+    
     t1 add 	-url [string_truncate_middle -len 80 $url] \
-  	        -url.href "[ad_url]$url" \
+  	        -url.href [expr {[string match *...* $url] ? "" : "[ad_url]$url" }] \
 		-totaltime [lindex $l 1] \
 		-cnt [lindex $l 2] \
 		-avg $avg \
