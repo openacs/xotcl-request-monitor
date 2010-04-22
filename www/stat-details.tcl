@@ -6,35 +6,131 @@ ad_page_contract {
     @cvs-id $id: whos-online.tcl,v 1.1.1.1 2004/03/16 16:11:51 nsadmin exp $
 } -query {
     {all:optional 0}
+    {with_param:optional 1}
+    {with_apps:optional 0}
     {orderby:optional "totaltime,desc"}
 } -properties {
     title:onevalue
     context:onevalue
     user_string:onevalue
 }
-
 set title "Url Statistics"
 set context [list "Url Statistics"]
 set hide_patterns [parameter::get -parameter hide-requests -default {*.css}]
+array set apps {
+  calendar 1 acs-templating 1 forums 1 file-storage 1 one-community 1 
+  xowiki 1 
+  annotations 1 gradebook 1 homework 1 lecturecast 1 res 1 
+}
+array set vuh {
+  ical 1
+  lecturecast 1
+  download 1
+}
 
 set stat [throttle report_url_stats]
 set total 0.0
-set cnt 0
-set full_stat [list]
+set total_cnt 0
 
 foreach l $stat {
   set total [expr {$total+[lindex $l 1]}]
-  set cnt   [expr {$cnt  +[lindex $l 2]}]
-  lappend full_stat [lappend l [expr {[lindex $l 1]/[lindex $l 2]}]]
+  incr total_cnt [lindex $l 2]
 }
-set total_avg [expr {$cnt>0 ? $total/($cnt*1000.0) : "0" }]
+set total_avg [expr {$total_cnt>0 ? $total/($total_cnt*1000.0) : "0" }]
 
-set label(0) "Show filtered"
-set tooltip(0) "Show filtered values"
-set label(1) "Show all"
-set tooltip(1) "Show all values"
-set all [expr {!$all}]
-set url [export_vars -base [ad_conn url] {all}]
+set full_stat [list]
+if {$with_param == 0} {
+  # without parameter
+  # add up same urls
+  array unset aggr_stat
+  foreach l $stat {
+    foreach {url time cnt} $l break
+    set p ""
+    set has_param [regexp {^(.*)[?]} $url _ url]
+    #
+    # truncate tails, if we have VUHs
+    #
+    set url_list [list]
+    foreach p [split $url /] {
+      if {[info exists vuh($p)]} {
+        lappend url_list $p
+        set url [join $url_list /]/...
+        break
+      }
+      lappend url_list $p
+    }
+    if {$has_param} {append url ?...}
+    set key aggr_stat($url)
+    if {[info exists $key]} {
+      set time [expr {[lindex [set $key] 0] + $time}]
+      set cnt [expr {[lindex [set $key] 1] + $cnt}]
+    }
+    set aggr_stat($url) [list $time $cnt]
+  }
+  set stat [list]
+  foreach url [array names aggr_stat] {
+    foreach {time cnt} $aggr_stat($url) break
+    lappend stat [list $url $time $cnt]
+  }
+}
+if {$with_apps == 1} {
+  # reduce statistics to apps
+  array unset aggr_stat
+  foreach l $stat {
+    foreach {url time cnt} $l break
+    set param ""
+    regexp {^(.*)([?].*$)} $url _ url param
+    set url_list [list]
+    foreach p [split $url /] {
+      if {[info exists apps($p)]} {
+        if {[llength $url_list]>0} {set url_list [list .../$p]}
+      } else {
+        lappend url_list $p
+      }
+    }
+    set url [join $url_list /]$param
+    set key aggr_stat($url)
+    if {[info exists $key]} {
+      set time [expr {[lindex [set $key] 0] + $time}]
+      set cnt [expr {[lindex [set $key] 1] + $cnt}]
+    }
+    set aggr_stat($url) [list $time $cnt]
+  }
+  set stat [list]
+  foreach url [array names aggr_stat] {
+    foreach {time cnt} $aggr_stat($url) break
+    lappend stat [list $url $time $cnt]
+  }
+}
+set full_stat $stat
+# append avg
+#foreach l $stat {
+#  foreach {url time cnt} $l break
+#  lappend full_stat [list $url $time $cnt [expr {$time/$cnt}]]
+#}
+
+set show_all_label(0) "Show filtered"
+set show_all_tooltip(0) "Show filtered values"
+set show_all_label(1) "Show all"
+set show_all_tooltip(1) "Show all values"
+set not_all [expr {!$all}]
+
+set with_param_label(1) "Without parameter"
+set with_param_tooltip(1) "Statistics without paramters"
+set with_param_label(0) "With parameter"
+set with_param_tooltip(0) "Statistics with paramters"
+set not_with_param [expr {!$with_param}]
+
+set with_apps_label(1) "With communities"
+set with_apps_tooltip(1) "Statistics with comm
+unities"
+set with_apps_label(0) "Strip communities"
+set with_apps_tooltip(0) "Statistics without Communities"
+set not_with_apps [expr {!$with_apps}]
+
+set url_all [export_vars -base [ad_conn url] [list [list all $not_all] with_apps with_param]]
+set url_apps [export_vars -base [ad_conn url] [list all [list with_apps $not_with_apps] with_param]]
+set url_param [export_vars -base [ad_conn url] [list all with_apps [list with_param $not_with_param]]]
 
 switch -glob $orderby {
   *,desc {set order -decreasing}
@@ -50,7 +146,9 @@ switch -glob $orderby {
 
 TableWidget t1 -volatile \
     -actions [subst {
-      Action new -label "$label($all)" -url $url -tooltip "$tooltip($all)"
+      Action new -label "$show_all_label($all)" -url $url_all -tooltip "show_all_tooltip($all)"
+      Action new -label "$with_param_label($with_param)" -url $url_param -tooltip "with_param_tooltip($with_param)"
+      Action new -label "$with_apps_label($with_apps)" -url $url_apps -tooltip "with_apps_tooltip($with_apps)"
       Action new -label "Delete Statistics" -url flush-url-statistics \
 	  -tooltip "Delete URL Statistics"
     }] \
@@ -92,7 +190,7 @@ set t1 [t1 asHTML]
 
 append user_string "<b>Grand Total Avg Response time: </b>" \
 	[format %6.2f $total_avg] " seconds/call " \
-	"(base: $cnt requests)<br>"
+	"(base: $total_cnt requests)<br>"
 
 append user_string "$hidden requests hidden."
 if {$hidden>0} {

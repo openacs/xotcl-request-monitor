@@ -24,7 +24,7 @@
   package_parameter log-dir \
       -default [file dirname [file root [ns_config ns/parameters ServerLog]]]
 
-  package_parameter max-url-stats  -default 13
+  package_parameter max-url-stats  -default 500
   package_parameter time-window    -default 13
   package_parameter trend-elements -default 48 
   package_parameter max-stats-elements -default 5
@@ -455,6 +455,9 @@
     set order [expr {($now-[[self class] set seconds])*10000+$c}]
     my set last100([expr {$order%99}]) [list $now $order $url $ms $requestor]
 
+    set has_param [regexp {^(.*)[?]} $url _ url]
+    if {$has_param} {set url $url?...}
+
     ### Add statistics in detail
     if {[my exists stat($url)]} {
       my incr stat($url) $ms
@@ -478,15 +481,7 @@
     return $result
   } -instproc check_truncate_stats {} {
     # truncate statistics if necessary
-    # get values from package parameters
-    my max_urls [max-url-stats]
-    # we use the timer to check other parameters as well here
-    set time_window [time-window]
-    if {$time_window != [throttler timeWindow]} {
-      throttler timeWindow $time_window
-      after 0 [list Users purge_access_stats]
-    }
-    set max [my max_urls]
+    set max [max-url-stats]
     if {$max>1} {
       set result [my url_stats]
       set l [llength $result]
@@ -499,6 +494,16 @@
       return $result
     }
     return ""
+  } -instproc cleanup_stats {} {
+    # truncate statistics if necessary
+    #my check_truncate_stats
+    # we use the timer to check other parameters as well here
+    set time_window [time-window]
+    if {$time_window != [throttler timeWindow]} {
+      throttler timeWindow $time_window
+      after 0 [list Users purge_access_stats]
+    }
+    return ""
   } -instproc report_url_stats {} {
     set stats [my check_truncate_stats]
     if {$stats eq ""} {
@@ -508,7 +513,7 @@
   } -instproc finalize args {
     next
     # each time the timer runs out, perform the cleanup
-    after 0 [list [self] check_truncate_stats]
+    after 0 [list [self] cleanup_stats]
   }
 
 
