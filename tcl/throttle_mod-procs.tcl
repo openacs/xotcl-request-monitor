@@ -78,13 +78,13 @@
   }
 
   Throttle instproc add_statistics { type requestor ip_adress url query } {
-    set furl [expr {$query ne "" ? "$url?$query" : $url}]
+    #set furl [expr {$query ne "" ? "$url?$query" : $url}]
     my incr ${type}s
     #my log "++++ add_statistics   -type $type -user_id $requestor "
     set entry [ThrottleStat new -childof [self]::stats \
 		   -type $type -requestor $requestor \
 		   -timestamp [clock seconds] \
-		   -ip_adress $ip_adress -url $furl]
+		   -ip_adress $ip_adress -url $url]
   }
 
   Throttle instproc url_statistics {{-flush 0}} {
