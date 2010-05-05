@@ -1133,10 +1133,8 @@ throttle proc postauth args {
   set r [my check]
   if {$r<0} {
     ns_return 200 text/html "
-      <H1>Repeated Operation</H1>
-      Operation blocked.
-      Don't submit the same query, while the old one is still
-      running...<p>"
+      <H1>[_ xotcl-request-monitor.repeated_operation]</H1>
+      [_ xotcl-request-monitor.operation_blocked]<p>"
     return filter_return
   } elseif {$r>0} {
     ns_return 200 text/html "

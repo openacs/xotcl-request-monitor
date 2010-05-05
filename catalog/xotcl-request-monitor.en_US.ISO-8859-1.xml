@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<message_catalog package_key="xotcl-request-monitor" locale="en_US" charset="ISO-8859-1">
+
+  <msg key="repeated_operation">Repeated Operation</msg>
+  <msg key="operation_blocked">Your query was repeatedly submitted to the server and therefore blocked. Please wait a moment before reloading the site or go back in your browser.</msg>
+</message_catalog>
