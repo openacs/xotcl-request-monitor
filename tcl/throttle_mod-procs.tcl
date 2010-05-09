@@ -177,7 +177,7 @@
     # might have up to 14 subrequests (through iframes).... 
     if {$off || $is_image_request || [my array size running_url] < 14} {
 
-      # less than forteen running requests, let people do what they want;
+      # less than 14 running requests, let people do what they want;
       # don't throttle/block embedded images.....
       return [list 0 0 0]
 
@@ -1085,7 +1085,7 @@ throttle ad_proc check {} {
 
   foreach {toMuch ms repeat} \
       [my throttle_check $requestor $pa $url \
-	   [ns_conn start] [ns_guesstype $url] $community_id] \
+	   [ns_conn start] [ns_guesstype [ns_conn url]] $community_id] \
       break
   if {$repeat} {
     my add_statistics repeat $requestor $pa $url $query
