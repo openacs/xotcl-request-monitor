@@ -37,13 +37,12 @@ proc currentSystemLoad {} {
   #    if {[catch {return [exec "/usr/bin/uptime"]}]} {
   #	return ""
   #    }
-  set threads "- threads: [ns_server threads]"
   set procloadavg /proc/loadavg
   if {[file readable $procloadavg]} {
     set f [open $procloadavg]; set c [read $f]; close $f
-    return "$c $threads"
+    return $c
   }
-  return "[exec /usr/bin/uptime] $threads"
+  return [exec /usr/bin/uptime]
 }
 
 # collect current response time (per minute and hour)
@@ -247,6 +246,8 @@ set response_trend [counterTable "Avg. Response <br>Time" \
 
 set current_response [join [currentResponseTime] " "]
 set current_load [currentSystemLoad]
+array set current_threads [ns_server threads]
+
 set running_requests [throttle running]
 set running [expr {[llength $running_requests]/2}]
 if {![catch {ns_conn contentsentlength}]} {
