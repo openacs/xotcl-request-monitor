@@ -246,7 +246,7 @@ set response_trend [counterTable "Avg. Response <br>Time" \
 
 set current_response [join [currentResponseTime] " "]
 set current_load [currentSystemLoad]
-array set current_threads [ns_server threads]
+array set current_threads [throttle server_threads]
 
 set running_requests [throttle running]
 set running [expr {[llength $running_requests]/2}]

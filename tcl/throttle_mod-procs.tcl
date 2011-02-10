@@ -134,9 +134,8 @@
     Throttle instproc server_threads {} {ns_server threads}
   } else {
     Throttle instproc server_threads {} {
-      set l [list]
-      foreach e [ns_server threads] {lappend l [lindex $e 0] [lindex $e 1]} 
-      return $l
+      # flatten the list
+      return [eval concat [ns_server threads]]
     }
   }
   Throttle instproc update_threads_state {} {
@@ -1118,6 +1117,7 @@ throttle forward thread_avgs             %self do throttler %proc
 throttle forward off                     %self do throttler set off 1
 throttle forward on                      %self do throttler set off 0
 throttle forward running                 %self do throttler %proc
+throttle forward server_threads          %self do throttler %proc
 throttle forward nr_running              %self do throttler array size running_url
 throttle forward trend                   %self do %1 set trend
 throttle forward max_values              %self do %1 set stats
