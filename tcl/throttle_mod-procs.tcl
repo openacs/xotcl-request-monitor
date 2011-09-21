@@ -1,4 +1,11 @@
 #############################################################################
+# Main procs of Request Monitor
+#
+# Create a separate thread (named "throttle") to act as a monitor of
+# the incoming requests. The monitor blocks repeated requests,
+# throttles over-eager users and provides a wide set of statistics.
+#############################################################################
+
 ::xotcl::THREAD create throttle {
 
   #
@@ -54,6 +61,27 @@
   set ::logdir [log-dir]
   if {![file isdirectory $logdir]} {file mkdir $logdir}
   
+  #
+  # Create AsyncLogFile class, which is one client of the
+  # AsyncDiskWriter from bgdelivery
+  #
+  Class create AsyncLogFile -parameter {filename {mode a}}
+  AsyncLogFile instproc init {} {
+    if {![my exists filename]} {
+      my filename $::logdir/[namespace tail [self]]
+    }
+    my set handle [bgdelivery do AsyncDiskWriter new -autoflush true]
+    bgdelivery do [my set handle] open -filename [my filename] -mode [my mode]
+  }
+  AsyncLogFile instproc write {msg} {
+    bgdelivery do [my set handle] async_write $msg\n
+  }
+
+  # open the used log-files
+  AsyncLogFile create counter.log 
+  AsyncLogFile create long-calls.log
+  AsyncLogFile create switches.log
+
   #
   # A class to keep simple statistics
   #
@@ -272,14 +300,13 @@
   }
   
   #throttle do throttler mixin ThrottleTrace
+  # yyyy
 
 
   Class create TraceLongCalls
   TraceLongCalls set count 0
   TraceLongCalls instproc log {msg} {
-    set traceFile [open $::logdir/long-calls.log a]
-    puts $traceFile "[clock format [clock seconds]] -- $msg"
-    close $traceFile
+    long-calls.log write "[clock format [clock seconds]] -- $msg"
     [self class] append log "[clock format [clock seconds]] -- $msg\n"
     [self class] incr count
   }
@@ -340,11 +367,10 @@
     my c 0
   }
 
+
   Counter instproc log_to_file {timestamp label value} {
     set server [ns_info server]
-    set f [open $::logdir/counter.log a]
-    puts $f "$timestamp -- $server $label $value"
-    close $f
+    counter.log write "$timestamp -- $server $label $value"
   }
 
   Counter instproc add_value {timestamp n} {
@@ -705,10 +731,8 @@
 	}
 	# log the change
 	set timestamp [clock format [clock seconds]]
-	set f [open $::logdir/switches.log a]
-	puts $f "$timestamp -- switch $key from\
+	switches.log write "$timestamp -- switch $key from\
  		[$class set pa($key)] to $pa $url"
-	close $f
       }
     }
     set counter active($key)
@@ -904,8 +928,7 @@
     Users time_window_cleanup
     Users compute_nr_users_per_day
   }
-  dump proc write {} {
-    set dumpFile [open [my set file] w]
+  dump proc write {{-sync false}} {
     set cmd ""
     # dump all variables of the object ::Users
     set o ::Users
@@ -919,8 +942,16 @@
         append cmd [list $o set $var [$o set $var]] \n
       }
     }
-    puts $dumpFile $cmd
-    close $dumpFile
+    if {$sync} {
+      set dumpFile [open [my set file] w]
+      puts -nonewline $dumpFile $cmd
+      close $dumpFile
+    } else {
+      set dumpFile [bgdelivery do AsyncDiskWriter new]
+      bgdelivery do $dumpFile open -filename [my set file]
+      bgdelivery do $dumpFile async_write $cmd
+      bgdelivery do $dumpFile close
+    }
   }
   
   # initialization of Users class object
@@ -994,7 +1025,7 @@
   # down.
   #
   ::xotcl::Object setExitHandler {
-    dump write
+    dump write -sync true
   }
 
   

@@ -8,7 +8,7 @@
     <singleton-p>t</singleton-p>
     <auto-mount>request-monitor</auto-mount>
 
-    <version name="0.42" url="http://media.wu-wien.ac.at/download/xotcl-request-monitor-0.42.apm">
+    <version name="0.43" url="http://media.wu-wien.ac.at/download/xotcl-request-monitor-0.43.apm">
         <owner url="mailto:neumann@wu-wien.ac.at">Gustaf Neumann</owner>
         <summary>Request Monitor with user tracking functionality</summary>
         <release-date>2008-10-04</release-date>
@@ -19,8 +19,8 @@
 0.39 brings parameterized counter values</description>
         <maturity>0</maturity>
 
-        <provides url="xotcl-request-monitor" version="0.42"/>
-        <requires url="xotcl-core" version="0.43"/>
+        <provides url="xotcl-request-monitor" version="0.43"/>
+        <requires url="xotcl-core" version="0.122"/>
 
         <callbacks>
         </callbacks>

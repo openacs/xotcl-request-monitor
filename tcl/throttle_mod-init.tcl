@@ -1,7 +1,7 @@
 
 # we register the following filters only during startup, since
 # existing connection threads are not aware of the throttle object.
-if {[ns_server connections]==0} {
+if {[ns_server connections] == 0 && [info command ::throttle] ne ""} {
   # 
   # Register the filter progs for url statistics.
   # The methods to be called have the name of the filter type.
