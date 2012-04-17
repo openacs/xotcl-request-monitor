@@ -1163,8 +1163,9 @@ throttle proc postauth args {
   #my log "+++ [self proc] [ad_conn url] auth ms [my ms] [ad_conn isconnected]"
   set r [my check]
   if {$r<0} {
+      set url [my set url]
     ns_return 200 text/html "
-      <H1>[_ xotcl-request-monitor.repeated_operation [list url [my set url]]]</H1>
+      <H1>[_ xotcl-request-monitor.repeated_operation]</H1>
       [_ xotcl-request-monitor.operation_blocked]<p>"
     return filter_return
   } elseif {$r>0} {
