@@ -192,11 +192,11 @@
     # will make the sttistics for images look better than they are.
     set is_image_request [string match "image/*" $content_type]
     if {[my exists $var] && !$is_image_request && !$off} {
-      #my log "### already $var"
+      #ns_log notice  "### already $var"
       return [list 0 0 1]
     } else {
       my set $var $conn_time
-      #my log "### new $var"
+      #ns_log notice  "### new $var"
     }
     my register_access $requestKey $pa $url $community_id
 
@@ -1164,7 +1164,7 @@ throttle proc postauth args {
   set r [my check]
   if {$r<0} {
     ns_return 200 text/html "
-      <H1>[_ xotcl-request-monitor.repeated_operation]</H1>
+      <H1>[_ xotcl-request-monitor.repeated_operation [list url [my set url]]]</H1>
       [_ xotcl-request-monitor.operation_blocked]<p>"
     return filter_return
   } elseif {$r>0} {
