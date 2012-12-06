@@ -55,19 +55,19 @@ proc currentResponseTime {} {
   }
   set avg_half_hour [avg_last_n $tm 30 cnt]
   if {$cnt > 0} {
-    set minstat "[format %4.2f $avg_half_hour] (last $cnt minutes), "
+    set minstat "[format %4.3f $avg_half_hour] (last $cnt minutes), "
   } else {
     set minstat ""
   }
   if {[llength $tm]>0} {
-    set lminstat "[format %4.2f [expr {[lindex $tm end]/1000.0}]] (last minute), "
+    set lminstat "[format %4.3f [expr {[lindex $tm end]/1000.0}]] (last minute), "
   } else {
     set lminstat ""
   }
   if {[llength $hours]>0} {
     set avg_last_day [avg_last_n $hours 24 cnt]
-    set hourstat "[format %4.2f [expr {[lindex $hours end]/1000.0}]] (last hour), "
-    append hourstat "[format %4.2f $avg_last_day] (last $cnt hours)"
+    set hourstat "[format %4.3f [expr {[lindex $hours end]/1000.0}]] (last hour), "
+    append hourstat "[format %4.3f $avg_last_day] (last $cnt hours)"
     set server_running "$cnt hours"
   } else {
     if {[llength $tm]>0} {
@@ -93,7 +93,7 @@ proc currentViews {} {
   set views_per_min_per_user [expr {60.0*$views_per_sec/[lindex $um end]}]
   set view_time [expr {$views_per_min_per_user>0 ? 
 	" avg. view time: [format %4.1f [expr {60.0/$views_per_min_per_user}]]" : ""}]
-  return "[format %4.1f $views_per_sec] views/sec, [format %4.2f $views_per_min_per_user] views/min/user,  $view_time"
+  return "[format %4.1f $views_per_sec] views/sec, [format %4.3f $views_per_min_per_user] views/min/user,  $view_time"
 }
 
 
