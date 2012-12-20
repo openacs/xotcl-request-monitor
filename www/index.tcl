@@ -255,6 +255,11 @@ if {![catch {ns_conn contentsentlength}]} {
   set background  [expr {[llength $background_requests]/2}]
   append running /$background
 }
+if {[ns_info name] eq "NaviServer"}  {
+   # add info from background writer
+   append running /[llength [ns_writer list]]
+}
+
 array set thread_avgs [throttle thread_avgs]
 
 if {[info command ::tlf::system_activity] ne ""} {
