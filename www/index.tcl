@@ -42,6 +42,9 @@ proc currentSystemLoad {} {
     set f [open $procloadavg]; set c [read $f]; close $f
     return $c
   }
+  if {![catch {exec sysctl vm.loadavg kern.boottime} result]} {
+      return $result
+  }
   return [exec /usr/bin/uptime]
 }
 
