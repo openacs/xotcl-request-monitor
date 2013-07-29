@@ -563,6 +563,7 @@
     @author Gustaf Neumann
     @cvs-id $Id$
   }
+
   Users ad_proc active {-full:switch}  {
     Return a list of lists containing information about current 
     users. If the switch 'full' is used this list contains 
@@ -614,7 +615,11 @@
     }
     return [list $ip $auth]
   }
-
+  Users ad_proc user_is_active {uid} {
+    @return boolean value whether user is active
+  } {
+    my exists pa($uid)
+  }
 
   Users ad_proc hits {uid} {
     @param uid request key
@@ -1155,6 +1160,7 @@ throttle forward max_values              %self do %1 set stats
 throttle forward purge_access_stats      %self do Users %proc
 throttle forward users                   %self do Users
 throttle forward views_per_minute        %self do Users %proc
+throttle forward user_is_active          %self do Users %proc
 
 ####
 # the next procs are for the filters (registered from the -init file)
