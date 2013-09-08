@@ -11,7 +11,7 @@
     <version name="0.43" url="http://media.wu-wien.ac.at/download/xotcl-request-monitor-0.43.apm">
         <owner url="mailto:neumann@wu-wien.ac.at">Gustaf Neumann</owner>
         <summary>Request Monitor with user tracking functionality</summary>
-        <release-date>2013-08-30</release-date>
+        <release-date>2013-09-08</release-date>
         <description format="text/html">This package provides a Request Monitor for OACS applications. It computes performance summary information such as requests/views per seconds, average response time, number of users connected, lists currently active threads, etc. Furthermore it can block overactive users (e.g. automated web-bots mirroring the site, users repeating running queries, etc.). It provides as well some user tracking (such as whos-online) with activity measures, it blocks repeated requests (impatient reloads), tracks switching of IP-adresses from users and provides request tracking per user for the monitored time window. It contains as well overall url statistics with performance measures. Updated for cirumventing handler calls openacs 5.2 for /resources/*. 
 0.28 provides calles for listing active communities and users active in these communities. 
 0.30 provides a nice graphical chats (many thanks to Nima) and a new interface to the background thread. In addition,  ns_returnfile_background is included; 
@@ -20,7 +20,7 @@
         <maturity>0</maturity>
 
         <provides url="xotcl-request-monitor" version="0.43"/>
-	<requires url="acs-kernel" version="5.8.0"/>
+	<requires url="acs-kernel" version="5.8.1d1"/>
         <requires url="xotcl-core" version="0.122"/>
 
         <callbacks>
