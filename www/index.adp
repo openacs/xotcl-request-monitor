@@ -1,5 +1,5 @@
 <master>
-<property name="title">@title@</property>
+<property name="doc(title)">@title@</property>
 <if @jsGraph@ eq 1> 
   <property name="header_stuff">
     <SCRIPT Language="JavaScript" src="/resources/xotcl-request-monitor/diagram/diagram.js"></SCRIPT>

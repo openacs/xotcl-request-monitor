@@ -1,5 +1,5 @@
 <master>
-<property name="title">@title@</property>
+<property name="doc(title)">@title@</property>
 
 <blockquote>@throttle_statistics;noquote@</blockquote>
 
