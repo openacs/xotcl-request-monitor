@@ -20,7 +20,7 @@ TableWidget t1 \
       Field count -label Count -orderby count
     }
 
-foreach {att order} [split $orderby ,] break
+lassign [split $orderby ,] att order
 t1 orderby -order [expr {$order eq "asc" ? "increasing" : "decreasing"}] $att
 
 foreach {community_id users} [throttle users active_communities] {

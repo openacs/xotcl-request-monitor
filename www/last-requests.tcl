@@ -60,7 +60,7 @@ set last_timestamp [clock seconds]
 
 set hidden 0
 foreach element [lsort -index 0 -decreasing $requests] {
-  foreach {timestamp url pa} $element break
+  lassign $element timestamp url pa
   if {!$all} {
     set exclude 0
     foreach pattern $hide_patterns {

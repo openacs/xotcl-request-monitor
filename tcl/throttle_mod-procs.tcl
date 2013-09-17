@@ -219,7 +219,7 @@
       if {[my exists active($requestKey)]} {
 	# if more than one request for this key is already active, 
 	# return blocking time
-	foreach {to cnt} [my set active($requestKey)] break
+	lassign [my set active($requestKey)] to cnt
 	set retMs [expr {$cnt>[my startThrottle] ? 500 : 0}]
 	# cancel the timeout
 	after cancel $to
@@ -423,7 +423,7 @@
   
   Counter user_count_day -timeoutMs [expr {60000*60}] -logging 1
   user_count_day proc end {} {
-    foreach {auth ip} [throttle users nr_users_per_day] break
+    lassign [throttle users nr_users_per_day] auth ip
     set now [clock format [clock seconds]]
     # The counter logs its intrinsic value (c) anyhow, which are the
     # authenticated users. We also want to record the number of
@@ -794,7 +794,7 @@
   Users proc expSmooth {ts key} {
     set mins [expr {$ts/60}]
     if {[my exists expSmooth($key)]} {
-      foreach {_ aggval lastmins hits} [my set expSmooth($key)] break
+      lassign [my set expSmooth($key)] _ aggval lastmins hits
       set mindiff [expr {$mins-$lastmins}]
       if {$mindiff == 0} {
 	incr hits
