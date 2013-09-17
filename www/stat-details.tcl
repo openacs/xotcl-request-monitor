@@ -44,7 +44,7 @@ if {$with_param == 0} {
   # add up same urls
   array unset aggr_stat
   foreach l $stat {
-    foreach {url time cnt} $l break
+    lassign $l url time cnt
     set p ""
     set has_param [regexp {^(.*)[?]} $url _ url]
     #
@@ -69,7 +69,7 @@ if {$with_param == 0} {
   }
   set stat [list]
   foreach url [array names aggr_stat] {
-    foreach {time cnt} $aggr_stat($url) break
+    lassign $aggr_stat($url) time cnt
     lappend stat [list $url $time $cnt]
   }
 }
@@ -77,7 +77,7 @@ if {$with_apps == 1} {
   # reduce statistics to apps
   array unset aggr_stat
   foreach l $stat {
-    foreach {url time cnt} $l break
+    lassign $l url time cnt
     set param ""
     regexp {^(.*)([?].*$)} $url _ url param
     set url_list [list]
@@ -98,16 +98,17 @@ if {$with_apps == 1} {
   }
   set stat [list]
   foreach url [array names aggr_stat] {
-    foreach {time cnt} $aggr_stat($url) break
+    lassign $aggr_stat($url) time cnt
     lappend stat [list $url $time $cnt]
   }
 }
 set full_stat $stat
 # append avg
-#foreach l $stat {
-#  foreach {url time cnt} $l break
-#  lappend full_stat [list $url $time $cnt [expr {$time/$cnt}]]
-#}
+foreach l $stat {
+    lassign $l url time cnt
+    set avg [expr {$cnt>0 ? $time*1.0/$cnt : 0.0}]
+    lappend full_stat [list $url $time $cnt $avg]
+}
 
 set show_all_label(0) "Show filtered"
 set show_all_tooltip(0) "Show filtered values"
@@ -140,7 +141,7 @@ switch -glob $orderby {
   url,*       {set index 0; set type -dictionary}
   totaltime,* {set index 1; set type -integer}
   cnt,*       {set index 2; set type -integer}
-  avg,*       {set index 3; set type -integer}
+  avg,*       {set index 3; set type -real}
 }
 
 
