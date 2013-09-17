@@ -102,7 +102,7 @@ if {$with_apps == 1} {
     lappend stat [list $url $time $cnt]
   }
 }
-set full_stat $stat
+set full_stat {}
 # append avg
 foreach l $stat {
     lassign $l url time cnt
