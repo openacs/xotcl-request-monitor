@@ -266,7 +266,7 @@
   Throttle instproc add_url_stat {url time_used key pa content_type} {
     catch {my unset running_url($key,$url)}
     #my log "### unset running_url($key,$url) $errmsg"
-    if {[string match text/html* $content_type]} {
+    if {[string match "text/html*" $content_type]} {
       [Users current_object] add_view $key
     }
     response_time_minutes add_url_stat $url $time_used $key
