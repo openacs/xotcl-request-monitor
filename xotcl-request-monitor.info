@@ -17,7 +17,8 @@
 0.30 provides a nice graphical chats (many thanks to Nima) and a new interface to the background thread. In addition,  ns_returnfile_background is included; 
 0.38 using context form xotcl-core
 0.39 brings parameterized counter values</description>
-        <maturity>0</maturity>
+        <license>BSD-Style</license>
+        <maturity>2</maturity>
 
         <provides url="xotcl-request-monitor" version="0.43"/>
 	<requires url="acs-kernel" version="5.8.1d1"/>
