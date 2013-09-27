@@ -1118,10 +1118,9 @@ throttle ad_proc check {} {
   my get_context
   #my log "### check"
 
-  foreach {toMuch ms repeat} \
-      [my throttle_check $requestor $pa $url \
-	   [ns_conn start] [ns_guesstype [ns_conn url]] $community_id] \
-      break
+  lassign [my throttle_check $requestor $pa $url \
+	       [ns_conn start] [ns_guesstype [ns_conn url]] $community_id] \
+      toMuch ms repeat
   if {$repeat} {
     my add_statistics repeat $requestor $pa $url $query
     return -1
