@@ -387,7 +387,7 @@
     # stats keeps nr_stats_elements highest values with time stamp
     #
     lappend stats [list $timestamp $n]
-    set stats [lrange [lsort -real -decreasing -index 1 $stats] 0 [expr {[my nr_stats_elements] - 1}]]
+    set stats [lrange [lsort -real -decreasing -index 1 $stats] 0 [my nr_stats_elements]-1]
   }
   Counter instproc finalize {n} {
     after cancel [my set to]
@@ -515,7 +515,7 @@
 	my unset stat($url)
 	my unset cnt($url)
       }
-      set result [lrange $result 0 [expr {$max-1}]]
+      set result [lrange $result 0 $max-1]
       return $result
     }
     return ""
