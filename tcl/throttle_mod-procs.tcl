@@ -288,7 +288,6 @@
   }
   ThrottleTrace instproc throttle_check args {
     catch {
-      if {[my exists traceCounter]} {my incr traceCounter} {my set traceCounter 0}
       my incr traceCounter
       my log "CALL [my set traceCounter] [self args]"
     }
@@ -484,13 +483,8 @@
     if {$has_param} {set url $url?...}
 
     ### Add statistics in detail
-    if {[my exists stat($url)]} {
-      my incr stat($url) $ms
-      my incr cnt($url)
-    } else {
-      my set stat($url) $ms
-      my set cnt($url) 1
-    }
+    my incr stat($url) $ms
+    my incr cnt($url)
   } -instproc last100  {} {
     my array get last100
   } -instproc flush_url_stats {} {
@@ -741,9 +735,7 @@
       }
     }
     set counter active($key)
-    if {[catch {my incr $counter}]} {
-      my set $counter 1
-    }
+    my incr $counter
     if {[my set $counter] == 1} {
       # we could combine this test with the incr, but in
       # Tcl 8.5, incr on unknown variables does not throw errors
@@ -755,19 +747,13 @@
     if {[catch {my lappend urls($key) $entry}]} {
       my set urls($key) [list $entry]
     }
-    if {[catch {$class incr hits($key)}]} {
-      $class set hits($key) 1
-    }
+    $class incr hits($key)
   }
 
   Users instproc add_view {uid} {
     #my log "#### add_view $uid"
     set key views($uid)
-    if {[my exists $key]} {
-      my incr $key
-    } else {
-      my set $key 1
-    }
+    my incr $key
   }
   Users proc views_per_minute {uid} {
     set mins 0
