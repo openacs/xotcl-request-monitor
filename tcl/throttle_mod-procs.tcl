@@ -381,7 +381,7 @@
     lappend trend $n
     set lt [llength $trend]
     if {$lt > [my nr_trend_elements]} {
-      set trend [lrange $trend [expr {$lt-[my nr_trend_elements]}] end]
+      set trend [lrange $trend $lt-[my nr_trend_elements] end]
     }
     #
     # stats keeps nr_stats_elements highest values with time stamp
