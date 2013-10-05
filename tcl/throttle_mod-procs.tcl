@@ -163,7 +163,7 @@
   } else {
     Throttle instproc server_threads {} {
       # flatten the list
-      return [eval concat [ns_server threads]]
+      return [concat {*}[ns_server threads]]
     }
   }
   Throttle instproc update_threads_state {} {
