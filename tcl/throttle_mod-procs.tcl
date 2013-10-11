@@ -29,7 +29,7 @@
       }
 
   package_parameter log-dir \
-      -default [file dirname [file root [ns_config ns/parameters ServerLog]]]
+      -default [file dirname [file rootname [ns_config ns/parameters ServerLog]]]
 
   package_parameter max-url-stats  -default 500
   package_parameter time-window    -default 13
@@ -505,7 +505,7 @@
       set result [my url_stats]
       set l [llength $result]
       for {set i $max} {$i<$l} {incr i} {
-	set url [lindex [lindex $result $i] 0]
+	set url [lindex $result $i 0]
 	my unset stat($url)
 	my unset cnt($url)
       }

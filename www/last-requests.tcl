@@ -55,7 +55,7 @@ TableWidget t1 \
 
 set all [expr {!$all}]
 set requests [throttle users last_requests $request_key]
-#set last_timestamp [lindex [lindex $requests end] 0]
+#set last_timestamp [lindex $requests end 0]
 set last_timestamp [clock seconds]
 
 set hidden 0
