@@ -29,7 +29,7 @@ template::list::create \
 multirow create url_statistics type user user_url time IPadress URL
 foreach l [lsort -index 2 $data] {
   lassign $l type user time IPadress URL
-  if {[string match *.* $user]} {
+  if {[string match "*.*" $user]} {
     set user "Anonymous"
     set user_url ""
   } else {

@@ -266,7 +266,7 @@
   Throttle instproc add_url_stat {url time_used key pa content_type} {
     catch {my unset running_url($key,$url)}
     #my log "### unset running_url($key,$url) $errmsg"
-    if {[string match text/html* $content_type]} {
+    if {[string match "text/html*" $content_type]} {
       [Users current_object] add_view $key
     }
     response_time_minutes add_url_stat $url $time_used $key
@@ -605,7 +605,7 @@
   } {
     set ip 0; set auth 0
     foreach i [my array names pa] {
-      if {[string match *.* $i]} {incr ip} {incr auth}
+      if {[string match "*.*" $i]} {incr ip} {incr auth}
     }
     return [list $ip $auth]
   }
@@ -802,7 +802,7 @@
       my incr refcount($key)
     } else {
       my set refcount($key) 1
-      if {[string match *.* $key]} {my incr ip24} {my incr auth24}
+      if {[string match "*.*" $key]} {my incr ip24} {my incr auth24}
     }
     my set pa($key) $pa
     my set timestamp($key) [clock seconds]
@@ -831,7 +831,7 @@
     #
     my set ip24 0; my set auth24 0
     foreach i [my array names timestamp] {
-      if {[string match *.* $i]} {my incr ip24} {my incr auth24}
+      if {[string match "*.*" $i]} {my incr ip24} {my incr auth24}
     }
   }
   Users proc nr_users_per_day {} {
@@ -841,7 +841,7 @@
     my instvar timestamp
     set ip [list]; set auth [list]
     foreach i [array names timestamp] {
-      if {[string match *.* $i]} {lappend ip [list $i $timestamp($i)]} {lappend auth [list $i $timestamp($i)]}
+      if {[string match "*.*" $i]} {lappend ip [list $i $timestamp($i)]} {lappend auth [list $i $timestamp($i)]}
     }
     return [list $ip $auth]
   }  
@@ -896,7 +896,7 @@
 	#my log "--- $i expired $d days $h hours $m minutes ago"
 	my unset timestamp($i)
       } else {
-        if {[string match *.* $i]} {my incr ip24} {my incr auth24}
+        if {[string match "*.*" $i]} {my incr ip24} {my incr auth24}
       }
     }
     dump write
