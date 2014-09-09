@@ -102,6 +102,7 @@ proc currentViews {} {
 
 if {$jsGraph} {
   # use javascript graphics
+  template::head::add_script -type text/javascript -src /resources/xotcl-request-monitor/diagram/diagram.js
 
   # draw a graph in form of an html table of with 500 pixels
   proc graph {values label type} {
@@ -304,3 +305,4 @@ if {[acs_user::site_wide_admin_p]} {
 } else {
     set param_url ""
 }
+
