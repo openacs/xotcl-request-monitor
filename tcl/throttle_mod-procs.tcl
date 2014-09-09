@@ -1173,7 +1173,7 @@ throttle proc postauth args {
 }
 throttle proc trace args {
   #my log "+++ [self proc] <$args> [ad_conn url] [my ms] [ad_conn isconnected]"
-  # openacs 5.2 bypasses for requests to /resources the user filter
+  # OpenACS 5.2 bypasses for requests to /resources the user filter
   # in these cases pre- or postauth are not called, but only trace.
   # So we have to make sure we have the needed context here
   my get_context
