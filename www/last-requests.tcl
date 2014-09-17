@@ -73,10 +73,10 @@ foreach element [lsort -index 0 -decreasing $requests] {
     if {$exclude} continue
   }
   set diff [expr {$last_timestamp-$timestamp}]
-  set url [string_truncate_middle -len 70 $url]
+  set url_label [string_truncate_middle -len 70 $url]
   t1 add       -time [clock format $timestamp] \
 	       -timediff $diff \
-      	       -url $url \
+      	       -url $url_label \
       	       -url.href "[ad_url]$url" \
 	       -pa $pa
 }
