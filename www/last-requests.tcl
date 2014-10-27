@@ -55,12 +55,12 @@ TableWidget t1 \
 
 set all [expr {!$all}]
 set requests [throttle users last_requests $request_key]
-#set last_timestamp [lindex [lindex $requests end] 0]
+#set last_timestamp [lindex $requests end 0]
 set last_timestamp [clock seconds]
 
 set hidden 0
 foreach element [lsort -index 0 -decreasing $requests] {
-  foreach {timestamp url pa} $element break
+  lassign $element timestamp url pa
   if {!$all} {
     set exclude 0
     foreach pattern $hide_patterns {
@@ -73,10 +73,10 @@ foreach element [lsort -index 0 -decreasing $requests] {
     if {$exclude} continue
   }
   set diff [expr {$last_timestamp-$timestamp}]
-  set url [string_truncate_middle -len 70 $url]
+  set url_label [string_truncate_middle -len 70 $url]
   t1 add       -time [clock format $timestamp] \
 	       -timediff $diff \
-      	       -url $url \
+      	       -url $url_label \
       	       -url.href "[ad_url]$url" \
 	       -pa $pa
 }

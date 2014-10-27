@@ -19,7 +19,7 @@ if {!$admin_p} {
 }
 
 set running_requests [throttle running]
-if {[info command bgdelivery] ne ""} {
+if {[info commands bgdelivery] ne ""} {
    set background_requests [bgdelivery running]
 } else {
    set background_requests [list]

@@ -1,14 +1,5 @@
 <master>
-<property name="title">@title@</property>
-<if @jsGraph@ eq 1> 
-  <property name="header_stuff">
-    <SCRIPT Language="JavaScript" src="/resources/xotcl-request-monitor/diagram/diagram.js"></SCRIPT>
-  </property>
-  <property name="head">
-    <SCRIPT Language="JavaScript" src="/resources/xotcl-request-monitor/diagram/diagram.js"></SCRIPT>
-  </property>
-</if>
-
+<property name="doc(title)">@title@</property>
 
 <table style="border: 0px solid blue; padding: 10px;">
   <tr><td><b>Active Users:</b></td><td>@active_user_string;noquote@</td><if @param_url@ ne "">

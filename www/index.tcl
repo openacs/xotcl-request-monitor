@@ -102,6 +102,7 @@ proc currentViews {} {
 
 if {$jsGraph} {
   # use javascript graphics
+  template::head::add_script -type text/javascript -src /resources/xotcl-request-monitor/diagram/diagram.js
 
   # draw a graph in form of an html table of with 500 pixels
   proc graph {values label type} {
@@ -265,7 +266,7 @@ if {[ns_info name] eq "NaviServer"}  {
 
 array set thread_avgs [throttle thread_avgs]
 
-if {[info command ::tlf::system_activity] ne ""} {
+if {[info commands ::tlf::system_activity] ne ""} {
   array set server_stats [::tlf::system_activity]
   set current_exercise_activity $server_stats(activity)
   set current_system_activity "$server_stats(activity) exercises last 15 mins, "
@@ -284,7 +285,7 @@ set authUsers24     [lindex $active24 1]
 set activeIP24      [lindex $active24 0]
 set activeTotal24   [expr {$authUsers24 + $activeIP24}]
 
-if {[info command ::dotlrn_community::get_community_id] ne ""} {
+if {[info commands ::dotlrn_community::get_community_id] ne ""} {
   set nr [throttle users nr_active_communities]
   set active_community_string "in <a href='./active-communities'>$nr communities</a> "
 } else {
@@ -304,3 +305,4 @@ if {[acs_user::site_wide_admin_p]} {
 } else {
     set param_url ""
 }
+

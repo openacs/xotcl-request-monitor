@@ -38,14 +38,14 @@ TableWidget t1 \
 
 
 set users [list]
-foreach {ip auth} [throttle users users_per_day] break
+lassign [throttle users users_per_day] ip auth
 if {!$all} {set elements [concat $ip $auth]} {set elements $auth}
 set summary "We noticed in [expr {[llength $ip]+[llength $auth]}] users in total, containing [llength $auth] authenticated users"
 
 set now_ansi  [clock_to_ansi [clock seconds]]
 
 foreach element $elements {
-  foreach {user_id timestamp} $element break
+  lassign $element user_id timestamp
   if {[string is integer $user_id]} {
     acs_user::get -user_id $user_id -array user
     set user_label "$user(last_name), $user(first_names)" 

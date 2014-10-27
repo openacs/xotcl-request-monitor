@@ -62,7 +62,7 @@ proc my_hostname pa {
 
 set users [list]
 foreach element [throttle users active -full] {
-  foreach {user_id pa timestamp hits smooth switches} $element break
+  lassign $element user_id pa timestamp hits smooth switches
   if {[string is integer $user_id]} {
     acs_user::get -user_id $user_id -array user
     set user_label "$user(last_name), $user(first_names)" 

@@ -24,7 +24,7 @@ TableWidget t1 \
 
 foreach e [lsort -decreasing -index 0 \
 	       [throttle users in_community $community_id]] {
-  foreach {timestamp requestor} $e break
+  lassign $e timestamp requestor
   if {[info exists listed($requestor)]} continue
   set listed($requestor) 1
   if {[string is integer $requestor]} {
