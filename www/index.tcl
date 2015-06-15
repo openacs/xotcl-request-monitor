@@ -128,7 +128,7 @@ if {$jsGraph} {
     regsub -all {,0} $end , end
     #ns_log Notice "begin: $begin, end: $end, $size $type"
 
-    set diagram [subst {<SCRIPT Language='JavaScript'>
+    set diagram [subst {<script type="text/javascript">
       document.open();
       var D=new Diagram();
       D.SetFrame(40, 20, 460, 120);
@@ -187,8 +187,8 @@ if {$jsGraph} {
 	}
 	set cl [expr {$c%2==0?"list-even":"list-odd"}]
 	append text [subst {
-	  <tr class='$cl'><td><font size='-2'>[lindex $v 0]</font></td>
-	  <td align='right'><font size='-2'>[lindex $v 1] $rps</font></td></tr>
+	  <tr class='$cl'><td><small>[lindex $v 0]</small></td>
+	  <td align='right'><small>[lindex $v 1] $rps</small></td></tr>
 	}]
       }
       append text "</table>\n</td></tr>\n"

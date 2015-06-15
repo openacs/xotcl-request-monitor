@@ -35,10 +35,11 @@
 @response_trend;noquote@
 
 <tr><td colspan='2'><h3 style="margin-top:10px;">Throttle Statistics</h3></td></tr>
-@throttle_stats;noquote@<br>
+<tr><td>@throttle_stats;noquote@</td></tr>
 
-Detailed <a href='throttle-statistics'>Throttle statistics</a>
 </table>
+<p>Detailed <a href='throttle-statistics'>Throttle statistics</a>
+
 </if>
 <else>
 <h3 style='text-align: center;'>Page View Statistics</h3>
