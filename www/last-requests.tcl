@@ -18,10 +18,10 @@ set context [list "Last Requests"]
 set hide_patterns [parameter::get -parameter hide-requests -default {*.css}]
 
 if {[string is integer $request_key]} {
-   acs_user::get -user_id $request_key -array user
-   set user_string "$user(first_names) $user(last_name)"
-   set tmp_url [acs_community_member_url -user_id $request_key]
-   append user_string " (<a href='$tmp_url'>$request_key</a>)" 
+    acs_user::get -user_id $request_key -array user
+    set user_string "$user(first_names) $user(last_name)"
+    set tmp_url [acs_community_member_url -user_id $request_key]
+    append user_string " (<a href='[ns_quotehtml $tmp_url]'>$request_key</a>)" 
 } else {
    set user_string $request_key 
 }
