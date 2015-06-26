@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<message_catalog package_key="xotcl-request-monitor" locale="ru_RU" charset="utf-8">
+
+  <msg key="operation_blocked">Ваш запрос многократно отправлялся на сервер и был заблокирован по этой причине. Пожалуйста, дождитесь ответа сервера до того,как отправите ваш запрос снова  [&lt;a href=&quot;%url%&quot;&gt;Continue&lt;/a&gt;].</msg>
+  <msg key="repeated_operation">Повторяющаяся операция</msg>
+</message_catalog>
