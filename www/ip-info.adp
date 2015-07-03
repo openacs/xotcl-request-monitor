@@ -1,4 +1,6 @@
 <master>
+<property name="doc(title)">Infomation about IP Address @ip@</property>
+
 <h1>Infomation about IP Address @ip@</h1>
 
 <ul>
