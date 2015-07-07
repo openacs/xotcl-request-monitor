@@ -1,5 +1,5 @@
 <master>
-<property name="doc(title)">@title@</property>
+<property name="doc(title)">@title;literal@</property>
 
 <table style="border: 0px solid blue; padding: 10px;">
   <tr><td><b>Active Users:</b></td><td>@active_user_string;noquote@</td><if @param_url@ ne "">
