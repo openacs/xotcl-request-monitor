@@ -32,7 +32,7 @@ ad_proc -public -callback subsite::parameter_changed -impl xotcl-request-monitor
       #
       # Just update these parameters, which are defined in the throttle thread.
       #
-      if {[throttle do info command $parameter] ne ""} {
+      if {[throttle do info commands $parameter] ne ""} {
         throttle do $parameter update $value
       }
     }
