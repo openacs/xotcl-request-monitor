@@ -1205,3 +1205,9 @@ ad_proc string_truncate_middle {{-ellipsis ...} {-len 100} string} {
   }
   return $string
 }
+
+# Local variables:
+#    mode: tcl
+#    tcl-indent-level: 2
+#    indent-tabs-mode: nil
+# End:

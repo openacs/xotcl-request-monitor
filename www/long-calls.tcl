@@ -59,3 +59,9 @@ set context [list $title]
 template::head::add_css -href //maxcdn.bootstrapcdn.com/bootstrap/3.3.1/css/bootstrap.min.css -media all
 template::head::add_css -href //maxcdn.bootstrapcdn.com/bootstrap/3.3.1/css/bootstrap-theme.min.css -media all
 #ns_return 200 text/plain "$long_calls_file [file exists $long_calls_file] l=$lines o=$offsets / $o / [llength $offsets]\n$c1\n$rows"
+
+# Local variables:
+#    mode: tcl
+#    tcl-indent-level: 2
+#    indent-tabs-mode: nil
+# End:

@@ -37,3 +37,9 @@ ad_proc -public -callback subsite::parameter_changed -impl xotcl-request-monitor
       }
     }
 }
+
+# Local variables:
+#    mode: tcl
+#    tcl-indent-level: 2
+#    indent-tabs-mode: nil
+# End:

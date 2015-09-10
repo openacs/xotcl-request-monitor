@@ -43,3 +43,9 @@ foreach l [lsort -index 2 $data] {
 
 #set throttle_url_statistics [throttle url_statistics]
 
+
+# Local variables:
+#    mode: tcl
+#    tcl-indent-level: 2
+#    indent-tabs-mode: nil
+# End:

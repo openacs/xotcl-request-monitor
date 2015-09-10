@@ -52,3 +52,9 @@ foreach l $stat {
 }
 set t1 [t1 asHTML]
 set last_url [ad_return_url]
+
+# Local variables:
+#    mode: tcl
+#    tcl-indent-level: 2
+#    indent-tabs-mode: nil
+# End:

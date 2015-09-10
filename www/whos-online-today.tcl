@@ -84,3 +84,9 @@ foreach e [lsort $type $order -index $index $users] {
 }
 
 set t1 [t1 asHTML]
+
+# Local variables:
+#    mode: tcl
+#    tcl-indent-level: 2
+#    indent-tabs-mode: nil
+# End:

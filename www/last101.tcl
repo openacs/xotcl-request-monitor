@@ -164,3 +164,8 @@ pageMaster set title $title
 pageMaster set context [lindex $context 0]
 
 ns_log notice "render time [time {t1 asHTML -page -master ::pageMaster}]"
+# Local variables:
+#    mode: tcl
+#    tcl-indent-level: 2
+#    indent-tabs-mode: nil
+# End:

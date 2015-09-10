@@ -199,3 +199,9 @@ if {$hidden>0} {
   append user_string " (Patterns: $hide_patterns)"
 }
 
+
+# Local variables:
+#    mode: tcl
+#    tcl-indent-level: 2
+#    indent-tabs-mode: nil
+# End:
