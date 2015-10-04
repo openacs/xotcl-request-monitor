@@ -12,7 +12,7 @@
         <owner url="mailto:neumann@wu-wien.ac.at">Gustaf	Neumann</owner>
         <vendor url="http://wu.ac.at">WU Vienna</vendor>
         <summary>Request Monitor with user tracking functionality</summary>
-        <release-date>2015-09-25</release-date>
+        <release-date>2015-10-04</release-date>
         <description format="text/html">&lt;pre&gt;
 This package provides a Request Monitor for OpenACS applications. It computes performance 
 summary information such as requests/views per seconds, average response time, number
@@ -34,7 +34,7 @@ Updated for circumventing handler calls OpenACS 5.2 for /resources/*.
         <maturity>2</maturity>
 
         <provides url="xotcl-request-monitor" version="0.45"/>
-	<requires url="acs-kernel" version="5.9.0b1"/>
+	<requires url="acs-kernel" version="5.9.0b2"/>
         <requires url="xotcl-core" version="0.122"/>
 
         <callbacks>
