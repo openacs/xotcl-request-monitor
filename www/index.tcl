@@ -4,7 +4,7 @@ ad_page_contract {
   @author Gustaf Neumann
   @cvs-id $Id$
 } -query {
-  {jsGraph 1}
+  {jsGraph 0}
 } -properties {
   title:onevalue
   context:onevalue
