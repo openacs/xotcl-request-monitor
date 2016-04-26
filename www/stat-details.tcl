@@ -145,7 +145,7 @@ switch -glob $orderby {
 }
 
 
-TableWidget t1 -volatile \
+TableWidget create t1 -volatile \
     -actions [subst {
       Action new -label "$show_all_label($all)" -url $url_all -tooltip "show_all_tooltip($all)"
       Action new -label "$with_param_label($with_param)" -url $url_param -tooltip "with_param_tooltip($with_param)"

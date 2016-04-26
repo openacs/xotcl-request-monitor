@@ -1,22 +1,22 @@
 ad_page_contract {
   Displays active users in a community
 
-    @author Gustaf Neumann 
+  @author Gustaf Neumann 
 
-    @cvs-id $id$
+  @cvs-id $id$
 } -query {
-  community_id
+  community_id:naturalnum
+  {community_name:nohtml ""}
 } -properties {
-    title:onevalue
-    context:onevalue
+  title:onevalue
+  context:onevalue
 }
 
-set community_name [dotlrn_community::get_community_name $community_id]
 set title "Users in Community $community_name"
 set context [list $title]
 set stat [list]
 
-TableWidget t1 \
+TableWidget create t1 \
     -columns {
       Field time -label "Last Activity" -html {align center}
       Field user -label User
@@ -27,7 +27,7 @@ foreach e [lsort -decreasing -index 0 \
   lassign $e timestamp requestor
   if {[info exists listed($requestor)]} continue
   set listed($requestor) 1
-  if {[string is integer $requestor]} {
+  if {[string is integer -strict $requestor]} {
     acs_user::get -user_id $requestor -array user
     set user_string "$user(first_names) $user(last_name)"
   } else {

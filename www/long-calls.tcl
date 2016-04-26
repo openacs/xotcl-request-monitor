@@ -38,10 +38,10 @@ set o [lindex $offsets end-$lines]
 set c1 [string range $c [lindex $o 0]+1 end]
 set rows ""
 foreach line [lreverse [split $c1 \n]] {
-    if {$line eq ""} continue
-    lassign $line wday mon day hours tz year dash url time uid ip fmt
-    set userinfo [::xo::userid_link $uid]
-    set iplink "<a href='ip-info?ip=$ip'>$ip</a>"
+  if {$line eq ""} continue
+  lassign $line wday mon day hours tz year dash url time uid ip fmt
+  set userinfo [::xo::userid_link $uid]
+  set iplink [subst {<a href="[export_vars -base ip-info {ip}]">[ns_quotehtml $ip]</a>}]
     if {$time < 6000} {
 	set class info
     } elseif {$time < 10000} {

@@ -16,7 +16,7 @@ set context [list "Last 100 Requests"]
 set stat [list]
 foreach {key value} [throttle last100] {lappend stat $value}
 
-Class CustomField -volatile \
+Class create CustomField -volatile \
     -instproc render-data {row} {
       html::div -style {
 	border: 1px solid #a1a5a9; padding: 0px 5px 0px 5px; background: #e2e2e2} {
@@ -24,7 +24,7 @@ Class CustomField -volatile \
 	}
     }
 
-TableWidget t1 -volatile \
+TableWidget create t1 -volatile \
     -columns {
       Field time       -label "Time" -orderby time -mixin ::template::CustomField
       AnchorField user -label "Userid" -orderby user

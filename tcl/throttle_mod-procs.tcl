@@ -16,7 +16,7 @@
   # package parameters. Eventually, this will move in a more general
   # way into xotcl-core.
   #
-  Class package_parameter \
+  Class create package_parameter \
       -parameter {{default ""} value name} \
       -instproc defaultmethod {} {my value} \
       -instproc update {value} {my value $value} \
@@ -31,11 +31,12 @@
   package_parameter log-dir \
       -default [file dirname [file rootname [ns_config ns/parameters ServerLog]]]
 
-  package_parameter max-url-stats  -default 500
-  package_parameter time-window    -default 13
-  package_parameter trend-elements -default 48 
+  package_parameter max-url-stats      -default 500
+  package_parameter time-window        -default 10
+  package_parameter trend-elements     -default 48 
   package_parameter max-stats-elements -default 5
-  package_parameter do_throttle    -default on
+  package_parameter do_throttle        -default on
+  package_parameter do_track_activity  -default off
 
   #
   # When updates happen on 
@@ -139,9 +140,9 @@
     return $l
   }
 
-  Throttle instproc register_access {requestKey pa url community_id} {
+  Throttle instproc register_access {requestKey pa url community_id is_embedded_request} {
     set obj [Users current_object]
-    $obj addKey $requestKey $pa $url $community_id
+    $obj addKey $requestKey $pa $url $community_id $is_embedded_request
     Users expSmooth [$obj point_in_time] $requestKey
   }
 
@@ -186,35 +187,45 @@
     my update_threads_state
 
     set var running_url($requestKey,$url)
-    # check first, whether the same user has already the same request
+    #
+    # Check first, whether the same user has already the same request
     # issued; if yes, block this request. Caveat: some html-pages
-    # use the same image in many places, so we can't block it. This
-    # will make the sttistics for images look better than they are.
-    set is_image_request [string match "image/*" $content_type]
-    if {[my exists $var] && !$is_image_request && !$off} {
+    # use the same image in many places, so we can't block it.
+    #
+    set is_embedded_request [expr {
+                                [string match "image/*" $content_type]
+                                || $content_type in { text/css application/javascript application/x-javascript }
+                              }]
+    if {[my exists $var] && !$is_embedded_request && !$off} {
       #ns_log notice  "### already $var"
       return [list 0 0 1]
     } else {
       my set $var $conn_time
       #ns_log notice  "### new $var"
     }
-    my register_access $requestKey $pa $url $community_id
 
-    # ... the number of 14 is arbitrary. one of our single real request
-    # might have up to 14 subrequests (through iframes).... 
-    if {$off || $is_image_request || [my array size running_url] < 14} {
+    my register_access $requestKey $pa $url $community_id $is_embedded_request
 
-      # less than 14 running requests, let people do what they want;
-      # don't throttle/block embedded images.....
+    # 
+    # Allow up to 14 requests to be executed concurrently.... the
+    # number of 14 is arbitrary. One of our single real request might
+    # have up to 14 subrequests (through iframes)....
+    #
+    if {$off || $is_embedded_request || [my array size running_url] < 14} {
+      #
+      # Maybe the throttler is off, or we have an embedded request or
+      # less than 14 running requests running. Everything is
+      # fine, let people do what they want.
+      #
       return [list 0 0 0]
 
     } else {
-
+      #
       # Check, whether the last request from a user was within 
       # the minimum time interval. We are not keeping a full table
       # of all request keys, but use an timeout triggered mechanism 
-      # to keep only the active request keys in an associative array
-
+      # to keep only the active request keys in an associative array.
+      #
       my incr alerts
       if {[my exists active($requestKey)]} {
 	# if more than one request for this key is already active, 
@@ -276,7 +287,6 @@
   Throttle instforward last100          response_time_minutes %proc
   Throttle create throttler
 
-
   Class create ThrottleTrace
   ThrottleTrace instproc log {msg} {
     if {![my exists traceFile]} {
@@ -298,9 +308,7 @@
     next
   }
   
-  #throttle do throttler mixin ThrottleTrace
-  # yyyy
-
+  # throttle do throttler mixin ThrottleTrace
 
   Class create TraceLongCalls
   TraceLongCalls set count 0
@@ -316,15 +324,32 @@
     next
   }
 
-  throttle do throttler mixin TraceLongCalls
+  #
+  # Simple means for banning users, e.g. performing too eager
+  # requests.  Requests from banned users receive a "duplicate
+  # request" reply.
+  #
+  Class create BanUser
+  # BanUser instproc throttle_check {requestKey pa url conn_time content_type community_id} {
+  #   #if {$requestKey eq 37958315} {return [list 0 0 1]}
+  #   #if {[string match 155.69.25.* $pa]} {return [list 0 0 1]}
+  #   next
+  # }
+  
+  throttle do throttler mixin {BanUser TraceLongCalls}
 
   ############################
   # A simple counter class, which is able to aggregate values in some
   # higher level counters (report_to) and to keep statistics in form 
   # of a trend and max values)
   Class create Counter -parameter { 
-    report timeoutMs 
-    {stats ""} {last ""} {trend ""} {c 0} {logging 0}
+    report
+    timeoutMs 
+    {stats ""}
+    {last ""}
+    {trend ""}
+    {c 0}
+    {logging 0}
     {nr_trend_elements [trend-elements]}
     {nr_stats_elements [max-stats-elements]} 
   } -ad_doc {
@@ -545,7 +570,11 @@
   #
   # Class for the user tracking
 
-  Class create Users -parameter {point_in_time {ip24 0} {auth24 0}} -ad_doc {
+  Class create Users -parameter {
+    point_in_time
+    {ip24 0}
+    {auth24 0}
+  } -ad_doc {
     This class is responsible for the user tracking and is defined only
     in a separate Tcl thread named <code>throttle</code>. 
     For each minute within the specified <code>time-window</code> an instance
@@ -605,7 +634,7 @@
   } {
     set ip 0; set auth 0
     foreach i [my array names pa] {
-      if {[string match "*.*" $i]} {incr ip} {incr auth}
+      if {[::xo::is_ip $i]} {incr ip} {incr auth}
     }
     return [list $ip $auth]
   }
@@ -686,19 +715,24 @@
     if {$mkey ne $last_mkey} { 
       if {$last_mkey ne ""} {my purge_access_stats}
       # create or recreate the container object for that minute
-      if {[my isobject $obj]} {$obj destroy}
+      if {[my isobject $obj]} {
+        $obj destroy
+      }
       Users create $obj -point_in_time $now
       my set last_mkey $mkey
     }
     return $obj
   }
+  
   Users proc purge_access_stats {} {
     throttler instvar timeWindow
     my instvar last_mkey
     set time [clock seconds]
     # purge stale entries (for low traffic)
-    set secs [expr {$timeWindow*60}]
-    if { $time - [[self]::users::$last_mkey point_in_time] > $secs } {
+    set secs [expr {$timeWindow * 60}]
+    if { [info commands [self]::users::$last_mkey] ne ""
+         && $time - [[self]::users::$last_mkey point_in_time] > $secs
+      } {
       # no requests for a while; delete all objects under [self]::users::
       Object create [self]::users
     } else {
@@ -709,21 +743,130 @@
     } 
   }
 
-  Users proc community_access {requestor community_id} {
-    [my current_object] community_access $requestor $community_id
+  Users proc community_access {requestor pa community_id} {
+    [my current_object] community_access $requestor $pa $community_id
   }
 
-  Users instproc community_access {key community_id} {
-    if {![my exists user_in_community($key,$community_id)]} {
-      my set user_in_community($key,$community_id) 1
-      my lappend in_community($community_id) $key
-    } 
+  Users proc entered_community {key now community_id data reason} {
+    ns_log notice "=== user $key entered community $community_id at $now reason $reason"
+    my set user_in_community($key) [dict replace $data \
+                                        community_id $community_id \
+                                        community_clicks 1 \
+                                        community_start $now]
   }
 
-  Users instproc addKey {key pa url community_id} {
+  Users proc left_community {key pa now community_id data reason} {
+    set seconds [expr {$now - [dict get $data community_start]}]
+    set clicks [dict get $data community_clicks]
+    dict unset data community_start
+    dict unset data community_clicks
+    dict unset data community_id
+    my set user_in_community($key) $data 
+    ns_log notice "=== user $key left community $community_id at $now reason $reason after $seconds seconds clicks $clicks"
+    if {[do_track_activity] && $seconds > 0} {
+      ::xo::request_monitor_record_community_activity $key $pa $community_id $seconds $clicks $reason
+    }
+  }
+  
+  Users proc left_system {key pa now data reason} {
+    if {[dict exist $data start]} {
+      set seconds [expr {$now - [dict get $data start]}]
+      set clicks [dict get $data clicks]
+    } else {
+      if {[my exists timestamp($key)]} {
+        set seconds [expr {$now - [my set timestamp($key)]}]
+        set clicks 0
+      } else {
+        ns_log warning "could not determine online duration <$key> <$pa> data <$data>"
+        set seconds -1
+        set clicks -1
+      }
+    }
+    ns_log notice "=== user $key left system at $now reason $reason after $seconds seconds clicks $clicks"
+    if {[do_track_activity] && $seconds > 0} {
+      ::xo::request_monitor_record_activity $key $pa $seconds $clicks $reason
+    }
+    catch {my unset user_in_community($key)}
+    catch {my unset refcount($key)}
+    catch {my unset pa($key)}
+    catch {my unset expSmooth($key)}
+    catch {my unset switches($key)}
+  }
+
+  Users instproc init {} {
+    next
+    #
+    # The following event is a heart-beat just necessary for idle
+    # systems. It makes sure, that per-minute objects don't hang
+    # around much longer than required (maximum 1 second), but that at
+    # the same time that last_mkey never points to an invalid object.
+    #
+    set ms [expr {([time-window] * 60000) + 1000}]
+    after $ms [list [self class] current_object]
+  }
+  
+  Users instproc community_access {key pa community_id} {
     set class [self class]
+    set now [clock seconds]
+    set var user_in_community($key)
+
+    #ns_log notice "=== [self] community_access $key $community_id have timestamp [$class exists timestamp($key)] in community [$class exists $var]"
+
+    if {[$class exists $var]} {
+      #
+      # The user was already in a community.
+      #
+      if {[$class exists timestamp($key)] && [$class set timestamp($key)] == $now } {
+        #
+        # ignore clicks less than one-second interval (probably embedded content)
+        #
+        return
+      }
+      set data [$class set $var]
+      set old_community_id [dict get $data community_id]
+      if {$old_community_id != $community_id} {
+        #
+        # The user was in a different community.
+        #
+        Users left_community $key $pa $now $old_community_id $data switch
+        dict incr data clicks
+        Users entered_community $key $now $community_id $data switch
+      } else {
+        dict incr data clicks
+        dict incr data community_clicks
+        $class set $var $data
+      }
+    } else {
+      #
+      # The user was in no community before.
+      #
+      set data [list start $now clicks 1]
+      Users entered_community $key $now $community_id $data new
+      set $var 1
+    }
+    
+    #
+    # Keep the currently active users in the per-minute objects.
+    #
+    set var user_in_community($key,$community_id)
+    if {![my exists $var]} {
+      my set $var 1
+      my lappend in_community($community_id) $key
+    }
+  }
+
+  Users instproc check_pa_change {key pa url} {
+    set class [self class]
+    #
+    # Check, if we have already a peer address for the given user.
+    #
     if {[$class exists pa($key)]} {
-      # check, if the peer address changed
+      #
+      # Check, if the peer address changed. This might be some
+      # indication, that multiple users are working under the same
+      # user_id, or that the identity was highjacked. Therefore, we
+      # note such occurences.
+      #
       if {[$class set pa($key)] ne $pa} {
 	if {[catch {$class incr switches($key)}]} {
 	  $class set switches($key) 1
@@ -733,21 +876,105 @@
 	switches.log write "$timestamp -- switch $key from\
  		[$class set pa($key)] to $pa $url"
       }
+    } elseif {[$class exists pa($pa)]} {
+      #
+      # We have for this peer address already an entry. Since we do
+      # not want to count this user twice, we assume, that this is the
+      # same user, when the requests were within a short time period.
+      #
+      if {[$class exists timestamp($pa)] && [clock seconds] - [$class set timestamp($pa)] < 60} {
+        ns_log notice "=== turn anonymous user from $pa into authenticated user $key"
+
+        if {[$class exists user_in_community($pa)]} {
+          $class set user_in_community($key) [$class set user_in_community($pa)]
+        }
+        $class incr ip24 -1
+        $class set pa($key)        [$class set pa($pa)]
+        $class set timestamp($key) [$class set timestamp($pa)]
+        $class unset pa($pa)
+        $class unset timestamp($pa)
+        ns_log notice "UNSET timestamp($pa) turned into timestamp($key)"
+      }
     }
+  }
+  
+  Users instproc addKey {key pa url community_id is_embedded_request} {
+    #ns_log notice "=== [self] addKey $key $pa $url '$community_id' $is_embedded_request"
+    #
+    # This method stores information about the current request partly
+    # in the round-robbin objects of the specified time windows, and
+    # keeps global information in the class objects.
+    #
+    # key: either user_id or peer address
+    # pa:  peer address
+    # 
+    set class [self class]
+    
+    if {$key ne $pa} {
+      my check_pa_change $key $pa $url
+    }
+
+    #
+    # Increase the number of requests that were issued from the user
+    # in the current minute.
+    #
     set counter active($key)
-    my incr $counter
-    if {[my set $counter] == 1} {
-      # we could combine this test with the incr, but in
-      # Tcl 8.5, incr on unknown variables does not throw errors
+    if {[my incr $counter] == 1} {
+      #
+      # On the first occurrence in the current minute, increment the
+      # global reference count
+      #
       $class incrRefCount $key $pa
     }
 
-    my community_access $key $community_id
-    set entry [list [my point_in_time] $url $pa]
-    if {[catch {my lappend urls($key) $entry}]} {
-      my set urls($key) [list $entry]
+    if {!$is_embedded_request} {
+      set blacklisted_url [expr {[string match /RrdGraphJS/public/* $url]
+                                  || [string match /munin/* $url]
+                                }]
+      #ns_log notice "=== $url black $blacklisted_url, community_access $key $pa $community_id"
+      if {!$blacklisted_url} {
+        #
+        # Register the fact that the user is doing something in the community
+        #
+        my community_access $key $pa $community_id
+      }
+      
+      #
+      # Handle logout
+      #
+      if {[string match "*/logout" $url]} {
+        set now [clock seconds]
+        set var user_in_community($key)
+        if {[$class exists $var]} {
+          set data [$class set $var]
+          if {[dict exist $data community_id]} {
+            #
+            # Logout from "community"
+            #
+            Users left_community $key $pa $now [dict get $data community_id] $data logout
+          }
+        } else {
+          set data ""
+        }
+        #
+        # Logout from the system
+        #
+        Users left_system $key $pa $now $data logout
+      }
     }
+    
+    #
+    # The array "urls" keeps triples of time stamps, urls and peer
+    # addresses per user.
+    #
+    my lappend urls($key) [list [my point_in_time] $url $pa]
+    
+    #
+    # The global array "hits" keeps overall activity of the user.
+    #
     $class incr hits($key)
+    $class set timestamp($key) [clock seconds]
+    #ns_log notice "[self] addKey ENDS  $class timestamp($key) [$class set timestamp($key)] counter $counter value [my set $counter]"
   }
 
   Users instproc add_view {uid} {
@@ -772,8 +999,19 @@
   }
 
   Users instproc destroy {} {
+    set class [self class]
+    #ns_log notice "=== [self] destroy [my array names active]"
+    if {[Users set last_mkey] eq [self]} {
+      Users set last_mkey ""
+    }
     foreach key [my array names active] {
-      [self class] decrRefCount $key [my set active($key)]
+      if {[::xo::is_ip $key]} {
+        set pa $key
+      } else {
+        set pa [expr {[$class exists pa($key)] ? [$class set pa($key)] : "unknown"}]
+      }
+      #ns_log notice "=== [self] destroy: $class exists pa($key) ?[$class exists pa($key)] => '$pa'"
+      $class decrRefCount $key $pa [my set active($key)]
     }
     next
   }
@@ -797,33 +1035,59 @@
     my set expSmooth($key) [list $retval $aggval $mins $hits]
     return $retval
   }
+  
   Users proc incrRefCount {key pa} {
-    if {[my exists refcount($key)]} {
-      my incr refcount($key)
-    } else {
-      my set refcount($key) 1
-      if {[string match "*.*" $key]} {my incr ip24} {my incr auth24}
+    #
+    # Whis method is called whenever the user (key) was seen the first
+    # time in the current minute.
+    #
+    if {[my incr refcount($key)] == 1} {
+      #
+      # We saw the user for the first time ever, so increment as well
+      # the counters of logged-in and not logged-in users.... but not
+      # in cases, where the timestamp data was restored.
+      #
+      if {![my exists timestamp($key)]} {
+        if {[::xo::is_ip $key]} {my incr ip24} {my incr auth24}
+      }
     }
     my set pa($key) $pa
-    my set timestamp($key) [clock seconds]
   }
-  Users proc decrRefCount {key hitcount} {
+  
+  Users proc decrRefCount {key pa hitcount} {
+    #ns_log notice "=== decrRefCount $key $hitcount"
     if {[my exists refcount($key)]} {
       set x [my incr refcount($key) -1]
       my incr hits($key) -$hitcount
       if {$x < 1} {
-	my unset refcount($key)
-	my unset pa($key)
-        catch {my unset expSmooth($key)}
-        catch {my unset switches($key)}
+        #
+        # The user fell out of the per-minute objects due to
+        # inactivity.
+        #
+        set var user_in_community($key)
+        if {[my exists $var]} {
+          set data [my set $var]
+          Users left_community $key $pa [clock seconds] [dict get $data community_id] $data inactive
+          Users left_system $key $pa [clock seconds] $data inactive
+        } else {
+          Users left_system $key $pa [clock seconds] {} inactive
+          if {![::xo::is_ip $key]} {
+            #
+            # It is ok, when the user has only accessed blackisted
+            # content, but when the user was logged in, this should
+            # not happen - it ist at least unusal
+            #
+            set address [expr {[my exists pa($pa)] ? "peer address [my set pa($pa)]" : ""}]
+            ns_log warning "no community info for $key available $address"
+          }
+        }
       }
     } else {
-      catch {my unset pa($key)}
-      catch {my unset expSmooth($key)}
-      catch {my unset switches($key)}
-      my log "+++ cannot decrement refcount for '$key' by $hitcount"
+      #Users left_system $key $pa [clock seconds] {} inactive-error
+      ns_log notice "no refcount for $key available, probably explicit logout"
     }
   }
+  
   Users proc compute_nr_users_per_day {} {
     #
     # this method is just for maintenance issues and updates the
@@ -831,9 +1095,10 @@
     #
     my set ip24 0; my set auth24 0
     foreach i [my array names timestamp] {
-      if {[string match "*.*" $i]} {my incr ip24} {my incr auth24}
+      if {[::xo::is_ip $i]} {my incr ip24} {my incr auth24}
     }
   }
+  
   Users proc nr_users_per_day {} {
     return [list [my set ip24] [my set auth24]]
   }
@@ -841,23 +1106,24 @@
     my instvar timestamp
     set ip [list]; set auth [list]
     foreach i [array names timestamp] {
-      if {[string match "*.*" $i]} {lappend ip [list $i $timestamp($i)]} {lappend auth [list $i $timestamp($i)]}
+      if {[::xo::is_ip $i]} {lappend ip [list $i $timestamp($i)]} {lappend auth [list $i $timestamp($i)]}
     }
     return [list $ip $auth]
   }  
 
   Users proc time_window_cleanup {} {
+    #ns_log notice "=== time_window_cleanup"
     # purge stale entries (maintenance only)
     throttler instvar timeWindow
     set now [clock seconds]
-    set maxdiff [expr {$timeWindow*60}]
+    set maxdiff [expr {$timeWindow * 60}]
     foreach i [lsort [my array names pa]] {
       set purge 0
       if {![my exists timestamp($i)]} {
         ns_log notice "throttle: no timestamp for $i"
         set purge 1
       } else {
-        set age [expr {$now-[my set timestamp($i)]}]
+        set age [expr {$now - [my set timestamp($i)]}]
         if {$age > $maxdiff} {
           if {[my exists pa($i)]} {
             ns_log notice "throttle: entry stale $i => [my exists pa($i)], age=$age"
@@ -866,6 +1132,7 @@
         }
       }
       if {$purge} {
+        ns_log notice "=== time_window_cleanup unsets pa($i)"
         my unset pa($i)
         catch {my unset refcount($i)}
         catch {my unset expSmooth($i)}
@@ -895,10 +1162,12 @@
 	#incr h -1
 	#my log "--- $i expired $d days $h hours $m minutes ago"
 	my unset timestamp($i)
+        ns_log notice "UNSET timestamp($i) deleted due to perDayCleanup after $secs seconds (> $secsPerDay)"
       } else {
-        if {[string match "*.*" $i]} {my incr ip24} {my incr auth24}
+        if {[::xo::is_ip $i]} {my incr ip24} {my incr auth24}
       }
     }
+    #ns_log notice "=== auth24 perDayCleanup -> [my set ip24] [my set auth24]"
     dump write
   }
 
@@ -918,6 +1187,13 @@
     # make sure to adjust the counters and timings
     Users time_window_cleanup
     Users compute_nr_users_per_day
+    #
+    # When old data is restored, don't trust user-info unless it is
+    # very recent (e.g. younger than 3 munutes)
+    #
+    if {[clock seconds] - [file mtime [my set file]] > 180} {
+      Users array unset user_in_community
+    }
   }
   dump proc write {{-sync false}} {
     set cmd ""
@@ -960,7 +1236,7 @@
   #
   # define a class value, which refreshes itself all "refresh" ms.  
   #
-  Class Value -parameter {{value ""} {refresh 10000}}
+  Class create Value -parameter {{value ""} {refresh 10000}}
   Value instproc updateValue {} {my set handle [after [my refresh] [list [self] updateValue]]}
 
   #
@@ -1016,9 +1292,18 @@
   # down.
   #
   ::xotcl::Object setExitHandler {
+    ns_log notice "::thottle: exiting"
     dump write -sync true
-  }
+    #
+    # Delete all users objects, that will flush all activity data to
+    # the tables if configured
+    #
+    foreach obj [Users info instances] {$obj destroy}
 
+    ns_log notice "::thottle speficic exist handler finished"
+  }
+  
+  #ns_log notice "============== Thread initialized ===================="
   
 } -persistent 1 -ad_doc {
   This is a small request-throttle application that handles simple 
@@ -1048,6 +1333,21 @@
   @cvs-id $Id$
 }
 
+throttle proc destroy {} {
+  #puts stderr thottle-DESTROY
+  ns_log notice thottle-DESTROY-shutdownpending->[ns_info shutdownpending]
+  if {[ns_info shutdownpending] && [nsv_exists ::xotcl::THREAD [self]]} {
+    set tid [nsv_get ::xotcl::THREAD [self]]
+    ns_log notice =========thottle-DESTROY-shutdown==========================$tid-??[::thread::exists $tid]
+    if {[::thread::exists $tid]} {
+      ns_log notice =========thottle-DESTROY-shutdown==========================THREAD-EXISTS
+      set refcount [::thread::release $tid]
+      ns_log notice thottle-DESTROY-shutdownpending->[ns_info shutdownpending]-refCount$refcount
+    }
+  }
+  next
+}
+
 throttle proc ms {-start_time} {
   if {![info exists start_time]} {
     set start_time [ns_conn start]
@@ -1067,17 +1367,20 @@ throttle proc get_context {} {
 
   my set community_id 0
   if {[info exists ::ad_conn(package_id)]} {
+    my set community_id [ad_conn subsite_id]
     #my log "--t we have a package_id"
     # ordinary request, ad_conn is initialized
     set package_id [ad_conn package_id]
     ::xo::ConnectionContext require -package_id $package_id -url $url
-    if {[info commands dotlrn_community::get_community_id] ne "" &&
-      $package_id ne ""} {
-      my set community_id [dotlrn_community::get_community_id \
-			       -package_id $package_id]
+    if {[info commands dotlrn_community::get_community_idget_community_id_from_url] ne ""} {
+      set community_id [dotlrn_community::get_community_id_from_url -url $url]
+      if {$community_id ne ""} {my set community_id $community_id}
     }
   } else {
-    #my log "--t we have no user_id and cannot use ad_conn package_id" 
+    #
+    # Requests for /resources/* land here
+    #
+    #my log "--t we have no package_id , subsite_id ?[info exists ::ad_conn(subsite_id)] [ns_conn url]"
     ::xo::ConnectionContext require -url $url
   }
 
@@ -1093,7 +1396,6 @@ throttle proc get_context {} {
   my set context_initialized 1
   #my log "--i leaving [ns_conn url] vars=[lsort [info vars]]"
 }
-
 
 throttle ad_proc check {} {
   This method should be called once per request that is monitored.
@@ -1152,16 +1454,17 @@ throttle forward user_is_active          %self do Users %proc
 ####
 throttle proc postauth args {
   #my log "+++ [self proc] [ad_conn url] auth ms [my ms] [ad_conn isconnected]"
+  #my do set ::cookies([my set requestor]) [ns_set get [ns_conn headers] Cookie]
   set r [my check]
   if {$r<0} {
       set url [my set url]
     ns_return 200 text/html "
-      <H1>[_ xotcl-request-monitor.repeated_operation]</H1>
+      <h1>[_ xotcl-request-monitor.repeated_operation]</h1>
       [_ xotcl-request-monitor.operation_blocked]<p>"
     return filter_return
   } elseif {$r>0} {
     ns_return 200 text/html "
-      <H1>Invalid Operation</H1>
+      <h1>Invalid Operation</h1>
       This web server is only open for interactive usage.<br>
       Automated copying and mirroring is not allowed!<p>
       Please slow down your requests...<p>"
@@ -1187,7 +1490,7 @@ throttle proc trace args {
 throttle proc community_access {community_id} {
   my get_context
   if {[my set community_id] eq ""} {
-    my users community_access [my set requestor] $community_id
+    my users community_access [my set requestor] [my set pa] $community_id
   }
 }
 #throttle proc {} args {my eval $args}
@@ -1204,6 +1507,74 @@ ad_proc string_truncate_middle {{-ellipsis ...} {-len 100} string} {
     return $left$ellipsis$right
   }
   return $string
+}
+
+namespace eval ::xo {
+  proc is_ip {key} {
+    expr { [string match *.* $key] || [string match *:* $key] }
+  }
+  
+  proc request_monitor_record_activity {key pa seconds clicks reason} {
+    if {[::xo::is_ip $key]} {
+      set user_id -1
+    } else {
+      set user_id $key
+    }
+    xo::dc dml add_activity {
+      insert into request_monitor_activities (user_id, peer_address, start_time, end_time, clicks, reason)
+      values (:user_id, :pa,  now() - :seconds * INTERVAL '1 second', now(), :clicks, :reason)
+    }
+    
+  }
+  proc request_monitor_record_community_activity {key pa community_id seconds clicks reason} {
+    if {[::xo::is_ip $key]} {
+      set user_id -1
+    } else {
+      set user_id $key
+    }
+    xo::dc dml add_community_activity {
+      insert into request_monitor_community_activities (user_id, peer_address, community_id, start_time, end_time, clicks, reason)
+      values (:user_id, :pa, :community_id, now() - :seconds * INTERVAL '1 second', now(), :clicks, :reason)
+    }
+  }
+
+  if {[::parameter::get_from_package_key \
+           -package_key "xotcl-request-monitor" \
+           -parameter "do_track_activity" \
+           -default "off"]
+    } {
+    #
+    # Data model for the activity statistics of a full session
+    #
+    ::xo::db::require table request_monitor_activities {
+      user_id      {integer references parties(party_id) on delete cascade}
+      peer_address text
+      start_time   timestamptz
+      end_time     timestamptz
+      clicks       integer
+      reason       text
+    }
+    ::xo::db::require index -table request_monitor_activities -col user_id
+    ::xo::db::require index -table request_monitor_activities -col start_time -using btree
+    ::xo::db::require index -table request_monitor_activities -col end_time -using btree    
+
+    #
+    # Data model for per-community / per-subsite activity statistics
+    #
+    ::xo::db::require table request_monitor_community_activities {
+      user_id      {integer references parties(party_id) on delete cascade}
+      peer_address text
+      community_id {integer references acs_objects(object_id) on delete cascade}
+      start_time   timestamptz
+      end_time     timestamptz
+      clicks       integer
+      reason       text
+    }
+    ::xo::db::require index -table request_monitor_community_activities -col user_id
+    ::xo::db::require index -table request_monitor_community_activities -col start_time -using btree
+    ::xo::db::require index -table request_monitor_community_activities -col end_time -using btree
+    ::xo::db::require index -table request_monitor_community_activities -col community_id
+  }
 }
 
 # Local variables:

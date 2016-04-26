@@ -25,7 +25,7 @@ set tooltip(1) "Show all users"
 set all [expr {!$all}]
 set url [export_vars -base [ad_conn url] {all}]
 
-TableWidget t1 \
+TableWidget create t1 \
     -actions [subst {
       Action new -label "$label($all)" -url $url -tooltip "$tooltip($all)"
     }] \

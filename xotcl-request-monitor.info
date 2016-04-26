@@ -8,11 +8,11 @@
     <singleton-p>t</singleton-p>
     <auto-mount>request-monitor</auto-mount>
 
-    <version name="0.45" url="http://media.wu-wien.ac.at/download/xotcl-request-monitor-0.45.apm">
-        <owner url="mailto:neumann@wu-wien.ac.at">Gustaf	Neumann</owner>
+    <version name="0.46" url="http://media.wu-wien.ac.at/download/xotcl-request-monitor-0.46.apm">
+        <owner url="mailto:neumann@wu-wien.ac.at">Gustaf Neumann</owner>
         <vendor url="http://wu.ac.at">WU Vienna</vendor>
         <summary>Request Monitor with user tracking functionality</summary>
-        <release-date>2015-10-04</release-date>
+        <release-date>2016-04-26</release-date>
         <description format="text/html">&lt;pre&gt;
 This package provides a Request Monitor for OpenACS applications. It computes performance 
 summary information such as requests/views per seconds, average response time, number
@@ -28,19 +28,23 @@ Updated for circumventing handler calls OpenACS 5.2 for /resources/*.
      background thread. In addition,  ns_returnfile_background is included; 
 0.38 using context form xotcl-core
 0.39 brings parameterized counter values
+0.39 brings optional activity tracking
 &lt;/pre&gt;
 </description>
         <license>BSD-Style</license>
         <maturity>2</maturity>
 
-        <provides url="xotcl-request-monitor" version="0.45"/>
-	<requires url="acs-kernel" version="5.9.0"/>
+        <provides url="xotcl-request-monitor" version="0.46"/>
+	<requires url="acs-kernel" version="5.9.0b2"/>
         <requires url="xotcl-core" version="0.122"/>
 
         <callbacks>
         </callbacks>
         <parameters>
             <parameter datatype="string"  min_n_values="1"  max_n_values="1"  name="do_throttle"  default="on" description="turn request throttling on or off (default on)"/>
+            <parameter datatype="string"  min_n_values="1"
+		       max_n_values="1"  name="do_track_activity"
+		       default="off" description="turn activity monitoring on or off (default off)"/>
             <parameter datatype="string"  min_n_values="1"  max_n_values="1"  name="hide-requests"  default="*.css *.ico" description="List of glob patterns to be used for hiding entries from request lists. Only requests that do not match any of these patterns are displayed unless all requests are forced. Affected pages:   - stat-details (list of all recorded urls with timings) - last-requests (tracking activity of a user)
 "/>
             <parameter datatype="number"  min_n_values="1"  max_n_values="1"  name="max-stats-elements"  default="5" description="Number of highest data points in the reporting period. The default of 5 will e.g. show you the top 5 times of requests per minute, hour aso."/>
