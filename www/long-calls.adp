@@ -1,3 +1,4 @@
+<property name="&doc">doc</property>
 <master>
 <table class="table table-condensed table-bordered small">
     <thead>

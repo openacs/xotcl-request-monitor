@@ -30,9 +30,13 @@ proc ::xo::subst_user_link {prefix uid} {
 
 set long_calls_file [file dirname [ns_info log]]/long-calls.log
 set filesize [file size $long_calls_file]
+
 set F [open $long_calls_file]
-if {$readsize < $filesize} {seek $F -$readsize end}
+if {$readsize < $filesize} {
+  seek $F -$readsize end
+}
 set c [read $F]; close $F
+
 set offsets [regexp -indices -all -inline \n $c]
 set o [lindex $offsets end-$lines]
 set c1 [string range $c [lindex $o 0]+1 end]
@@ -54,11 +58,10 @@ foreach line [lreverse [split $c1 \n]] {
     append rows "<tr class=$class><td class='text-right'><strong>$time</strong></td><td>$year&nbsp;$mon&nbsp;$day&nbsp;$hours</td><td class='text-right'>$userinfo</td><td>$iplink</td><td>$request</td></tr>\n"
 }
 
-set title "Long Calls"
-set context [list $title]
+set doc(title) "Long Calls"
+set context [list $doc(title)]
 template::head::add_css -href //maxcdn.bootstrapcdn.com/bootstrap/3.3.1/css/bootstrap.min.css -media all
 template::head::add_css -href //maxcdn.bootstrapcdn.com/bootstrap/3.3.1/css/bootstrap-theme.min.css -media all
-#ns_return 200 text/plain "$long_calls_file [file exists $long_calls_file] l=$lines o=$offsets / $o / [llength $offsets]\n$c1\n$rows"
 
 # Local variables:
 #    mode: tcl
