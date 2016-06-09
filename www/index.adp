@@ -10,19 +10,19 @@
 </if>
 
 <table style="border: 0px solid blue; padding: 10px;">
-  <tr><td><b>Active Users:</b></td><td>@active_user_string;noquote@</td><if @param_url@ ne "">
+  <tr><td><strong>Active Users:</strong></td><td>@active_user_string;noquote@</td><if @param_url@ ne "">
 <td align="right"><a class="button" href="@param_url@">#acs-subsite.parameters#</a></td>
 </if>
 </tr>
-  <tr><td><b>Current System Activity:</b></td><td>@current_system_activity@</td></tr>
-  <tr><td><b>Current System Load:</b></td><td>@current_load@</td></tr>
-  <tr><td><b>Current Avg Response Time/sec:</b></td><td>@current_response@</td></tr>
-  <tr><td><b>Threads:</b></td><td>@running@ <a href='running'>Request(s)</a>
+  <tr><td><strong>Current System Activity:</strong></td><td>@current_system_activity@</td></tr>
+  <tr><td><strong>Current System Load:</strong></td><td>@current_load@</td></tr>
+  <tr><td><strong>Current Avg Response Time/sec:</strong></td><td>@current_response@</td></tr>
+  <tr><td><strong>Threads:</strong></td><td>@running@ <a href='running'>Request(s)</a>
   currently running,  
   #connection threads @current_threads.current@ idle @current_threads.idle@,
   min @current_threads.min@ max @current_threads.max@
   <br>avg. #connection threads @thread_avgs.current@, avg. busy @thread_avgs.busy@</td></tr>
-  <tr><td><b>Summaries:</b></td><td><a href='stat-details'>Aggregated URL</a> Statistics,
+  <tr><td><strong>Summaries:</strong></td><td><a href='stat-details'>Aggregated URL</a> Statistics,
   <a href='last100'>Last 100</a> Requests,
   <a href='throttle-statistics'>Throttle</a> Statistics
 </td><td><div style="font-size: 80%">
