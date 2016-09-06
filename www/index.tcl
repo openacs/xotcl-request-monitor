@@ -4,7 +4,7 @@ ad_page_contract {
   @author Gustaf Neumann
   @cvs-id $Id$
 } -query {
-  {jsGraph 1}
+  {jsGraph:boolean 1}
 } -properties {
   title:onevalue
   context:onevalue
@@ -101,7 +101,12 @@ proc currentViews {} {
 
 
 if {$jsGraph} {
+  set nonce [::security::nonce_token]
 
+  template::add_body_script -src "//ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"
+  template::add_body_script -src "//code.highcharts.com/highcharts.js"
+  template::add_body_script -src "//code.highcharts.com/modules/exporting.js"
+  
   proc js_time {clock} {
     set year [clock format $clock -format %Y]
     set month [expr {[string trimleft [clock format $clock -format %N]] - 1}]
@@ -158,8 +163,7 @@ if {$jsGraph} {
                 }
     }}]
 
-    set diagram [subst {
-    <script>
+    template::add_body_script -script [subst {
     \$('#$graphID').highcharts({
         chart: {
             type: 'line'
@@ -192,13 +196,11 @@ if {$jsGraph} {
         },
         series: \[$series\]
     });
-    </script>
     }]
 
     #ns_log notice diagram=$diagram
     return [subst {
       <div id="$graphID" style="min-width: 640px; max-width: 100%; height: 240px; margin: 0 auto"></div>
-      $diagram
     }]
   }
   

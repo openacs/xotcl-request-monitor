@@ -1,14 +1,6 @@
 <master>
 <property name="doc(title)">@title;literal@</property>
 
-<if @jsGraph@ eq 1>
-<property name="head">
-<script type="text/javascript" src="//ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
-<script type="text/javascript" src="//code.highcharts.com/highcharts.js"></script>
-<script type="text/javascript" src="//code.highcharts.com/modules/exporting.js"></script>
-</property>
-</if>
-
 <table style="border: 0px solid blue; padding: 10px;">
   <tr><td><strong>Active Users:</strong></td><td>@active_user_string;noquote@</td><if @param_url@ ne "">
 <td align="right"><a class="button" href="@param_url@">#acs-subsite.parameters#</a></td>
