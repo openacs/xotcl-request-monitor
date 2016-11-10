@@ -318,7 +318,26 @@
     [self class] incr count
   }
   TraceLongCalls instproc add_url_stat {url time_used key pa content_type} {
+    regexp {^([^?]+)[?]} $url . url
+    #ns_log notice "url=<$url> time_used $time_used"
+    if {$url in {/register/ /}} {
+      #
+      # calculate for certain URLs separate statistics
+      #
+      incr ::agg_time($url) $time_used
+      incr ::count(calls:$url)
+    }
     if {$time_used > 5000} {
+      if {$url eq "/register/"} {
+        set color unexpected
+      } elseif {$time_used > 10000} {
+        set color red
+      } elseif {$time_used > 6000} {
+        set color orange
+      } else {                
+        set color yellow
+      }
+      incr ::count(longcalls:$color)    
       catch {my log [self args]}
     }
     next
