@@ -1103,7 +1103,7 @@
         # inactivity.
         #
         set var user_in_community($key)
-        if {[inf exists :$var]} {
+        if {[info exists :$var]} {
           set data [set :$var]
           Users left_community $key $pa [clock seconds] [dict get $data community_id] $data inactive
           Users left_system $key $pa [clock seconds] $data inactive
