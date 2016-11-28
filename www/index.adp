@@ -16,7 +16,8 @@
   <br>avg. #connection threads @thread_avgs.current@, avg. busy @thread_avgs.busy@</td></tr>
   <tr><td><strong>Summaries:</strong></td><td><a href='stat-details'>Aggregated URL</a> Statistics,
   <a href='last100'>Last 100</a> Requests,
-  <a href='throttle-statistics'>Throttle</a> Statistics
+  <a href='throttle-statistics'>Throttle</a> Statistics,
+  <a href='long-calls'>Long calls</a>
 </td><td><div style="font-size: 80%">
 <a class='button' href="@toggle_graphics_url@">Toggle Graphics</a>
 </div></td>

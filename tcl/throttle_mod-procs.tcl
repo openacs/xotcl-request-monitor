@@ -273,14 +273,14 @@
     return [my array get active]
   }
 
-  Throttle instproc add_url_stat {method url time_used key pa content_type} {
+  Throttle instproc add_url_stat {method url partialtimes key pa content_type} {
     #ns_log notice "Throttle.add_url_stat($method,$url,$time_used,$key,$pa,$content_type)"
     catch {my unset running_url($key,$url)}
     #my log "### unset running_url($key,$url) $errmsg"
     if {[string match "text/html*" $content_type]} {
       [Users current_object] add_view $key
     }
-    response_time_minutes add_url_stat $url $time_used $key
+    response_time_minutes add_url_stat $url [dict get $partialtimes ms] $key
   }
   Throttle instforward report_url_stats response_time_minutes %proc
   Throttle instforward flush_url_stats  response_time_minutes %proc
@@ -318,8 +318,14 @@
     [self class] append log "$entry\n"
     [self class] incr count
   }
-  TraceLongCalls instproc add_url_stat {method url time_used key pa content_type} {
+  TraceLongCalls instproc add_url_stat {method url partialtimes key pa content_type} {
     regexp {^([^?]+)[?]} $url . url
+    #
+    # conntime: time spent in connection thread in ms, not including queuing times
+    # totaltime: time since start of the request
+    #set conntime [expr {int(([dict get $partialtimes runtime] + [dict get $partialtimes filtertime]) * 1000)}]
+    set totaltime [dict get $partialtimes ms]
+    
     #ns_log notice "url=<$url> time_used $time_used"
     if { $url in {/register/ / /dotlrn/} } {
       #
@@ -328,18 +334,18 @@
       incr ::agg_time($url) $time_used
       incr ::count(calls:$url)
     }
-    if {$time_used > 5000} {
+    if {$totaltime > 5000} {
       if {$url eq "/register/"} {
         set color unexpected
-      } elseif {$time_used > 10000} {
+      } elseif {$totaltime > 10000} {
         set color red
-      } elseif {$time_used > 6000} {
+      } elseif {$totaltime > 6000} {
         set color orange
       } else {                
         set color yellow
       }
-      incr ::count(longcalls:$color)    
-      catch {my log [self args]}
+      incr ::count(longcalls:$color)
+      catch {my log [list $url $totaltime $key $pa $content_type]}
     }
     next
   }
@@ -1388,14 +1394,30 @@ throttle proc destroy {} {
   next
 }
 
-throttle proc ms {-start_time} {
-  if {![info exists start_time]} {
-    set start_time [ns_conn start]
+#
+# Use the feature of connection pool unmapping to determine, if we can
+# use "ns_conn partialtimes". We can't use the latter directly, since
+# this file is typically loaded from a non-connection thread.
+#
+if {[catch {ns_server unmap "GET /*JUST_FOR_TESTING*"}]} {
+  #
+  # Older version of NaviServer or AOLserver
+  #
+  throttle proc partialtimes {} {
+    set t [ns_time diff [ns_time get] [ns_conn start]]
+    set ms [expr {[ns_time seconds $t]*1000 + [ns_time microseconds $t]/1000}]
+    return [list ms $ms runtime [expr {$ms/1000.0}] filtertime 0 queuetime 0 accepttime 0]
   }
-  set t [ns_time diff [ns_time get] $start_time]
-  #my log "+++ $t [ns_conn url]"
-  set ms [expr {[ns_time seconds $t]*1000 + [ns_time microseconds $t]/1000}]
-  return $ms
+} else {
+  #
+  # Use variant based on "ns_conn partialtimes"
+  #
+  throttle proc partialtimes {} {
+    set d [ns_conn partialtimes]
+    set t [ns_time diff [ns_time get] [ns_conn start]]
+    lappend d ms [expr {[ns_time seconds $t]*1000 + [ns_time microseconds $t]/1000}]
+    return $d
+  }
 }
 
 throttle proc get_context {} {
@@ -1494,7 +1516,7 @@ throttle forward user_is_active          %self do Users %proc
 # the next procs are for the filters (registered from the -init file)
 ####
 throttle proc postauth args {
-  #my log "+++ [self proc] [ad_conn url] auth ms [my ms] [ad_conn isconnected]"
+  #my log "+++ [self proc] [ad_conn url] auth ms [my partialtimes] [ad_conn isconnected]"
   #my do set ::cookies([set :requestor]) [ns_set get [ns_conn headers] Cookie]
   set r [my check]
   if {$r < 0} {
@@ -1516,14 +1538,14 @@ throttle proc postauth args {
   }
 }
 throttle proc trace args {
-  #my log "+++ [self proc] <$args> [ad_conn url] [my ms] [ad_conn isconnected]"
+  #my log "+++ [self proc] <$args> [ad_conn url] [my partialtimes] [ad_conn isconnected]"
   # OpenACS 5.2 bypasses for requests to /resources the user filter
   # in these cases pre- or postauth are not called, but only trace.
   # So we have to make sure we have the needed context here
   my get_context
   #my log "CT=[ns_set array [ns_conn outputheaders]] -- [set :url]"
   
-  my add_url_stat ${:method} ${:url} [my ms] ${:requestor} ${:pa} \
+  my add_url_stat ${:method} ${:url} [my partialtimes] ${:requestor} ${:pa} \
       [ns_set get [ns_conn outputheaders] Content-Type]
   my unset context_initialized
   return filter_ok
