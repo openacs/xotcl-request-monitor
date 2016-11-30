@@ -12,7 +12,7 @@ ad_page_contract {
 }
 
 set title "Last 100 Requests"
-set context [list "Last 100 Requests"]
+set context [list $title]
 set stat [list]
 foreach {key value} [throttle last100] {lappend stat $value}
 

@@ -1,6 +1,9 @@
 <property name="&doc">doc</property>
+<property name="context">@context;literal@</property>
 <master>
-<p>
+
+<h1>Long Calls</h1>
+<div style="float:right">
 &nbsp;Lines: <a href="long-calls?lines=20">20</a>,
 <a href="long-calls?lines=50">50</a>,
 <a href="long-calls?lines=100">100</a>,
@@ -10,8 +13,8 @@
 <a href="long-calls?lines=2000&amp;readsize=100000">2000</a>,
 <a href="long-calls?lines=5000&amp;readsize=500000">5000</a>,
 <a href="long-calls?lines=10000&amp;readsize=500000">10000</a>
-</p>
-
+&nbsp;
+</div>
 
 <table class="table table-condensed table-bordered small">
     <thead>

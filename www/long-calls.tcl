@@ -60,6 +60,7 @@ foreach line [lreverse [split $c1 \n]] {
 
 set doc(title) "Long Calls"
 set context [list $doc(title)]
+
 template::head::add_css -href //maxcdn.bootstrapcdn.com/bootstrap/3.3.1/css/bootstrap.min.css -media all
 template::head::add_css -href //maxcdn.bootstrapcdn.com/bootstrap/3.3.1/css/bootstrap-theme.min.css -media all
 

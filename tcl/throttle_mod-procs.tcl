@@ -274,7 +274,7 @@
   }
 
   Throttle instproc add_url_stat {method url partialtimes key pa content_type} {
-    #ns_log notice "Throttle.add_url_stat($method,$url,$time_used,$key,$pa,$content_type)"
+    #ns_log notice "Throttle.add_url_stat($method,$url,$partialtimes,$key,$pa,$content_type)"
     catch {my unset running_url($key,$url)}
     #my log "### unset running_url($key,$url) $errmsg"
     if {[string match "text/html*" $content_type]} {
@@ -326,12 +326,12 @@
     #set conntime [expr {int(([dict get $partialtimes runtime] + [dict get $partialtimes filtertime]) * 1000)}]
     set totaltime [dict get $partialtimes ms]
     
-    #ns_log notice "url=<$url> time_used $time_used"
+    #ns_log notice "url=<$url> totaltime $totaltime"
     if { $url in {/register/ / /dotlrn/} } {
       #
       # calculate for certain URLs separate statistics
       #
-      incr ::agg_time($url) $time_used
+      incr ::agg_time($url) $totaltime
       incr ::count(calls:$url)
     }
     if {$totaltime > 5000} {
@@ -1418,6 +1418,12 @@ if {[catch {ns_server unmap "GET /*JUST_FOR_TESTING*"}]} {
     lappend d ms [expr {[ns_time seconds $t]*1000 + [ns_time microseconds $t]/1000}]
     return $d
   }
+}
+throttle proc ms {-start_time} {
+  if {![info exists start_time]} {set start_time [ns_conn start]}
+  set t [ns_time diff [ns_time get] $start_time]
+  set ms [expr {[ns_time seconds $t]*1000 + [ns_time microseconds $t]/1000}]
+  return $ms
 }
 
 throttle proc get_context {} {

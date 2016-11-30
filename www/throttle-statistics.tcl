@@ -11,6 +11,7 @@ ad_page_contract {
 }
 
 set title "Throttle statistics"
+set context [list $title]
 set throttle_statistics [throttle statistics]
 set data [throttle url_statistics]
 
