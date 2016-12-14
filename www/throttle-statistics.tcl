@@ -29,14 +29,14 @@ template::list::create \
 
 multirow create url_statistics type user user_url time IPadress URL
 foreach l [lsort -index 2 $data] {
-  lassign $l type user time IPadress URL
-  if {[string match "*.*" $user]} {
+  lassign $l type uid time IPadress URL
+  if {![string is integer -strict $uid]} {
     set user "Anonymous"
     set user_url ""
   } else {
-    acs_user::get -user_id $user -array userinfo
-    set user_url /acs-admin/users/one?user_id=$user
+    acs_user::get -user_id $uid -array userinfo
     set user "$userinfo(first_names) $userinfo(last_name)"
+    set user_url [acs_community_member_admin_url -user_id $uid]
   }
   set time [clock format $time -format "%Y-%m-%d %H:%M:%S"]
   multirow append url_statistics $type $user $user_url $time $IPadress $URL

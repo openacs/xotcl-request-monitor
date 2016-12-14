@@ -13,12 +13,13 @@ ad_page_contract {
 }
 
 proc ::xo::userid_link {uid} {
-    if {[string first . $uid] > -1} {
-       set userinfo 0
-    } else {
-       set userinfo "<a href='/acs-admin/users/one?user_id=$uid'>$uid</a>"
-    }
-    return $userinfo
+  if {![string is integer -strict $uid]} {
+    set userinfo 0
+  } else {
+    set user_url [acs_community_member_admin_url -user_id $uid]
+    set userinfo "<a href='$user_url'>$uid</a>"
+  }
+  return $userinfo
 }
 proc ::xo::regsub_eval {re string cmd {prefix ""}} {
     set map { \" \\\" \[ \\[ \] \\] \$ \\$ \\ \\\\}
