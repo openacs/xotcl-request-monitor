@@ -92,8 +92,13 @@ proc currentViews {} {
   set um [throttle trend user_count_minutes]
   if { $vm eq "" || $um eq ""} { return "NO DATA" }
   set views_per_sec [expr {[lindex $vm end]/60.0}]
-  #ns_log notice "um='$um' vm='$vm' expr {60.0*$views_per_sec/[lindex $um end]}"
-  set views_per_min_per_user [expr {60.0*$views_per_sec/[lindex $um end]}]
+  set currentUsers [lindex $um end]
+  if {$currentUsers > 0} {
+    #ns_log notice "um='$um' vm='$vm' expr {60.0*$views_per_sec/[lindex $um end]}"
+    set views_per_min_per_user [expr {60.0 * $views_per_sec / $currentUsers}]
+  } else {
+    set views_per_min_per_user "0"
+  }
   set view_time [expr {$views_per_min_per_user>0 ? 
 	" avg. view time: [format %4.1f [expr {60.0/$views_per_min_per_user}]]" : ""}]
   return "[format %4.1f $views_per_sec] views/sec, [format %4.3f $views_per_min_per_user] views/min/user,  $view_time"
