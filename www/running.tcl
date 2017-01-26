@@ -4,7 +4,7 @@ ad_page_contract {
     @author Gustaf Neumann (adapted for interaction with controlling thread)
     @cvs-id $Id$
 } -query {
-  orderby:optional
+  orderby:token,optional
 } -properties {
     title:onevalue
     context:onevalue

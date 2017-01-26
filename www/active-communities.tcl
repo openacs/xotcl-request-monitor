@@ -5,7 +5,7 @@ ad_page_contract {
 
     @cvs-id $id$
 } -query {
-  {orderby:optional "count,desc"}
+  {orderby:token,optional "count,desc"}
 } -properties {
   title:onevalue
   context:onevalue

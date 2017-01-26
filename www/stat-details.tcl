@@ -8,7 +8,7 @@ ad_page_contract {
     {all:optional 0}
     {with_param:optional 1}
     {with_apps:optional 0}
-    {orderby:optional "totaltime,desc"}
+    {orderby:token,optional "totaltime,desc"}
 } -properties {
     title:onevalue
     context:onevalue
