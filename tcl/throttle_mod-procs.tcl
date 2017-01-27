@@ -7,7 +7,8 @@
 #############################################################################
 
 if {"async-cmd" ni [ns_job queues]} {
-  ns_job create async-cmd 4
+  ns_job create async-cmd 10
+  ns_job configure -jobsperthread 10000
 }
 
 ::xotcl::THREAD create throttle {
@@ -184,7 +185,8 @@ if {"async-cmd" ni [ns_job queues]} {
   }
 
   Throttle instproc throttle_check {requestKey pa url conn_time content_type community_id} {
-    my instvar off
+    set t0 [clock milliseconds]
+
     seconds ++
     
     my update_threads_state
@@ -199,22 +201,27 @@ if {"async-cmd" ni [ns_job queues]} {
                                 [string match "image/*" $content_type]
                                 || $content_type in { text/css application/javascript application/x-javascript }
                               }]
-    if {[my exists $var] && !$is_embedded_request && !$off} {
+    if {[my exists $var] && !$is_embedded_request && !${:off}} {
       #ns_log notice  "### already $var"
       return [list 0 0 1]
     } else {
       set :$var $conn_time
       #ns_log notice  "### new $var"
     }
-
+    set t1 [clock milliseconds]
     my register_access $requestKey $pa $url $community_id $is_embedded_request
+    set t2 [clock milliseconds]
+
+    if {$t2 - $t0 > 500} {
+      ns_log warning "throttle_check slow, can lead to filter time >1sec: total time [expr {$t2 - $t0}], t1 [expr {$t1 - $t0}]"
+    }
 
     # 
     # Allow up to 14 requests to be executed concurrently.... the
     # number of 14 is arbitrary. One of our single real request might
     # have up to 14 subrequests (through iframes)....
     #
-    if {$off || $is_embedded_request || [my array size running_url] < 14} {
+    if {${:off} || $is_embedded_request || [my array size running_url] < 14} {
       #
       # Maybe the throttler is off, or we have an embedded request or
       # less than 14 running requests running. Everything is
@@ -813,9 +820,15 @@ if {"async-cmd" ni [ns_job queues]} {
     set :user_in_community($key) $data 
     #ns_log notice "=== user $key left community $community_id at $now reason $reason after $seconds seconds clicks $clicks"
     if {[do_track_activity] && $seconds > 0} {
+      set t0 [clock milliseconds]
       ns_job queue -detached async-cmd \
           [list ::xo::request_monitor_record_community_activity $key $pa $community_id $seconds $clicks $reason]
+      set t1 [clock milliseconds]
+      if {$t1 - $t0 > 500} {
+        ns_log warning "request_monitor_record_community_activity left_community slow, can lead to filter time >1sec: total time [expr {$t1 - $t0}]"
+      }
     }
+    set t1 [clock milliseconds]
   }
   
   Users proc left_system {key pa now data reason} {
@@ -834,8 +847,13 @@ if {"async-cmd" ni [ns_job queues]} {
     }
     ns_log notice "=== user $key left system at $now reason $reason after $seconds seconds clicks $clicks"
     if {[do_track_activity] && $seconds > 0} {
+      set t0 [clock milliseconds]
       ns_job queue -detached async-cmd \
           [list ::xo::request_monitor_record_activity $key $pa $seconds $clicks $reason]
+      set t1 [clock milliseconds]
+      if {$t1 - $t0 > 500} {
+        ns_log warning "::xo::request_monitor_record_activity left_system slow, can lead to filter time >1sec: total time [expr {$t1 - $t0}]"
+      }
     }
     catch {my unset user_in_community($key)}
     catch {my unset refcount($key)}
