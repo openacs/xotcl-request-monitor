@@ -6,6 +6,10 @@
 # throttles over-eager users and provides a wide set of statistics.
 #############################################################################
 
+if {"async-cmd" ni [ns_job queues]} {
+  ns_job create async-cmd 4
+}
+
 ::xotcl::THREAD create throttle {
 
   #
@@ -809,7 +813,8 @@
     set :user_in_community($key) $data 
     #ns_log notice "=== user $key left community $community_id at $now reason $reason after $seconds seconds clicks $clicks"
     if {[do_track_activity] && $seconds > 0} {
-      ::xo::request_monitor_record_community_activity $key $pa $community_id $seconds $clicks $reason
+      ns_job queue -detached async-cmd \
+          [list ::xo::request_monitor_record_community_activity $key $pa $community_id $seconds $clicks $reason]
     }
   }
   
@@ -829,7 +834,8 @@
     }
     ns_log notice "=== user $key left system at $now reason $reason after $seconds seconds clicks $clicks"
     if {[do_track_activity] && $seconds > 0} {
-      ::xo::request_monitor_record_activity $key $pa $seconds $clicks $reason
+      ns_job queue -detached async-cmd \
+          [list ::xo::request_monitor_record_activity $key $pa $seconds $clicks $reason]
     }
     catch {my unset user_in_community($key)}
     catch {my unset refcount($key)}
@@ -1472,26 +1478,38 @@ throttle ad_proc check {} {
   It should be called after authentication such we have already 
   the userid if the user is authenticated
 } {
+  set t0 [clock milliseconds]
+  
   my get_context
   #my log "### check"
 
   lassign [my throttle_check ${:requestor} ${:pa} ${:url} \
 	       [ns_conn start] [ns_guesstype [ns_conn url]] ${:community_id}] \
       toMuch ms repeat
+  set t1 [clock milliseconds]
+  
   if {$repeat} {
     my add_statistics repeat ${:requestor} ${:pa} ${:url} ${:query}
-    return -1
+    set result -1
   } elseif {$toMuch} {
     my log "*** we have to refuse user ${:requestor} with $toMuch requests"
     my add_statistics reject ${:requestor} ${:pa} ${:url} ${:query}
-    return $toMuch
+    set result $toMuch
   } elseif {$ms} {
     my log "*** we have to block user ${:requestor} for $ms ms"
     my add_statistics throttle ${:requestor} ${:pa} ${:url} ${:query}
     after $ms
     my log "*** continue for user ${:requestor}"
+    set result 0
+  } else {
+    set result 0
   }
-  return 0
+  set tend [clock milliseconds]
+  if {$tend - $t0 > 500} {
+    ns_log warning "throttle_filter slow, can lead to filter time >1sec: total time [expr {$tend - $t0}], t1 [expr {$t1 - $t0}]"
+  }
+
+  return $result
 }
 ####
 # the following procs are forwarder to the monitoring thread
@@ -1594,8 +1612,8 @@ namespace eval ::xo {
       insert into request_monitor_activities (user_id, peer_address, start_time, end_time, clicks, reason)
       values (:user_id, :pa,  now() - :seconds * INTERVAL '1 second', now(), :clicks, :reason)
     }
-    
   }
+  
   proc request_monitor_record_community_activity {key pa community_id seconds clicks reason} {
     if {[::xo::is_ip $key]} {
       set user_id -1
