@@ -7,8 +7,8 @@
 #############################################################################
 
 if {"async-cmd" ni [ns_job queues]} {
-  ns_job create async-cmd 10
-  ns_job configure -jobsperthread 10000
+  ns_job create async-cmd 4
+  #ns_job configure -jobsperthread 10000
 }
 
 ::xotcl::THREAD create throttle {
@@ -23,14 +23,14 @@ if {"async-cmd" ni [ns_job queues]} {
   #
   Class create package_parameter \
       -parameter {{default ""} value name} \
-      -instproc defaultmethod {} {my value} \
-      -instproc update {value} {my value $value} \
+      -instproc defaultmethod {} {return ${:value}} \
+      -instproc update {value} {set :value $value} \
       -instproc init {} {
-        my name [namespace tail [self]]
-        my value [parameter::get_from_package_key \
-                      -package_key "xotcl-request-monitor" \
-                      -parameter [my name] \
-                      -default [my default]]
+        set :name [namespace tail [self]]
+        set :value [parameter::get_from_package_key \
+                        -package_key "xotcl-request-monitor" \
+                        -parameter ${:name} \
+                        -default ${:default}]
       }
 
   package_parameter log-dir \
@@ -73,14 +73,14 @@ if {"async-cmd" ni [ns_job queues]} {
   #
   Class create AsyncLogFile -parameter {filename {mode a}}
   AsyncLogFile instproc init {} {
-    if {![my exists filename]} {
-      my filename $::logdir/[namespace tail [self]]
+    if {![info exists :filename]} {
+      set :filename $::logdir/[namespace tail [self]]
     }
     set :handle [bgdelivery do AsyncDiskWriter new -autoflush true]
-    bgdelivery do [set :handle] open -filename [my filename] -mode [my mode]
+    bgdelivery do ${:handle} open -filename ${:filename} -mode ${:mode}
   }
   AsyncLogFile instproc write {msg} {
-    bgdelivery do [set :handle] async_write $msg\n
+    bgdelivery do ${:handle} async_write $msg\n
   }
 
   # open the used log-files
@@ -99,7 +99,7 @@ if {"async-cmd" ni [ns_job queues]} {
   Class create Throttle -parameter {
     {timeWindow 10}
     {timeoutMs 2000}
-    {startThrottle 7} 
+    {startThrottle 11} 
     {toMuch 10} 
     {alerts 0} {throttles 0} {rejects 0} {repeats 0}
   }
@@ -113,8 +113,8 @@ if {"async-cmd" ni [ns_job queues]} {
 
   Throttle instproc add_statistics { type requestor ip_adress url query } {
     #set furl [expr {$query ne "" ? "$url?$query" : $url}]
-    my incr ${type}s
-    #my log "++++ add_statistics   -type $type -user_id $requestor "
+    incr :${type}s
+    # :log "++++ add_statistics   -type $type -user_id $requestor "
     set entry [ThrottleStat new -childof [self]::stats \
 		   -type $type -requestor $requestor \
 		   -timestamp [clock seconds] \
@@ -152,7 +152,7 @@ if {"async-cmd" ni [ns_job queues]} {
   }
   
   Throttle instproc running {} {
-    my array get running_url
+    array get :running_url
   }
 
   #
@@ -172,7 +172,7 @@ if {"async-cmd" ni [ns_job queues]} {
     }
   }
   Throttle instproc update_threads_state {} {
-    array set threadInfo [my server_threads]
+    array set threadInfo [:server_threads]
     incr ::threads_busy [expr {$threadInfo(current) - $threadInfo(idle)}]
     incr ::threads_current $threadInfo(current)
     incr ::threads_datapoints
@@ -189,9 +189,9 @@ if {"async-cmd" ni [ns_job queues]} {
 
     seconds ++
     
-    my update_threads_state
+    :update_threads_state
 
-    set var running_url($requestKey,$url)
+    set var :running_url($requestKey,$url)
     #
     # Check first, whether the same user has already the same request
     # issued; if yes, block this request. Caveat: some html-pages
@@ -201,15 +201,15 @@ if {"async-cmd" ni [ns_job queues]} {
                                 [string match "image/*" $content_type]
                                 || $content_type in { text/css application/javascript application/x-javascript }
                               }]
-    if {[my exists $var] && !$is_embedded_request && !${:off}} {
+    if {[info exists $var] && !$is_embedded_request && !${:off}} {
       #ns_log notice  "### already $var"
       return [list 0 0 1]
     } else {
-      set :$var $conn_time
+      set $var $conn_time
       #ns_log notice  "### new $var"
     }
     set t1 [clock milliseconds]
-    my register_access $requestKey $pa $url $community_id $is_embedded_request
+    :register_access $requestKey $pa $url $community_id $is_embedded_request
     set t2 [clock milliseconds]
 
     if {$t2 - $t0 > 500} {
@@ -221,7 +221,7 @@ if {"async-cmd" ni [ns_job queues]} {
     # number of 14 is arbitrary. One of our single real request might
     # have up to 14 subrequests (through iframes)....
     #
-    if {${:off} || $is_embedded_request || [my array size running_url] < 14} {
+    if {${:off} || $is_embedded_request || [array size :running_url] < 14} {
       #
       # Maybe the throttler is off, or we have an embedded request or
       # less than 14 running requests running. Everything is
@@ -237,11 +237,11 @@ if {"async-cmd" ni [ns_job queues]} {
       # to keep only the active request keys in an associative array.
       #
       incr :alerts
-      if {[my exists active($requestKey)]} {
+      if {[info exists :active($requestKey)]} {
 	# if more than one request for this key is already active, 
 	# return blocking time
 	lassign [set :active($requestKey)] to cnt
-	set retMs [expr {$cnt > [my startThrottle] ? 500 : 0}]
+	set retMs [expr {$cnt > ${:startThrottle} ? 500 : 0}]
 	# cancel the timeout
 	after cancel $to
       } else {
@@ -250,9 +250,9 @@ if {"async-cmd" ni [ns_job queues]} {
       }
       incr cnt
       # establish a new timeout
-      set to [after [my timeoutMs] [list [self] cancel $requestKey]]
+      set to [after ${:timeoutMs} [list [self] cancel $requestKey]]
       set :active($requestKey) [list $to $cnt]
-      if {$cnt <= [my toMuch]} {
+      if {$cnt <= ${:toMuch}} {
 	set cnt 0
       }
       return [list $cnt $retMs 0]
@@ -261,33 +261,33 @@ if {"async-cmd" ni [ns_job queues]} {
 
   Throttle instproc statistics {} {
     return "<table>
-        <tr><td>Number of alerts:</td><td>[my alerts]</td></tr>
-        <tr><td>Number of throttles:</td><td>[my throttles]</td></tr>
-        <tr><td>Number of rejects:</td><td>[my rejects]</td></tr>
-        <tr><td>Number of repeats:</td><td>[my repeats]</td></tr>
+        <tr><td>Number of alerts:</td><td>[:alerts]</td></tr>
+        <tr><td>Number of throttles:</td><td>[:throttles]</td></tr>
+        <tr><td>Number of rejects:</td><td>[:rejects]</td></tr>
+        <tr><td>Number of repeats:</td><td>[:repeats]</td></tr>
         </table>\n"
   }
 
   Throttle instproc cancel {requestKey} {
     # cancel a timeout and clean up active request table for this key
-    if {[my exists active($requestKey)]} {
+    if {[info exists :active($requestKey)]} {
       after cancel [lindex [set :active($requestKey)] 0]
-      my unset active($requestKey)
-      #my log "+++ Cancel $requestKey block"
+      unset :active($requestKey)
+      # :log "+++ Cancel $requestKey block"
     } else {
-      my log "+++ Cancel for $requestKey failed !!!"
+      :log "+++ Cancel for $requestKey failed !!!"
     }
   }
 
   Throttle instproc active { } {
     # return the currently active requests (for debugging and introspection)
-    return [my array get active]
+    return [array get :active]
   }
 
   Throttle instproc add_url_stat {method url partialtimes key pa content_type} {
     #ns_log notice "Throttle.add_url_stat($method,$url,$partialtimes,$key,$pa,$content_type)"
-    catch {my unset running_url($key,$url)}
-    #my log "### unset running_url($key,$url) $errmsg"
+    catch {unset :running_url($key,$url)}
+    # :log "### unset running_url($key,$url) $errmsg"
     if {[string match "text/html*" $content_type]} {
       [Users current_object] add_view $key
     }
@@ -300,22 +300,22 @@ if {"async-cmd" ni [ns_job queues]} {
 
   Class create ThrottleTrace
   ThrottleTrace instproc log {msg} {
-    if {![my exists traceFile]} {
+    if {![info exists :traceFile]} {
       set file $::logdir/calls
       set :traceFile [open $file a]
       set :traceCounter 0
     }
-    puts [set :traceFile] $msg
+    puts ${:traceFile} $msg
   }
   ThrottleTrace instproc throttle_check args {
     catch {
       incr :traceCounter
-      my log "CALL [set :traceCounter] [self args]"
+      :log "CALL ${:traceCounter} [self args]"
     }
     next
   }
   ThrottleTrace instproc add_url_stat args {
-    catch {my log "END [set :traceCounter] [self args]"}
+    catch {:log "END ${:traceCounter} [self args]"}
     next
   }
   
@@ -356,7 +356,7 @@ if {"async-cmd" ni [ns_job queues]} {
         set color yellow
       }
       incr ::count(longcalls:$color)
-      catch {my log [list $url $totaltime $key $pa $content_type]}
+      catch {:log [list $url $totaltime $key $pa $content_type]}
     }
     next
   }
@@ -412,7 +412,7 @@ if {"async-cmd" ni [ns_job queues]} {
     an instance variable to the same value. This is used here 
     in combination with changing parameters 
   } {
-    foreach object [my allinstances] {
+    foreach object [:allinstances] {
       $object set $var $value
     }
   }
@@ -421,10 +421,10 @@ if {"async-cmd" ni [ns_job queues]} {
     incr :c
   }
   Counter instproc end {} {
-    if {[my exists report]} {
-      [my report] incr c ${:c}
+    if {[info exists :report]} {
+      [:report] incr c ${:c}
     }
-    my finalize ${:c}
+    :finalize ${:c}
     set :c 0
   }
 
@@ -440,14 +440,14 @@ if {"async-cmd" ni [ns_job queues]} {
     #
     lappend :trend $n
     set lt [llength ${:trend}]
-    if {$lt > [my nr_trend_elements]} {
-      set :trend [lrange ${:trend} $lt-[my nr_trend_elements] end]
+    if {$lt > ${:nr_trend_elements}} {
+      set :trend [lrange ${:trend} $lt-${:nr_trend_elements} end]
     }
     #
     # stats keeps nr_stats_elements highest values with time stamp
     #
     lappend :stats [list $timestamp $n]
-    set :stats [lrange [lsort -real -decreasing -index 1 ${:stats}] 0 [my nr_stats_elements]-1]
+    set :stats [lrange [lsort -real -decreasing -index 1 ${:stats}] 0 ${:nr_stats_elements}-1]
   }
   Counter instproc finalize {n} {
     if {[info exists :to]} {
@@ -456,20 +456,20 @@ if {"async-cmd" ni [ns_job queues]} {
       # update statistics
       #
       set now [clock format [clock seconds]]
-      my add_value $now $n
+      :add_value $now $n
       #
       # log if necessary
       #
-      catch {if {[my logging]} {my log_to_file $now [self] $n}}
+      catch {if {${:logging}} {:log_to_file $now [self] $n}}
       #
     } else {
       ns_log notice "[self] has no timeout defined"
     }
-    set :to [after [my timeoutMs] [list [self] end]]
+    set :to [after ${:timeoutMs} [list [self] end]]
   }
 
   Counter instproc init {} {
-    set :to [after [my timeoutMs] [list [self] end]]
+    set :to [after ${:timeoutMs} [list [self] end]]
     next
   }
   Counter instproc destroy {} {
@@ -492,20 +492,21 @@ if {"async-cmd" ni [ns_job queues]} {
     # The counter logs its intrinsic value (c) anyhow, which are the
     # authenticated users. We also want to record the number of
     # unauthenticated users, and do this here manually.
-    my log_to_file $now [self]-non-auth $ip
+    :log_to_file $now [self]-non-auth $ip
     set :c $auth
     Users perDayCleanup
     next
   }
 
   Class create MaxCounter -superclass Counter -instproc end {} {
-    my c [Users nr_active]
-    if {[my exists report]} {
-      [my report] instvar {c rc}
-      if {$rc < [my c]} {set rc [my c]}
+    set :c [Users nr_active]
+    if {[info exists :report]} {
+      if {[${:report} set c] < ${:c}} {
+        ${:report} set c ${:c}
+      }
     }
-    my finalize [my c]
-    my c 0
+    :finalize ${:c}
+    set :c 0
   }
 
   MaxCounter create user_count_hours -timeoutMs [expr {60000*60}] -logging 1
@@ -513,19 +514,19 @@ if {"async-cmd" ni [ns_job queues]} {
 
   Class create AvgCounter -superclass Counter \
       -parameter {{t 0} {atleast 1}} -instproc end {} {
-    if {[my c]>0} {
-      set avg [expr {int([my t]*1.0/[my c])}]
-    } else {
-      set avg 0
-    }
-    if {[my exists report]} {
-      [my report] incr c [my c]
-      [my report] incr t [my t]
-    }
-    my finalize $avg
-    my c 0
-    my t 0
-  }
+        if {${:c} > 0} {
+          set avg [expr {int(${:t} * 1.0 / ${:c})}]
+        } else {
+          set avg 0
+        }
+        if {[info exists :report]} {
+          ${:report} incr c ${:c}
+          ${:report} incr t ${:t}
+        }
+        :finalize $avg
+        set :c 0
+        set :t 0
+      }
 
   Class create UrlCounter -superclass AvgCounter \
       -parameter {
@@ -537,7 +538,7 @@ if {"async-cmd" ni [ns_job queues]} {
   UrlCounter instproc add_url_stat {url ms requestor} {
     #ns_log notice "UrlCounter.add_url_stat($url,$ms,$requestor)"
     my ++
-    # my log "[self proc] $url /$ms/ $requestor (${:c})"
+    # :log "[self proc] $url /$ms/ $requestor (${:c})"
     incr :t $ms
 
     ### set up a value for the right ordering in last 100.
@@ -557,16 +558,16 @@ if {"async-cmd" ni [ns_job queues]} {
   }
   
   UrlCounter instproc last100  {} {
-    my array get last100
+    array get :last100
   }
   UrlCounter instproc flush_url_stats {} {
-    my log "flush_url_stats"
-    my array unset stat
-    my array unset cnt
+    :log "flush_url_stats"
+    array unset :stat
+    array unset :cnt
   }
   UrlCounter instproc url_stats {} {
     set result [list]
-    foreach url [my array names stat] {
+    foreach url [array names :stat] {
       lappend result [list $url [set :stat($url)] [set :cnt($url)]]
     }
     set result [lsort -real -decreasing -index 1 $result]
@@ -576,12 +577,12 @@ if {"async-cmd" ni [ns_job queues]} {
     # truncate statistics if necessary
     set max [max-url-stats]
     if {$max>1} {
-      set result [my url_stats]
+      set result [:url_stats]
       set l [llength $result]
       for {set i $max} {$i<$l} {incr i} {
 	set url [lindex $result $i 0]
-	my unset stat($url)
-	my unset cnt($url)
+	unset :stat($url)
+	unset :cnt($url)
       }
       set result [lrange $result 0 $max-1]
       return $result
@@ -590,7 +591,7 @@ if {"async-cmd" ni [ns_job queues]} {
   }
   UrlCounter instproc cleanup_stats {} {
     # truncate statistics if necessary
-    #my check_truncate_stats
+    # :check_truncate_stats
     # we use the timer to check other parameters as well here
     set time_window [time-window]
     if {$time_window != [throttler timeWindow]} {
@@ -600,9 +601,9 @@ if {"async-cmd" ni [ns_job queues]} {
     return ""
   }
   UrlCounter instproc report_url_stats {} {
-    set stats [my check_truncate_stats]
+    set stats [:check_truncate_stats]
     if {$stats eq ""} {
-      set stats [my url_stats]
+      set stats [:url_stats]
     }
     return $stats
   }
@@ -665,7 +666,7 @@ if {"async-cmd" ni [ns_job queues]} {
   } {
     if {$full} {
       set info [list]
-      foreach key [my array names pa] {
+      foreach key [array names :pa] {
 	set entry [list $key [set :pa($key)]]
 	foreach var [list timestamp hits expSmooth switches] {
 	  set k ${var}($key)
@@ -675,23 +676,23 @@ if {"async-cmd" ni [ns_job queues]} {
       }
       return $info
     } else {
-      return [my array names pa]
+      return [array names :pa]
     }
   }
   Users proc unknown { obj args } {
-    my log "unknown called with $obj $args"
+    :log "unknown called with $obj $args"
   }
   Users ad_proc nr_active {} {
     @return number of active users (in time window)
   } {
-    return [my array size pa]
+    return [array size :pa]
   }
 
   Users ad_proc nr_users_time_window {} {
     @return number of different ip addresses and authenticated users (in time window)
   } {
     set ip 0; set auth 0
-    foreach i [my array names pa] {
+    foreach i [array names :pa] {
       if {[::xo::is_ip $i]} {incr ip} {incr auth}
     }
     return [list $ip $auth]
@@ -699,26 +700,38 @@ if {"async-cmd" ni [ns_job queues]} {
   Users ad_proc user_is_active {uid} {
     @return boolean value whether user is active
   } {
-    my exists pa($uid)
+    info exists :pa($uid)
   }
 
   Users ad_proc hits {uid} {
     @param uid request key
     @return Number of hits by this user (in time window)
   } {
-    if {[my exists hits($uid)]} {return [set :hits($uid)]} else {return 0}
+    if {[info exists :hits($uid)]} {
+      return [set :hits($uid)]
+    } else {
+      return 0
+    }
   }
   Users ad_proc last_pa {uid} {
     @param uid request key
     @return last peer address of the specified users
   } {
-    if {[my exists pa($uid)]} { return [set :pa($uid)]} else { return "" }
+    if {[info exists :pa($uid)]} {
+      return [set :pa($uid)]
+    } else {
+      return ""
+    }
   }
   Users proc last_click {uid} {
-    if {[my exists timestamp($uid)]} {return [set :timestamp($uid)]} else {return 0}
+    if {[info exists :timestamp($uid)]} {
+      return [set :timestamp($uid)]
+    } else {
+      return 0
+    }
   }
   Users proc last_requests {uid} {
-    if {[my exists pa($uid)]} { 
+    if {[info exists :pa($uid)]} { 
        set urls [list]
        foreach i [Users info instances] {
           if {[$i exists urls($uid)]} {
@@ -764,15 +777,14 @@ if {"async-cmd" ni [ns_job queues]} {
   }
 
   Users proc current_object {} {
-    throttler instvar timeWindow
     set now 	[clock seconds]
-    set mkey 	[expr { ($now / 60) % $timeWindow}]
+    set mkey 	[expr { ($now / 60) % [throttler timeWindow]}]
     set obj 	[self]::users::$mkey
 
     if {$mkey ne ${:last_mkey}} { 
-      if {${:last_mkey} ne ""} {my purge_access_stats}
+      if {${:last_mkey} ne ""} {:purge_access_stats}
       # create or recreate the container object for that minute
-      if {[my isobject $obj]} {
+      if {[:isobject $obj]} {
         $obj destroy
       }
       Users create $obj -point_in_time $now
@@ -782,10 +794,9 @@ if {"async-cmd" ni [ns_job queues]} {
   }
   
   Users proc purge_access_stats {} {
-    throttler instvar timeWindow
     set time [clock seconds]
     # purge stale entries (for low traffic)
-    set secs [expr {$timeWindow * 60}]
+    set secs [expr {[throttler timeWindow] * 60}]
     if { [info commands [self]::users::${:last_mkey}] ne ""
          && $time - [[self]::users::${:last_mkey} point_in_time] > $secs
       } {
@@ -800,7 +811,7 @@ if {"async-cmd" ni [ns_job queues]} {
   }
 
   Users proc community_access {requestor pa community_id} {
-    [my current_object] community_access $requestor $pa $community_id
+    [:current_object] community_access $requestor $pa $community_id
   }
 
   Users proc entered_community {key now community_id data reason} {
@@ -836,7 +847,7 @@ if {"async-cmd" ni [ns_job queues]} {
       set seconds [expr {$now - [dict get $data start]}]
       set clicks [dict get $data clicks]
     } else {
-      if {[my exists timestamp($key)]} {
+      if {[info exists :timestamp($key)]} {
         set seconds [expr {$now - [set :timestamp($key)]}]
         set clicks 0
       } else {
@@ -855,11 +866,11 @@ if {"async-cmd" ni [ns_job queues]} {
         ns_log warning "::xo::request_monitor_record_activity left_system slow, can lead to filter time >1sec: total time [expr {$t1 - $t0}]"
       }
     }
-    catch {my unset user_in_community($key)}
-    catch {my unset refcount($key)}
-    catch {my unset pa($key)}
-    catch {my unset expSmooth($key)}
-    catch {my unset switches($key)}
+    catch {unset :user_in_community($key)}
+    catch {unset :refcount($key)}
+    catch {unset :pa($key)}
+    catch {unset :expSmooth($key)}
+    catch {unset :switches($key)}
   }
 
   Users instproc init {} {
@@ -917,10 +928,10 @@ if {"async-cmd" ni [ns_job queues]} {
     #
     # Keep the currently active users in the per-minute objects.
     #
-    set var user_in_community($key,$community_id)
-    if {![my exists $var]} {
-      set :$var 1
-      my lappend in_community($community_id) $key
+    set var :user_in_community($key,$community_id)
+    if {![info exists $var]} {
+      set $var 1
+      lappend :in_community($community_id) $key
     }
   }
 
@@ -980,15 +991,15 @@ if {"async-cmd" ni [ns_job queues]} {
     set class [self class]
     
     if {$key ne $pa} {
-      my check_pa_change $key $pa $url
+      :check_pa_change $key $pa $url
     }
 
     #
     # Increase the number of requests that were issued from the user
     # in the current minute.
     #
-    set counter active($key)
-    if {[incr :$counter] == 1} {
+    set counter :active($key)
+    if {[incr $counter] == 1} {
       #
       # On the first occurrence in the current minute, increment the
       # global reference count
@@ -1005,7 +1016,7 @@ if {"async-cmd" ni [ns_job queues]} {
         #
         # Register the fact that the user is doing something in the community
         #
-        my community_access $key $pa $community_id
+        :community_access $key $pa $community_id
       }
       
       #
@@ -1036,18 +1047,18 @@ if {"async-cmd" ni [ns_job queues]} {
     # The array "urls" keeps triples of time stamps, urls and peer
     # addresses per user.
     #
-    my lappend urls($key) [list [my point_in_time] $url $pa]
+    lappend :urls($key) [list ${:point_in_time} $url $pa]
     
     #
     # The global array "hits" keeps overall activity of the user.
     #
     $class incr hits($key)
     $class set timestamp($key) [clock seconds]
-    #ns_log notice "[self] addKey ENDS  $class timestamp($key) [$class set timestamp($key)] counter $counter value [set :$counter]"
+    #ns_log notice "[self] addKey ENDS  $class timestamp($key) [$class set timestamp($key)] counter $counter value [set $counter]"
   }
 
   Users instproc add_view {uid} {
-    #my log "#### add_view $uid"
+    # :log "#### add_view $uid"
     incr :views($uid)
   }
   Users proc views_per_minute {uid} {
@@ -1068,11 +1079,11 @@ if {"async-cmd" ni [ns_job queues]} {
 
   Users instproc destroy {} {
     set class [self class]
-    #ns_log notice "=== [self] destroy [my array names active]"
+    #ns_log notice "=== [self] destroy [array names :active]"
     if {[Users set last_mkey] eq [self]} {
       Users set last_mkey ""
     }
-    foreach key [my array names active] {
+    foreach key [array names :active] {
       if {[::xo::is_ip $key]} {
         set pa $key
       } else {
@@ -1085,7 +1096,7 @@ if {"async-cmd" ni [ns_job queues]} {
   }
   Users proc expSmooth {ts key} {
     set mins [expr {$ts/60}]
-    if {[my exists expSmooth($key)]} {
+    if {[info exists :expSmooth($key)]} {
       lassign [set :expSmooth($key)] _ aggval lastmins hits
       set mindiff [expr {$mins-$lastmins}]
       if {$mindiff == 0} {
@@ -1115,7 +1126,7 @@ if {"async-cmd" ni [ns_job queues]} {
       # the counters of logged-in and not logged-in users.... but not
       # in cases, where the timestamp data was restored.
       #
-      if {![my exists timestamp($key)]} {
+      if {![info exists :timestamp($key)]} {
         if {[::xo::is_ip $key]} {incr :ip24} {incr :auth24}
       }
     }
@@ -1124,7 +1135,7 @@ if {"async-cmd" ni [ns_job queues]} {
   
   Users proc decrRefCount {key pa hitcount} {
     #ns_log notice "=== decrRefCount $key $hitcount"
-    if {[my exists refcount($key)]} {
+    if {[info exists :refcount($key)]} {
       set x [incr :refcount($key) -1]
       incr :hits($key) -$hitcount
       if {$x < 1} {
@@ -1132,9 +1143,9 @@ if {"async-cmd" ni [ns_job queues]} {
         # The user fell out of the per-minute objects due to
         # inactivity.
         #
-        set var user_in_community($key)
-        if {[info exists :$var]} {
-          set data [set :$var]
+        set var :user_in_community($key)
+        if {[info exists $var]} {
+          set data [set $var]
           Users left_community $key $pa [clock seconds] [dict get $data community_id] $data inactive
           Users left_system $key $pa [clock seconds] $data inactive
         } else {
@@ -1145,7 +1156,7 @@ if {"async-cmd" ni [ns_job queues]} {
             # content, but when the user was logged in, this should
             # not happen - it ist at least unusal
             #
-            set address [expr {[my exists pa($pa)] ? "peer address [set :pa($pa)]" : ""}]
+            set address [expr {[info exists :pa($pa)] ? "peer address [set :pa($pa)]" : ""}]
             ns_log warning "no community info for $key available $address"
           }
         }
@@ -1163,19 +1174,23 @@ if {"async-cmd" ni [ns_job queues]} {
     #
     set :ip24 0
     set :auth24 0
-    foreach i [my array names timestamp] {
+    foreach i [array names :timestamp] {
       if {[::xo::is_ip $i]} {incr :ip24} {incr :auth24}
     }
   }
   
   Users proc nr_users_per_day {} {
-    return [list [set :ip24] [set :auth24]]
+    return [list ${:ip24} ${:auth24}]
   }
   Users proc users_per_day {} {
-    my instvar timestamp
     set ip [list]; set auth [list]
-    foreach i [array names timestamp] {
-      if {[::xo::is_ip $i]} {lappend ip [list $i $timestamp($i)]} {lappend auth [list $i $timestamp($i)]}
+    foreach i [array names :timestamp] {
+      if {[::xo::is_ip $i]} {
+        set var ip
+      } else {
+        set var auth
+      }
+      lappend $var [list $i [set :timestamp($i)]]
     }
     return [list $ip $auth]
   }  
@@ -1183,35 +1198,34 @@ if {"async-cmd" ni [ns_job queues]} {
   Users proc time_window_cleanup {} {
     #ns_log notice "=== time_window_cleanup"
     # purge stale entries (maintenance only)
-    throttler instvar timeWindow
     set now [clock seconds]
-    set maxdiff [expr {$timeWindow * 60}]
-    foreach i [lsort [my array names pa]] {
+    set maxdiff [expr {[throttler timeWindow] * 60}]
+    foreach i [lsort [array names :pa]] {
       set purge 0
-      if {![my exists timestamp($i)]} {
+      if {![info exists :timestamp($i)]} {
         ns_log notice "throttle: no timestamp for $i"
         set purge 1
       } else {
         set age [expr {$now - [set :timestamp($i)]}]
         if {$age > $maxdiff} {
-          if {[my exists pa($i)]} {
-            ns_log notice "throttle: entry stale $i => [my exists pa($i)], age=$age"
+          if {[info exists :pa($i)]} {
+            ns_log notice "throttle: entry stale $i => [info exists :pa($i)], age=$age"
             set purge 1
           }
         }
       }
       if {$purge} {
         ns_log notice "=== time_window_cleanup unsets pa($i)"
-        my unset pa($i)
-        catch {my unset refcount($i)}
-        catch {my unset expSmooth($i)}
-        catch {my unset switches($i)}
+        unset :pa($i)
+        catch {unset :refcount($i)}
+        catch {unset :expSmooth($i)}
+        catch {unset :switches($i)}
       }
     }
-    foreach i [lsort [my array names refcount]] {
-      if {![my exists pa($i)]} {
+    foreach i [lsort [array names :refcount]] {
+      if {![info exists :pa($i)]} {
         ns_log notice "throttle: void refcount for $i"
-        my unset refcount($i)
+        unset :refcount($i)
       }
     }
   }
@@ -1220,9 +1234,9 @@ if {"async-cmd" ni [ns_job queues]} {
     set :ip24 0
     set :auth24 0
     set secsPerDay [expr {3600*24}]
-    foreach i [lsort [my array names timestamp]] {
+    foreach i [lsort [array names :timestamp]] {
       set secs [expr {[clock seconds]-[set :timestamp($i)]}]
-      # my log "--- $i: last click $secs secs ago"
+      # :log "--- $i: last click $secs secs ago"
       if {$secs > $secsPerDay} {
 	#foreach {d h m s} [clock format [expr {$secs-$secsPerDay}] \
 	#		       -format {%j %H %M %S}] break
@@ -1230,14 +1244,14 @@ if {"async-cmd" ni [ns_job queues]} {
 	#regexp {^[0]+(.*)$} $h match h
 	#incr d -1
 	#incr h -1
-	#my log "--- $i expired $d days $h hours $m minutes ago"
-	my unset timestamp($i)
+	# :log "--- $i expired $d days $h hours $m minutes ago"
+	unset :timestamp($i)
         ns_log notice "UNSET timestamp($i) deleted due to perDayCleanup after $secs seconds (> $secsPerDay)"
       } else {
         if {[::xo::is_ip $i]} {incr :ip24} {incr :auth24}
       }
     }
-    #ns_log notice "=== auth24 perDayCleanup -> [set :ip24] [set :auth24]"
+    #ns_log notice "=== auth24 perDayCleanup -> ${:ip24} ${:auth24}"
     dump write
   }
 
@@ -1246,11 +1260,11 @@ if {"async-cmd" ni [ns_job queues]} {
   dump proc read {} {
     # make sure, timestamp exists as an array
     array set Users::timestamp [list]
-    if {[file readable [set :file]]} {
+    if {[file readable ${:file}]} {
       # in case of disk-full, the file might be damaged, so make sure,
       # we can continue
-      if {[catch {source [set :file]} errorMsg]} {
-        ns_log error "during source of [set :file]:\n$errorMsg"
+      if {[catch {source ${:file}} errorMsg]} {
+        ns_log error "during source of ${:file}:\n$errorMsg"
       }
     }
     # The dump file data is merged with maybe preexisting data
@@ -1261,7 +1275,7 @@ if {"async-cmd" ni [ns_job queues]} {
     # When old data is restored, don't trust user-info unless it is
     # very recent (e.g. younger than 3 munutes)
     #
-    if {[clock seconds] - [file mtime [set :file]] > 180} {
+    if {[clock seconds] - [file mtime ${:file}] > 180} {
       Users array unset user_in_community
     }
   }
@@ -1280,12 +1294,12 @@ if {"async-cmd" ni [ns_job queues]} {
       }
     }
     if {$sync} {
-      set dumpFile [open [set :file] w]
+      set dumpFile [open ${:file} w]
       puts -nonewline $dumpFile $cmd
       close $dumpFile
     } else {
       set dumpFile [bgdelivery do AsyncDiskWriter new]
-      bgdelivery do $dumpFile open -filename [set :file]
+      bgdelivery do $dumpFile open -filename ${:file}
       bgdelivery do $dumpFile async_write $cmd
       bgdelivery do $dumpFile close
     }
@@ -1307,7 +1321,7 @@ if {"async-cmd" ni [ns_job queues]} {
   # define a class value, which refreshes itself all "refresh" ms.  
   #
   Class create Value -parameter {{value ""} {refresh 10000}}
-  Value instproc updateValue {} {set :handle [after [my refresh] [list [self] updateValue]]}
+  Value instproc updateValue {} {set :handle [after ${:refresh} [list [self] updateValue]]}
 
   #
   # define a object loadAvg.
@@ -1319,7 +1333,7 @@ if {"async-cmd" ni [ns_job queues]} {
     set procloadavg /proc/loadavg
     if {[file readable $procloadavg]} {
       set f [open $procloadavg]; 
-      my value [lrange [read $f] 0 2]; 
+      set :value [lrange [read $f] 0 2]
       close $f
     }
     next
@@ -1386,7 +1400,7 @@ if {"async-cmd" ni [ns_job queues]} {
   <li><em>timeWindow:</em>Time window for computing detailed statistics; can 
      be configured via OACS package parameter <code>time-window</code></li>
   <li><em>timeoutMs:</em> Time window to keep statistics for a user</li>
-  <li><em>startThrottle:</em> If user requests more than this #, he is throttled</li>
+  <li><em>startThrottle:</em> If user requests more than this #, thre requests are delayed. When larger than toMuc, the parameter is ignored</li>
   <li><em>toMuch:</em> If user requests more than this #, he is kicked out</li>
   </ul>
   The throttler is defined as a class running in a detached thread. See <a href='/api-doc/procs-file-view?path=packages/xotcl-core/tcl/40-thread-mod-procs.tcl'>XOTcl API for Thread management</a> for more details.
@@ -1451,8 +1465,8 @@ throttle proc ms {-start_time} {
 }
 
 throttle proc get_context {} {
-  #my log "--t [my exists context_initialized] url=[ns_conn url]"
-  if {[my exists context_initialized]} return
+  # :log "--t [info exists :context_initialized] url=[ns_conn url]"
+  if {[info exists :context_initialized]} return
 
   set :url [ns_conn url]
   set :method [ns_conn method]
@@ -1460,7 +1474,7 @@ throttle proc get_context {} {
   set :community_id 0
   if {[info exists ::ad_conn(package_id)]} {
     set :community_id [ad_conn subsite_id]
-    #my log "--t we have a package_id"
+    # :log "--t we have a package_id"
     # ordinary request, ad_conn is initialized
     set package_id [ad_conn package_id]
     ::xo::ConnectionContext require -package_id $package_id -url ${:url}
@@ -1474,7 +1488,7 @@ throttle proc get_context {} {
     #
     # Requests for /resources/* land here
     #
-    #my log "--t we have no package_id , subsite_id ?[info exists ::ad_conn(subsite_id)] [ns_conn url]"
+    # :log "--t we have no package_id , subsite_id ?[info exists ::ad_conn(subsite_id)] [ns_conn url]"
     ::xo::ConnectionContext require -url ${:url}
   }
 
@@ -1485,10 +1499,10 @@ throttle proc get_context {} {
   if {${:query} ne ""} {
     append :url ?${:query}
   }
-  #my log "### setting url to ${:url}"
+  # :log "### setting url to ${:url}"
   #xo::show_stack
   set :context_initialized 1
-  #my log "--i leaving [ns_conn url] vars=[lsort [info vars]]"
+  # :log "--i leaving [ns_conn url] vars=[lsort [info vars]]"
 }
 
 throttle ad_proc check {} {
@@ -1498,26 +1512,26 @@ throttle ad_proc check {} {
 } {
   set t0 [clock milliseconds]
   
-  my get_context
-  #my log "### check"
+  :get_context
+  # :log "### check"
 
-  lassign [my throttle_check ${:requestor} ${:pa} ${:url} \
+  lassign [:throttle_check ${:requestor} ${:pa} ${:url} \
 	       [ns_conn start] [ns_guesstype [ns_conn url]] ${:community_id}] \
       toMuch ms repeat
   set t1 [clock milliseconds]
   
   if {$repeat} {
-    my add_statistics repeat ${:requestor} ${:pa} ${:url} ${:query}
+    :add_statistics repeat ${:requestor} ${:pa} ${:url} ${:query}
     set result -1
   } elseif {$toMuch} {
-    my log "*** we have to refuse user ${:requestor} with $toMuch requests"
-    my add_statistics reject ${:requestor} ${:pa} ${:url} ${:query}
+    :log "*** we have to refuse user ${:requestor} with $toMuch requests"
+    :add_statistics reject ${:requestor} ${:pa} ${:url} ${:query}
     set result $toMuch
   } elseif {$ms} {
-    my log "*** we have to block user ${:requestor} for $ms ms"
-    my add_statistics throttle ${:requestor} ${:pa} ${:url} ${:query}
+    :log "*** we have to block user ${:requestor} for $ms ms"
+    :add_statistics throttle ${:requestor} ${:pa} ${:url} ${:query}
     after $ms
-    my log "*** continue for user ${:requestor}"
+    :log "*** continue for user ${:requestor}"
     set result 0
   } else {
     set result 0
@@ -1558,11 +1572,11 @@ throttle forward user_is_active          %self do Users %proc
 # the next procs are for the filters (registered from the -init file)
 ####
 throttle proc postauth args {
-  #my log "+++ [self proc] [ad_conn url] auth ms [my partialtimes] [ad_conn isconnected]"
-  #my do set ::cookies([set :requestor]) [ns_set get [ns_conn headers] Cookie]
-  set r [my check]
+  # :log "+++ [self proc] [ad_conn url] auth ms [:partialtimes] [ad_conn isconnected]"
+  # :do set ::cookies(${:requestor}) [ns_set get [ns_conn headers] Cookie]
+  set r [:check]
   if {$r < 0} {
-    set url [set :url]
+    set url ${:url}
     ns_return 200 text/html "
       <h1>[_ xotcl-request-monitor.repeated_operation]</h1>
       [_ xotcl-request-monitor.operation_blocked]<p>"
@@ -1575,32 +1589,30 @@ throttle proc postauth args {
       Please slow down your requests...<p>"
     return filter_return
   } else {
-    #my log "-- filter_ok"
+    # :log "-- filter_ok"
     return filter_ok
   }
 }
 throttle proc trace args {
-  #my log "+++ [self proc] <$args> [ad_conn url] [my partialtimes] [ad_conn isconnected]"
+  # :log "+++ [self proc] <$args> [ad_conn url] [:partialtimes] [ad_conn isconnected]"
   # OpenACS 5.2 bypasses for requests to /resources the user filter
   # in these cases pre- or postauth are not called, but only trace.
   # So we have to make sure we have the needed context here
-  my get_context
-  #my log "CT=[ns_set array [ns_conn outputheaders]] -- [set :url]"
+  :get_context
+  # :log "CT=[ns_set array [ns_conn outputheaders]] -- ${:url}"
   
-  my add_url_stat ${:method} ${:url} [my partialtimes] ${:requestor} ${:pa} \
+  :add_url_stat ${:method} ${:url} [:partialtimes] ${:requestor} ${:pa} \
       [ns_set get [ns_conn outputheaders] Content-Type]
-  my unset context_initialized
+  unset :context_initialized
   return filter_ok
 }
 
 throttle proc community_access {community_id} {
-  my get_context
-  if {[set :community_id] eq ""} {
-    my users community_access [set :requestor] [set :pa] $community_id
+  :get_context
+  if {${:community_id} eq ""} {
+    :users community_access ${:requestor} ${:pa} $community_id
   }
 }
-#throttle proc {} args {my eval $args}
-
 
 ad_proc string_truncate_middle {{-ellipsis ...} {-len 100} string} {
   cut middle part of a string in case it is to long

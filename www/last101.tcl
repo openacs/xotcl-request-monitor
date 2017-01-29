@@ -20,7 +20,7 @@ Class create CustomField -volatile \
     -instproc render-data {row} {
       html::div -style {
 	border: 1px solid #a1a5a9; padding: 0px 5px 0px 5px; background: #e2e2e2} {
-	  html::t  [$row set [my name]] 
+	  html::t  [$row set [:name]] 
 	}
     }
 
@@ -101,7 +101,7 @@ Object ::pageMaster -proc decorate {node} {
 	      html::t -disableOutputEscaping "&#187;\n"
 	      html::a -href "/request-monitor" {html::t "XOTcl Request Monitor"}
 	      html::t -disableOutputEscaping "&#187;\n"
-	      html::t [my set context]
+	      html::t ${:context}
 	      html::div -style "clear:both;"
 	    }
 	    html::div -id status {
@@ -122,7 +122,7 @@ Object ::pageMaster -proc decorate {node} {
 	  }
 	} ;# end of site header
 	html::div -id "youarehere" {
-	  html::t [my set title]
+	  html::t ${:title}
 	}
 	html::br
 	html::div -id "portal-navigation" {
