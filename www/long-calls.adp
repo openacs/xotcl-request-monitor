@@ -19,7 +19,10 @@
 <table class="table table-condensed table-bordered small">
     <thead>
       <tr>
-        <th>Milliseconds</th>
+        <th class='text-right'>Queuetime</th>
+        <th class='text-right'>Filtertime</th>
+	<th class='text-right'>Runtime</th>
+	<th class='text-right'>Totaltime</th>
         <th>Date</th>
         <th>User ID</th>
         <th>IP</th>

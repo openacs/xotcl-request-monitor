@@ -334,10 +334,10 @@ if {"async-cmd" ni [ns_job queues]} {
     #
     # conntime: time spent in connection thread in ms, not including queuing times
     # totaltime: time since start of the request
-    #set conntime [expr {int(([dict get $partialtimes runtime] + [dict get $partialtimes filtertime]) * 1000)}]
+    set conntime [expr {int(([dict get $partialtimes runtime] + [dict get $partialtimes filtertime]) * 1000)}]
     set totaltime [dict get $partialtimes ms]
     
-    #ns_log notice "url=<$url> totaltime $totaltime"
+    #ns_log notice "conntime $conntime totaltime $totaltime url=<$url>"
     if { $url in {/register/ / /dotlrn/} } {
       #
       # calculate for certain URLs separate statistics
@@ -345,18 +345,18 @@ if {"async-cmd" ni [ns_job queues]} {
       incr ::agg_time($url) $totaltime
       incr ::count(calls:$url)
     }
-    if {$totaltime > 5000} {
+    if {$conntime > 3000} {
       if {$url eq "/register/"} {
         set color unexpected
-      } elseif {$totaltime > 10000} {
+      } elseif {$conntime > 7000} {
         set color red
-      } elseif {$totaltime > 6000} {
+      } elseif {$conntime > 5000} {
         set color orange
       } else {                
         set color yellow
       }
       incr ::count(longcalls:$color)
-      catch {:log [list $url $totaltime $key $pa $content_type]}
+      catch {:log [list $url $partialtimes $key $pa $content_type]}
     }
     next
   }
