@@ -329,22 +329,28 @@ if {"async-cmd" ni [ns_job queues]} {
     [self class] append log "$entry\n"
     [self class] incr count
   }
+  
   TraceLongCalls instproc add_url_stat {method url partialtimes key pa content_type} {
     regexp {^([^?]+)[?]} $url . url
     #
     # conntime: time spent in connection thread in ms, not including queuing times
     # totaltime: time since start of the request
+    #
     set conntime [expr {int(([dict get $partialtimes runtime] + [dict get $partialtimes filtertime]) * 1000)}]
     set totaltime [dict get $partialtimes ms]
     
     #ns_log notice "conntime $conntime totaltime $totaltime url=<$url>"
     if { $url in {/register/ / /dotlrn/} } {
       #
-      # calculate for certain URLs separate statistics
+      # Calculate for certain URLs separate statistics
       #
       incr ::agg_time($url) $totaltime
       incr ::count(calls:$url)
     }
+
+    #
+    # Handling of longcalls counter
+    #
     if {$conntime > 3000} {
       if {$url eq "/register/"} {
         set color unexpected
@@ -356,7 +362,22 @@ if {"async-cmd" ni [ns_job queues]} {
         set color yellow
       }
       incr ::count(longcalls:$color)
-      catch {:log [list $url $partialtimes $key $pa $content_type]}
+
+      #
+      # Add url, in case it is not too long
+      #
+      set ql [string length $query] 
+      if {$ql > 0 && $ql < 60} {
+        set loggedUrl $url?$query
+      } else {
+        set loggedUrl $url
+      }
+      
+      #
+      # Finally, log the entry with to log/long-calls.log
+      #
+      catch {:log [list $loggedUrl $partialtimes $key $pa $content_type]}
+
     }
     next
   }
