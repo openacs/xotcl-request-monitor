@@ -61,7 +61,7 @@ foreach line [lreverse [split $c1 \n]] {
         set queuetime  [dict get $time queuetime]
         set filtertime [dict get $time filtertime]
         set runtime    [dict get $time runtime]
-        set totaltime  [expr {$queuetime + $filtertime + $runtime}]
+        set totaltime  [format %8.6f [expr {$queuetime + $filtertime + $runtime}]]
         set color(queuetime)  [::xo::colorize_slow_calls -warning 1.000 -danger 5.000  $queuetime]
         set color(filtertime) [::xo::colorize_slow_calls -warning 0.500 -danger 1.000  $filtertime]
         set color(runtime)    [::xo::colorize_slow_calls -warning 3.000 -danger 5.000  $runtime]
