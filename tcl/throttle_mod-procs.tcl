@@ -331,7 +331,7 @@ if {"async-cmd" ni [ns_job queues]} {
   }
 
   TraceLongCalls instproc add_url_stat {method url partialtimes key pa content_type} {
-    regexp {^([^?]+)[?]} $url . url
+    regexp {^([^?]+)[?]?(.*)$} $url . url query
     #
     # conntime: time spent in connection thread in ms, not including queuing times
     # totaltime: time since start of the request
