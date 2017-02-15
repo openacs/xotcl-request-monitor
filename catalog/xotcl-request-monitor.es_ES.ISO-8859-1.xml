@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<message_catalog package_key="xotcl-request-monitor" locale="es_ES" charset="ISO-8859-1">
+
+  <msg key="operation_blocked">Su acción ha sido enviada repetidamente al servidor y por ello ha sido bloqueada. Por favor, espere a que el servidor responda antes de enviarla de nuevo [&lt;a href=&#34;%url%&#34;&gt;Continuar&lt;/a&gt;].</msg>
+  <msg key="repeated_operation">Operación repetida</msg>
+</message_catalog>
