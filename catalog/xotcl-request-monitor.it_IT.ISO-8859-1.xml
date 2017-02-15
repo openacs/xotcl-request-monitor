@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<message_catalog package_key="xotcl-request-monitor" locale="it_IT" charset="ISO-8859-1">
+
+  <msg key="operation_blocked">La tua query è stata inviata ripetutamente al server e per questo è stata bloccata. Ti preghiamo di attendere fino alla risposta del server prima di inviare nuovamente la richiesta [&lt;a href=&#34;%url%&#34;&gt;Continua&lt;/a&gt;].</msg>
+  <msg key="repeated_operation">Operazione Ripetuta</msg>
+</message_catalog>
