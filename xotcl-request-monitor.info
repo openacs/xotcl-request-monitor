@@ -12,7 +12,7 @@
         <owner url="mailto:neumann@wu-wien.ac.at">Gustaf Neumann</owner>
         <vendor url="http://wu.ac.at">WU Vienna</vendor>
         <summary>Request Monitor with user tracking functionality</summary>
-        <release-date>2017-01-30</release-date>
+        <release-date>2017-02-20</release-date>
         <description format="text/html">&lt;pre&gt;
 This package provides a Request Monitor for OpenACS applications. It computes performance 
 summary information such as requests/views per seconds, average response time, number
