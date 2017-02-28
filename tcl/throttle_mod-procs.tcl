@@ -1295,7 +1295,7 @@ if {"async-cmd" ni [ns_job queues]} {
     # When old data is restored, don't trust user-info unless it is
     # very recent (e.g. younger than 3 munutes)
     #
-    if {[clock seconds] - [file mtime ${:file}] > 180} {
+    if {[file readable ${:file}] && ([clock seconds] - [file mtime ${:file}] > 180)} {
       Users array unset user_in_community
     }
   }
