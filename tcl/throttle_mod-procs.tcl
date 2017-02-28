@@ -1535,21 +1535,21 @@ throttle ad_proc check {} {
   :get_context
   # :log "### check"
 
-  lassign [:throttle_check ${:requestor} ${:pa} ${:url} \
+  lassign [my throttle_check ${:requestor} ${:pa} ${:url} \
                [ns_conn start] [ns_guesstype [ns_conn url]] ${:community_id}] \
       toMuch ms repeat
   #set t1 [clock milliseconds]
 
   if {$repeat} {
-    :add_statistics repeat ${:requestor} ${:pa} ${:url} ${:query}
+    my add_statistics repeat ${:requestor} ${:pa} ${:url} ${:query}
     set result -1
   } elseif {$toMuch} {
     :log "*** we have to refuse user ${:requestor} with $toMuch requests"
-    :add_statistics reject ${:requestor} ${:pa} ${:url} ${:query}
+    my add_statistics reject ${:requestor} ${:pa} ${:url} ${:query}
     set result $toMuch
   } elseif {$ms} {
     :log "*** we have to block user ${:requestor} for $ms ms"
-    :add_statistics throttle ${:requestor} ${:pa} ${:url} ${:query}
+    my add_statistics throttle ${:requestor} ${:pa} ${:url} ${:query}
     after $ms
     :log "*** continue for user ${:requestor}"
     set result 0
@@ -1621,7 +1621,7 @@ throttle proc trace args {
   :get_context
   # :log "CT=[ns_set array [ns_conn outputheaders]] -- ${:url}"
 
-  :add_url_stat ${:method} ${:url} [:partialtimes] ${:requestor} ${:pa} \
+  my add_url_stat ${:method} ${:url} [:partialtimes] ${:requestor} ${:pa} \
       [ns_set get [ns_conn outputheaders] Content-Type]
   unset :context_initialized
   return filter_ok
