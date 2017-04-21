@@ -91,7 +91,7 @@ if {"async-cmd" ni [ns_job queues]} {
   #
   # A class to keep simple statistics
   #
-  Class create ThrottleStat -parameter { type requestor timestamp ip_adress url }
+  Class create ThrottleStat -parameter { type requestor timestamp ip_address url }
 
   #
   # class for throtteling eager requestors or to block duplicate requests
@@ -111,14 +111,14 @@ if {"async-cmd" ni [ns_job queues]} {
     next
   }
 
-  Throttle instproc add_statistics { type requestor ip_adress url query } {
+  Throttle instproc add_statistics { type requestor ip_address url query } {
     #set furl [expr {$query ne "" ? "$url?$query" : $url}]
     incr :${type}s
     # :log "++++ add_statistics   -type $type -user_id $requestor "
     set entry [ThrottleStat new -childof [self]::stats \
                    -type $type -requestor $requestor \
                    -timestamp [clock seconds] \
-                   -ip_adress $ip_adress -url $url]
+                   -ip_address $ip_address -url $url]
   }
 
   Throttle instproc url_statistics {{-flush 0}} {
@@ -131,7 +131,7 @@ if {"async-cmd" ni [ns_job queues]} {
     } else {
       foreach stat $data {
         lappend output [list [$stat type] [$stat requestor] \
-                            [$stat timestamp] [$stat ip_adress] [$stat url]]
+                            [$stat timestamp] [$stat ip_address] [$stat url]]
       }
       return $output
     }
@@ -965,7 +965,7 @@ if {"async-cmd" ni [ns_job queues]} {
       # Check, if the peer address changed. This might be some
       # indication, that multiple users are working under the same
       # user_id, or that the identity was highjacked. Therefore, we
-      # note such occurences.
+      # note such occurrences.
       #
       if {[$class set pa($key)] ne $pa} {
         if {[catch {$class incr switches($key)}]} {

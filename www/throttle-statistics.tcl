@@ -23,13 +23,13 @@ template::list::create \
       user {
 	label Userid
 	link_url_col user_url}
-      IPadress  {label "IP Address"}
+      IPaddress  {label "IP Address"}
       URL {label "URL"}
     }
 
-multirow create url_statistics type user user_url time IPadress URL
+multirow create url_statistics type user user_url time IPaddress URL
 foreach l [lsort -index 2 $data] {
-  lassign $l type uid time IPadress URL
+  lassign $l type uid time IPaddress URL
   if {![string is integer -strict $uid]} {
     set user "Anonymous"
     set user_url ""
@@ -39,7 +39,7 @@ foreach l [lsort -index 2 $data] {
     set user_url [acs_community_member_admin_url -user_id $uid]
   }
   set time [clock format $time -format "%Y-%m-%d %H:%M:%S"]
-  multirow append url_statistics $type $user $user_url $time $IPadress $URL
+  multirow append url_statistics $type $user $user_url $time $IPaddress $URL
 }
 
 #set throttle_url_statistics [throttle url_statistics]
