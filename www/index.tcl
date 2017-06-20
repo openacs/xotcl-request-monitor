@@ -45,7 +45,13 @@ proc currentSystemLoad {} {
   if {![catch {exec sysctl vm.loadavg kern.boottime} result]} {
       return $result
   }
-  return [exec /usr/bin/uptime]
+  if {[set uptime [util::which uptime]] ne ""} {
+    return [exec $uptime]    
+  } else {
+    set msg "'uptime' command not found on the system"
+    ad_log error $msg
+    return ""
+  }  
 }
 
 # collect current response time (per minute and hour)
