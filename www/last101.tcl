@@ -5,7 +5,7 @@ ad_page_contract {
 
     @cvs-id $id
 } -query {
-    {orderby:optional "time,desc"}
+    {orderby:token,optional "time,desc"}
 } -properties {
     title:onevalue
     context:onevalue
@@ -16,15 +16,15 @@ set context [list "Last 100 Requests"]
 set stat [list]
 foreach {key value} [throttle last100] {lappend stat $value}
 
-Class CustomField -volatile \
+Class create CustomField -volatile \
     -instproc render-data {row} {
       html::div -style {
 	border: 1px solid #a1a5a9; padding: 0px 5px 0px 5px; background: #e2e2e2} {
-	  html::t  [$row set [my name]] 
+	  html::t  [$row set [:name]] 
 	}
     }
 
-TableWidget t1 -volatile \
+TableWidget create t1 -volatile \
     -columns {
       Field time       -label "Time" -orderby time -mixin ::template::CustomField
       AnchorField user -label "Userid" -orderby user
@@ -101,7 +101,7 @@ Object ::pageMaster -proc decorate {node} {
 	      html::t -disableOutputEscaping "&#187;\n"
 	      html::a -href "/request-monitor" {html::t "XOTcl Request Monitor"}
 	      html::t -disableOutputEscaping "&#187;\n"
-	      html::t [my set context]
+	      html::t ${:context}
 	      html::div -style "clear:both;"
 	    }
 	    html::div -id status {
@@ -122,7 +122,7 @@ Object ::pageMaster -proc decorate {node} {
 	  }
 	} ;# end of site header
 	html::div -id "youarehere" {
-	  html::t [my set title]
+	  html::t ${:title}
 	}
 	html::br
 	html::div -id "portal-navigation" {
@@ -164,3 +164,8 @@ pageMaster set title $title
 pageMaster set context [lindex $context 0]
 
 ns_log notice "render time [time {t1 asHTML -page -master ::pageMaster}]"
+# Local variables:
+#    mode: tcl
+#    tcl-indent-level: 2
+#    indent-tabs-mode: nil
+# End:

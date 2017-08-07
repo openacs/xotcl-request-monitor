@@ -1,7 +1,7 @@
 <master>
-<property name="doc(title)">Infomation about IP Address @ip@</property>
+<property name="doc(title)">Information about IP Address @ip@</property>
 
-<h1>Infomation about IP Address @ip@</h1>
+<h1>Information about IP Address @ip@</h1>
 
 <ul>
 <li>DNS: @dns_name@</li>

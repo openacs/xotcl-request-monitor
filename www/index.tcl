@@ -4,7 +4,7 @@ ad_page_contract {
   @author Gustaf Neumann
   @cvs-id $Id$
 } -query {
-  {jsGraph 1}
+  {jsGraph:boolean 1}
 } -properties {
   title:onevalue
   context:onevalue
@@ -45,7 +45,13 @@ proc currentSystemLoad {} {
   if {![catch {exec sysctl vm.loadavg kern.boottime} result]} {
       return $result
   }
-  return [exec /usr/bin/uptime]
+  if {[set uptime [util::which uptime]] ne ""} {
+    return [exec $uptime]    
+  } else {
+    set msg "'uptime' command not found on the system"
+    ad_log error $msg
+    return ""
+  }  
 }
 
 # collect current response time (per minute and hour)
@@ -92,8 +98,13 @@ proc currentViews {} {
   set um [throttle trend user_count_minutes]
   if { $vm eq "" || $um eq ""} { return "NO DATA" }
   set views_per_sec [expr {[lindex $vm end]/60.0}]
-  #ns_log notice "um='$um' vm='$vm' expr {60.0*$views_per_sec/[lindex $um end]}"
-  set views_per_min_per_user [expr {60.0*$views_per_sec/[lindex $um end]}]
+  set currentUsers [lindex $um end]
+  if {$currentUsers > 0} {
+    #ns_log notice "um='$um' vm='$vm' expr {60.0*$views_per_sec/[lindex $um end]}"
+    set views_per_min_per_user [expr {60.0 * $views_per_sec / $currentUsers}]
+  } else {
+    set views_per_min_per_user "0"
+  }
   set view_time [expr {$views_per_min_per_user>0 ? 
 	" avg. view time: [format %4.1f [expr {60.0/$views_per_min_per_user}]]" : ""}]
   return "[format %4.1f $views_per_sec] views/sec, [format %4.3f $views_per_min_per_user] views/min/user,  $view_time"
@@ -101,20 +112,21 @@ proc currentViews {} {
 
 
 if {$jsGraph} {
-  # use javascript graphics
-  template::head::add_script -type text/javascript -src /resources/xotcl-request-monitor/diagram/diagram.js
+  set nonce [::security::nonce_token]
 
-  # draw a graph in form of an html table of with 500 pixels
+  template::add_body_script -src "//ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"
+  template::add_body_script -src "//code.highcharts.com/highcharts.js"
+  template::add_body_script -src "//code.highcharts.com/modules/exporting.js"
+  
+  proc js_time {clock} {
+    set year [clock format $clock -format %Y]
+    set month [expr {[string trimleft [clock format $clock -format %N]] - 1}]
+    return "Date.UTC($year, $month, [clock format $clock -format {%d, %H, %M, %S}], 0)"
+  }
+
+  set ::graphCount 0
   proc graph {values label type} {
-
-    switch $type {
-      "Second" { set delta "D.XGridDelta=10000;\n"  }
-      "Minute" { set delta "D.XGridDelta=600000;\n" }
-      default  { set delta ""}
-    }
-
-    set max 1
-    foreach v $values {if {$v>$max} {set max $v}}
+    #ns_log notice "values=$values label=$label, type=$type"
 
     set size  [llength $values]
     if {$size<12} {
@@ -122,49 +134,85 @@ if {$jsGraph} {
       set size [llength $values]
     }
 
-    set end   [clock format [clock seconds] -format "%Y,%m,%d,%H,%M,%S"]
-    set begin [clock format [clock scan "-$size $type"] -format "%Y,%m,%d,%H,%M,%S"]
-    regsub -all {,0} $begin , begin
-    regsub -all {,0} $end , end
-    #ns_log Notice "begin: $begin, end: $end, $size $type"
+    set begin    [clock scan "-$size $type"]
+    set interval [clock scan "1 $type" -base 0]
+    set graphID "graph[incr ::graphCount]"
 
-    set diagram [subst {<script type="text/javascript">
-      document.open();
-      var D=new Diagram();
-      D.SetFrame(40, 20, 460, 120);
-      D.SetBorder(Date.UTC($begin),Date.UTC($end), -$max*0.03, $max*1.03);
-      D.SetText("$type","", "$label");
-      D.XScale=4;
-      D.YScale=1;
-      $delta
-      D.Font="color:#000000;font-family:Verdana;font-weight:normal;font-size:7pt;line-height:7pt;";
-      D.Draw("", "#004080", false);
-      var i, j, x, y, y0=D.ScreenY(0);
+    set i 0
+    set data {}
+    foreach t $values {
+      set js_time [js_time [expr {$begin + $i * $interval}]]
+      lappend data [subst {{x: $js_time, y: $t}}]
+      incr i
+    }
+    #ns_log notice "data=$data"
+
+    set series [subst {{
+      showInLegend: false,
+      type: 'areaspline',
+      threshold : null,
+      marker: {
+        enabled: true,
+        radius: 3
+      },
+      tooltip : {
+        valueDecimals : 2
+      },
+      name: '$label',
+      data: \[ [join $data ,] \],
+      fillColor : {
+                    linearGradient : {
+                        x1: 0,
+                        y1: 0,
+                        x2: 0,
+                        y2: 1
+                    },
+                    stops : \[
+                        \[0, Highcharts.getOptions().colors\[0\]\],
+                        \[1, Highcharts.Color(Highcharts.getOptions().colors\[0\]).setOpacity(0).get('rgba')\]
+                    \]
+                }
+    }}]
+
+    template::add_body_script -script [subst {
+    \$('#$graphID').highcharts({
+        chart: {
+            type: 'line'
+        },
+        title: {
+            text: ''
+        },
+        xAxis: {
+            type: 'datetime',
+	    title:  { text: 'Date'},
+        },
+        yAxis: \[{
+          min: 0,
+          title: {
+              text: '$label',
+              align: 'high',
+              offset: 60
+            },
+	    labels: { overflow: 'justify'}
+        }\],
+        plotOptions: {
+            bar: {
+                dataLabels: {
+                    enabled: true
+                }
+            }
+        },
+        credits: {
+            enabled: false
+        },
+        series: \[$series\]
+    });
     }]
 
-    #ns_log notice "--- $label $begin ... $end"
-
-    set index 0
-    set x "Date.UTC($begin)" 
-    set y [lindex $values 0]
-    foreach v $values {
-      incr index
-      set val [clock format [clock scan "[expr {$index-$size}] $type"] -format "%Y,%m,%d,%H,%M,%S"]
-      #ns_log notice "--- $label $index $val // [expr {$index-$size}] $type = $v"
-      regsub -all {,0} $val , val
-      set x1 "Date.UTC($val)"
-      #ns_log notice "--- X1 = $x1"
-      set y1 $v
-      append diagram [subst {
-	i=D.ScreenX(Date.UTC($val));
-	j=D.ScreenY($v);
-	new Dot(i, j, 2, 2, "#000000", "$v");
-	new Line(D.ScreenX($x),D.ScreenY($y),D.ScreenX($x1),D.ScreenY($y1),"#c0c0c0",1,"");
-      }]
-      set x $x1; set y $y1
-    }
-    append diagram "\ndocument.close();\n</SCRIPT>\n"
-    return "<div style='position:relative;top:0px;height:150px;width:480px'>\n$diagram\n</div>"
+    #ns_log notice diagram=$diagram
+    return [subst {
+      <div id="$graphID" style="min-width: 640px; max-width: 100%; height: 240px; margin: 0 auto"></div>
+    }]
   }
   
 
@@ -172,7 +220,7 @@ if {$jsGraph} {
   proc counterTable {label objlist} {
     foreach {t l} $objlist {
       set trend [throttle trend $t]
-       append text [subst {
+      append text [subst {
 	<tr><td valign='top'>[graph $trend "$label per $l" $l]</td>
 	<td valign='top'>
 	<table><tr><td>Max</td></tr>
@@ -193,6 +241,7 @@ if {$jsGraph} {
       }
       append text "</table>\n</td></tr>\n"
     }
+    #ns_log notice "counterTable $label $objlist ->\n$text"
     return $text
   }
 
@@ -306,3 +355,9 @@ if {[acs_user::site_wide_admin_p]} {
     set param_url ""
 }
 
+
+# Local variables:
+#    mode: tcl
+#    tcl-indent-level: 2
+#    indent-tabs-mode: nil
+# End:

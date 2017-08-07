@@ -23,3 +23,9 @@ if {[info commands ad_conn] eq ""} {
   ### this is probably not sufficient to do something useful...
 }
 
+
+# Local variables:
+#    mode: tcl
+#    tcl-indent-level: 2
+#    indent-tabs-mode: nil
+# End:

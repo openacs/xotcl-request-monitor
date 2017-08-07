@@ -8,7 +8,7 @@ ad_page_contract {
     {all:optional 0}
     {with_param:optional 1}
     {with_apps:optional 0}
-    {orderby:optional "totaltime,desc"}
+    {orderby:token,optional "totaltime,desc"}
 } -properties {
     title:onevalue
     context:onevalue
@@ -145,7 +145,7 @@ switch -glob $orderby {
 }
 
 
-TableWidget t1 -volatile \
+TableWidget create t1 -volatile \
     -actions [subst {
       Action new -label "$show_all_label($all)" -url $url_all -tooltip "show_all_tooltip($all)"
       Action new -label "$with_param_label($with_param)" -url $url_param -tooltip "with_param_tooltip($with_param)"
@@ -199,3 +199,9 @@ if {$hidden>0} {
   append user_string " (Patterns: $hide_patterns)"
 }
 
+
+# Local variables:
+#    mode: tcl
+#    tcl-indent-level: 2
+#    indent-tabs-mode: nil
+# End:

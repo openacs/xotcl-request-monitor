@@ -4,7 +4,7 @@ ad_page_contract {
     @author Gustaf Neumann (adapted for interaction with controlling thread)
     @cvs-id $Id$
 } -query {
-  orderby:optional
+  orderby:token,optional
 } -properties {
     title:onevalue
     context:onevalue
@@ -103,3 +103,9 @@ foreach r [lsort -decreasing -real -index 3 $sortable_requests] {
 }
 
 set t1 [t1 asHTML]
+
+# Local variables:
+#    mode: tcl
+#    tcl-indent-level: 2
+#    indent-tabs-mode: nil
+# End:
