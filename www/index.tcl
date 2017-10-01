@@ -228,7 +228,7 @@ if {$jsGraph} {
       set c 1
       foreach v [throttle max_values $t] {
 	incr c
-	switch $t {
+	switch -- $t {
 	  minutes {set rps "([format %5.2f [expr {[lindex $v 1]/60.0}]] rps)"}
 	  hours   {set rps "([format %5.2f [expr {[lindex $v 1]/(60*60.0)}]] rps)"}
 	  default {set rps ""}
@@ -276,7 +276,7 @@ if {$jsGraph} {
       set c 1
       foreach v [throttle max_values $t] {
 	incr c
-	switch $t {
+	switch -- $t {
 	  minutes {set rps "([format %5.2f [expr {[lindex $v 1]/60.0}]] rps)"}
 	  hours   {set rps "([format %5.2f [expr {[lindex $v 1]/(60*60.0)}]] rps)"}
 	  default {set rps ""}

@@ -973,7 +973,7 @@ if {"async-cmd" ni [ns_job queues]} {
         }
         # log the change
         set timestamp [clock format [clock seconds]]
-        switches.log write "$timestamp -- switch $key from\
+        switches.log write "$timestamp -- switch -- $key from\
          [$class set pa($key)] to $pa $url"
       }
     } elseif {[$class exists pa($pa)]} {
