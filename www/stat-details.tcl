@@ -1,5 +1,5 @@
 ad_page_contract {
-    Displays last requests of a user
+    Displays call statistics
 
     @author Gustaf Neumann 
 
@@ -16,6 +16,14 @@ ad_page_contract {
 }
 set title "Url Statistics"
 set context [list "Url Statistics"]
+
+set admin_p [acs_user::site_wide_admin_p]
+if {!$admin_p} {
+  ad_return_warning "Insufficient Permissions" \
+      "Only side wide admins are allowed to view this page!"
+  ad_script_abort
+}
+
 set hide_patterns [parameter::get -parameter hide-requests -default {*.css}]
 array set apps {
   calendar 1 acs-templating 1 forums 1 file-storage 1 one-community 1 
