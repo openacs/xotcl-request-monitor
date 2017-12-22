@@ -125,9 +125,9 @@ set show_all_tooltip(1) "Show all values"
 set not_all [expr {!$all}]
 
 set with_param_label(1) "Without parameter"
-set with_param_tooltip(1) "Statistics without paramters"
+set with_param_tooltip(1) "Statistics without parameters"
 set with_param_label(0) "With parameter"
-set with_param_tooltip(0) "Statistics with paramters"
+set with_param_tooltip(0) "Statistics with parameters"
 set not_with_param [expr {!$with_param}]
 
 set with_apps_label(1) "With communities"
