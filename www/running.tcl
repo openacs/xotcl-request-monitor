@@ -1,14 +1,14 @@
 ad_page_contract {
-    Displays last requests of a user
+  Displays last requests of a user
 
-    @author Gustaf Neumann (adapted for interaction with controlling thread)
-    @cvs-id $Id$
+  @author Gustaf Neumann (adapted for interaction with controlling thread)
+  @cvs-id $Id$
 } -query {
   orderby:token,optional
 } -properties {
-    title:onevalue
-    context:onevalue
-    user_string:onevalue
+  title:onevalue
+  context:onevalue
+  user_string:onevalue
 }
 
 set admin_p [acs_user::site_wide_admin_p]
@@ -20,9 +20,9 @@ if {!$admin_p} {
 
 set running_requests [throttle running]
 if {[info commands bgdelivery] ne ""} {
-   set background_requests [bgdelivery running]
+  set background_requests [bgdelivery running]
 } else {
-   set background_requests [list]
+  set background_requests [list]
 }
 set nr_bg  [expr {[llength $background_requests]/2}]
 set nr_req [expr {[llength $running_requests]/2}]
