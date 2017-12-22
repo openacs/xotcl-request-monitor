@@ -1565,7 +1565,7 @@ throttle ad_proc check {} {
 }
 ####
 # the following procs are forwarder to the monitoring thread
-# for conveniance
+# for convenience
 ####
 throttle forward statistics              %self do throttler %proc
 throttle forward url_statistics          %self do throttler %proc
