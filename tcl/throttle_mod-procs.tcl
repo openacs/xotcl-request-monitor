@@ -14,12 +14,9 @@ if {"async-cmd" ni [ns_job queues]} {
 ::xotcl::THREAD create throttle {
 
   #
-  #set package_id [::xo::parameter get_package_id_from_package_key \
-                                     #                    -package_key "xotcl-request-monitor"]
-  #
-  # A simple helper class to provide a faster an easier-to-use interface to
-  # package parameters. Eventually, this will move in a more general
-  # way into xotcl-core.
+  # A simple helper class to provide a faster an easier-to-use
+  # interface to package parameters. Eventually, this will move in a
+  # more general way into xotcl-core.
   #
   Class create package_parameter \
       -parameter {{default ""} value name} \
