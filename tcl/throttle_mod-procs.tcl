@@ -286,7 +286,7 @@ if {"async-cmd" ni [ns_job queues]} {
 
   Throttle instproc add_url_stat {method url partialtimes key pa content_type} {
     #ns_log notice "Throttle.add_url_stat($method,$url,$partialtimes,$key,$pa,$content_type)"
-    catch {unset :running_url($key,$url)}
+    unset -nocomplain :running_url($key,$url)
     # :log "### unset running_url($key,$url) $errmsg"
     if {[string match "text/html*" $content_type]} {
       [Users current_object] add_view $key
@@ -308,10 +308,8 @@ if {"async-cmd" ni [ns_job queues]} {
     puts ${:traceFile} $msg
   }
   ThrottleTrace instproc throttle_check args {
-    catch {
-      incr :traceCounter
-      :log "CALL ${:traceCounter} [self args]"
-    }
+    incr :traceCounter
+    :log "CALL ${:traceCounter} [self args]"
     next
   }
   ThrottleTrace instproc add_url_stat args {
@@ -484,7 +482,7 @@ if {"async-cmd" ni [ns_job queues]} {
       catch {if {${:logging}} {:log_to_file $now [self] $n}}
       #
     } else {
-      ns_log notice "[self] has no timeout defined"
+      ns_log notice "request-monitor: [self] has no timeout defined"
     }
     set :to [after ${:timeoutMs} [list [self] end]]
   }
@@ -602,8 +600,7 @@ if {"async-cmd" ni [ns_job queues]} {
       set l [llength $result]
       for {set i $max} {$i<$l} {incr i} {
         set url [lindex $result $i 0]
-        unset :stat($url)
-        unset :cnt($url)
+        unset :stat($url) :cnt($url)
       }
       set result [lrange $result 0 $max-1]
       return $result
@@ -886,11 +883,7 @@ if {"async-cmd" ni [ns_job queues]} {
       #  ns_log warning "::xo::request_monitor_record_activity left_system slow, can lead to filter time >1sec: total time [expr {$t1 - $t0}]"
       #}
     }
-    catch {unset :user_in_community($key)}
-    catch {unset :refcount($key)}
-    catch {unset :pa($key)}
-    catch {unset :expSmooth($key)}
-    catch {unset :switches($key)}
+    unset -nocomplain :user_in_community($key) :refcount($key) :pa($key) :expSmooth($key) :switches($key)
   }
 
   Users instproc init {} {
@@ -968,9 +961,7 @@ if {"async-cmd" ni [ns_job queues]} {
       # note such occurrences.
       #
       if {[$class set pa($key)] ne $pa} {
-        if {[catch {$class incr switches($key)}]} {
-          $class set switches($key) 1
-        }
+        $class incr switches($key)
         # log the change
         set timestamp [clock format [clock seconds]]
         switches.log write "$timestamp -- switch -- $key from\
@@ -1236,10 +1227,7 @@ if {"async-cmd" ni [ns_job queues]} {
       }
       if {$purge} {
         ns_log notice "=== time_window_cleanup unsets pa($i)"
-        unset :pa($i)
-        catch {unset :refcount($i)}
-        catch {unset :expSmooth($i)}
-        catch {unset :switches($i)}
+        unset -nocomplain :pa($i) :refcount($i) :expSmooth($i) :switches($i)
       }
     }
     foreach i [lsort [array names :refcount]] {
@@ -1371,18 +1359,21 @@ if {"async-cmd" ni [ns_job queues]} {
     set number_of_lines [expr {182 * [trend-elements]}]
     exec $tail -n $number_of_lines ${logdir}/counter.log >${logdir}/counter-new.log
 
-    set f [open $logdir/counter-new.log]
-    while {-1 != [gets $f line]} {
-      regexp {(.*) -- (.*) ::(.*) (.*)} $line match timestamp server counter value
-      #ns_log notice "$counter add_value $timestamp $value"
-      if {[::xotcl::Object isobject $counter]} {
-        $counter add_value $timestamp $value
-      } elseif {![info exists complain($counter)]} {
-        ns_log notice "ignore reload of value $value for counter $counter"
-        set complain($counter) 1
+    try {
+      set f [open $logdir/counter-new.log]
+      while {-1 != [gets $f line]} {
+        regexp {(.*) -- (.*) ::(.*) (.*)} $line match timestamp server counter value
+        #ns_log notice "$counter add_value $timestamp $value"
+        if {[::xotcl::Object isobject $counter]} {
+          $counter add_value $timestamp $value
+        } elseif {![info exists complain($counter)]} {
+          ns_log notice "request-monitor: ignore reload of value $value for counter $counter"
+          set complain($counter) 1
+        }
       }
+    } finally {
+      close $f
     }
-    close $f
     unset f
   }
 
