@@ -1162,7 +1162,7 @@ if {"async-cmd" ni [ns_job queues]} {
             #
             # It is ok, when the user has only accessed blackisted
             # content, but when the user was logged in, this should
-            # not happen - it ist at least unusal
+            # not happen - it is at least unusual
             #
             set address [expr {[info exists :pa($pa)] ? "peer address [set :pa($pa)]" : ""}]
             ns_log warning "no community info for $key available $address"
@@ -1289,7 +1289,7 @@ if {"async-cmd" ni [ns_job queues]} {
     # dump all variables of the object ::Users
     set o ::Users
     foreach var [$o info vars] {
-      # last_mkey is just for interal purposes
+      # last_mkey is just for internal purposes
       if {$var eq "last_mkey"} continue
       # the remainder are primarily runtime statistics
       if {[$o array exists $var]} {
