@@ -857,7 +857,7 @@ if {"async-cmd" ni [ns_job queues]} {
   }
 
   Users proc left_system {key pa now data reason} {
-    if {[dict exist $data start]} {
+    if {[dict exists $data start]} {
       set seconds [expr {$now - [dict get $data start]}]
       set clicks [dict get $data clicks]
     } else {
@@ -1035,7 +1035,7 @@ if {"async-cmd" ni [ns_job queues]} {
         set var user_in_community($key)
         if {[$class exists $var]} {
           set data [$class set $var]
-          if {[dict exist $data community_id]} {
+          if {[dict exists $data community_id]} {
             #
             # Logout from "community"
             #
