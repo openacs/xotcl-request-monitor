@@ -1486,7 +1486,7 @@ throttle proc get_context {} {
     # ordinary request, ad_conn is initialized
     set package_id [ad_conn package_id]
     ::xo::ConnectionContext require -package_id $package_id -url ${:url}
-    if {[info commands dotlrn_community::get_community_idget_community_id_from_url] ne ""} {
+    if {[info commands dotlrn_community::get_community_id_from_url] ne ""} {
       set community_id [dotlrn_community::get_community_id_from_url -url ${:url}]
       if {$community_id ne ""} {
         set :community_id $community_id
