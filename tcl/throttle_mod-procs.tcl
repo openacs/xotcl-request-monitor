@@ -385,7 +385,7 @@ if {"async-cmd" ni [ns_job queues]} {
   Class create BanUser
   # BanUser instproc throttle_check {requestKey pa url conn_time content_type community_id} {
   #   #if {$requestKey eq 37958315} {return [list 0 0 1]}
-  #   #if {[string match 155.69.25.* $pa]} {return [list 0 0 1]}
+  #   #if {[string match "155.69.25.*" $pa]} {return [list 0 0 1]}
   #   next
   # }
 
@@ -1016,8 +1016,8 @@ if {"async-cmd" ni [ns_job queues]} {
     }
 
     if {!$is_embedded_request} {
-      set blacklisted_url [expr {[string match /RrdGraphJS/public/* $url]
-                                 || [string match /munin/* $url]
+      set blacklisted_url [expr {[string match "/RrdGraphJS/public/*" $url]
+                                 || [string match "/munin/*" $url]
                                }]
       #ns_log notice "=== $url black $blacklisted_url, community_access $key $pa $community_id"
       if {!$blacklisted_url} {
@@ -1523,21 +1523,21 @@ throttle ad_proc check {} {
   :get_context
   # :log "### check"
 
-  lassign [my throttle_check ${:requestor} ${:pa} ${:url} \
+  lassign [:throttle_check ${:requestor} ${:pa} ${:url} \
                [ns_conn start] [ns_guesstype [ns_conn url]] ${:community_id}] \
       toMuch ms repeat
   #set t1 [clock milliseconds]
 
   if {$repeat} {
-    my add_statistics repeat ${:requestor} ${:pa} ${:url} ${:query}
+    :add_statistics repeat ${:requestor} ${:pa} ${:url} ${:query}
     set result -1
   } elseif {$toMuch} {
     :log "*** we have to refuse user ${:requestor} with $toMuch requests"
-    my add_statistics reject ${:requestor} ${:pa} ${:url} ${:query}
+    :add_statistics reject ${:requestor} ${:pa} ${:url} ${:query}
     set result $toMuch
   } elseif {$ms} {
     :log "*** we have to block user ${:requestor} for $ms ms"
-    my add_statistics throttle ${:requestor} ${:pa} ${:url} ${:query}
+    :add_statistics throttle ${:requestor} ${:pa} ${:url} ${:query}
     after $ms
     :log "*** continue for user ${:requestor}"
     set result 0
@@ -1609,7 +1609,7 @@ throttle proc trace args {
   :get_context
   # :log "CT=[ns_set array [ns_conn outputheaders]] -- ${:url}"
 
-  my add_url_stat ${:method} ${:url} [:partialtimes] ${:requestor} ${:pa} \
+  :add_url_stat ${:method} ${:url} [:partialtimes] ${:requestor} ${:pa} \
       [ns_set get [ns_conn outputheaders] Content-Type]
   unset :context_initialized
   return filter_ok
@@ -1637,7 +1637,7 @@ ad_proc string_truncate_middle {{-ellipsis ...} {-len 100} string} {
 
 namespace eval ::xo {
   proc is_ip {key} {
-    expr { [string match *.* $key] || [string match *:* $key] }
+    expr { [string match "*.*" $key] || [string match "*:*" $key] }
   }
 
   proc request_monitor_record_activity {key pa seconds clicks reason} {

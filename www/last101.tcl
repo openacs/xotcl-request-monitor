@@ -57,11 +57,11 @@ Object instproc asHTML {{-master defaultMaster} -page:switch} {
   dom createDocument html doc
   set root [$doc documentElement]
   if {!$page} {
-    $root appendFromScript {my render}
+    $root appendFromScript {:render}
     return [[$root childNode] asHTML]
   } else {
     set slave [$master decorate $root]
-    $slave appendFromScript {my render}
+    $slave appendFromScript {:render}
     ns_return 200 text/html [$root asHTML]
   }
 }
