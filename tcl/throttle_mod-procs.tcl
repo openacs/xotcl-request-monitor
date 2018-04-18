@@ -1384,7 +1384,7 @@ if {"async-cmd" ni [ns_job queues]} {
   # down.
   #
   ::xotcl::Object setExitHandler {
-    ns_log notice "::thottle: exiting"
+    ns_log notice "::throttle: exiting"
     dump write -sync true
     #
     # Delete all users objects, that will flush all activity data to
@@ -1392,7 +1392,7 @@ if {"async-cmd" ni [ns_job queues]} {
     #
     foreach obj [Users info instances] {$obj destroy}
 
-    ns_log notice "::thottle speficic exist handler finished"
+    ns_log notice "::throttle specific exist handler finished"
   }
 
   #ns_log notice "============== Thread initialized ===================="
@@ -1426,15 +1426,15 @@ if {"async-cmd" ni [ns_job queues]} {
 }
 
 throttle proc destroy {} {
-  #puts stderr thottle-DESTROY
-  ns_log notice thottle-DESTROY-shutdownpending->[ns_info shutdownpending]
+  #puts stderr throttle-DESTROY
+  ns_log notice throttle-DESTROY-shutdownpending->[ns_info shutdownpending]
   if {[ns_info shutdownpending] && [nsv_exists ::xotcl::THREAD [self]]} {
     set tid [nsv_get ::xotcl::THREAD [self]]
-    ns_log notice =========thottle-DESTROY-shutdown==========================$tid-??[::thread::exists $tid]
+    ns_log notice =========throttle-DESTROY-shutdown==========================$tid-??[::thread::exists $tid]
     if {[::thread::exists $tid]} {
-      ns_log notice =========thottle-DESTROY-shutdown==========================THREAD-EXISTS
+      ns_log notice =========throttle-DESTROY-shutdown==========================THREAD-EXISTS
       set refcount [::thread::release $tid]
-      ns_log notice thottle-DESTROY-shutdownpending->[ns_info shutdownpending]-refCount$refcount
+      ns_log notice throttle-DESTROY-shutdownpending->[ns_info shutdownpending]-refCount$refcount
     }
   }
   next
