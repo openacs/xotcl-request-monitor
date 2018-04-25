@@ -135,7 +135,7 @@ if {"async-cmd" ni [ns_job queues]} {
   }
 
   Throttle instproc call_statistics {} {
-    set l [list]
+    set l {}
     foreach t {seconds minutes hours} {
       lappend l [list $t [$t set last] [$t set trend] [$t set stats]]
     }
@@ -582,7 +582,7 @@ if {"async-cmd" ni [ns_job queues]} {
     array unset :cnt
   }
   UrlCounter instproc url_stats {} {
-    set result [list]
+    set result {}
     foreach url [array names :stat] {
       lappend result [list $url [set :stat($url)] [set :cnt($url)]]
     }
@@ -680,7 +680,7 @@ if {"async-cmd" ni [ns_job queues]} {
     @return list with detailed user info
   } {
     if {$full} {
-      set info [list]
+      set info {}
       foreach key [array names :pa] {
         set entry [list $key [set :pa($key)]]
         foreach var [list timestamp hits expSmooth switches] {
@@ -747,7 +747,7 @@ if {"async-cmd" ni [ns_job queues]} {
   }
   Users proc last_requests {uid} {
     if {[info exists :pa($uid)]} {
-      set urls [list]
+      set urls {}
       foreach i [Users info instances] {
         if {[$i exists urls($uid)]} {
           foreach u [$i set urls($uid)] { lappend urls $u }
@@ -779,7 +779,7 @@ if {"async-cmd" ni [ns_job queues]} {
   }
 
   Users proc in_community {community_id} {
-    set users [list]
+    set users {}
     foreach i [Users info instances] {
       if {[$i exists in_community($community_id)]} {
         set time [$i point_in_time]
@@ -1191,7 +1191,7 @@ if {"async-cmd" ni [ns_job queues]} {
     return [list ${:ip24} ${:auth24}]
   }
   Users proc users_per_day {} {
-    set ip [list]; set auth [list]
+    set ip [list]; set auth {}
     foreach i [array names :timestamp] {
       if {[::xo::is_ip $i]} {
         set var ip
@@ -1264,7 +1264,7 @@ if {"async-cmd" ni [ns_job queues]} {
   dump set file ${logdir}/throttle-data.dump
   dump proc read {} {
     # make sure, timestamp exists as an array
-    array set Users::timestamp [list]
+    array set Users::timestamp {}
     if {[file readable ${:file}]} {
       # in case of disk-full, the file might be damaged, so make sure,
       # we can continue
