@@ -15,7 +15,7 @@ set title "Last 100 Requests"
 set context [list $title]
 set admin_p [acs_user::site_wide_admin_p]
 
-set stat [list]
+set stat {}
 foreach {key value} [throttle last100] {lappend stat $value}
 
 Class create CustomField -volatile \

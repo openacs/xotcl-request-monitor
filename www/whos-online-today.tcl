@@ -37,7 +37,7 @@ TableWidget create t1 \
     -no_data "no registered online today" 
 
 
-set users [list]
+set users {}
 lassign [throttle users users_per_day] ip auth
 if {!$all} {set elements [concat $ip $auth]} {set elements $auth}
 set summary "We noticed in [expr {[llength $ip]+[llength $auth]}] users in total, containing [llength $auth] authenticated users"

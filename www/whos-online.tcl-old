@@ -81,7 +81,7 @@ template::list::create \
     -no_data "no registered users online" \
     -elements $template_elements 
 
-set users [list]
+set users {}
 foreach element [throttle users active -full] {
   foreach {user_id pa timestamp hits smooth switches} $element break
   if {[string first . $user_id] > 0} {

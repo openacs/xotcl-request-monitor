@@ -60,7 +60,7 @@ proc my_hostname pa {
   #return "$peer"
 }
 
-set users [list]
+set users {}
 foreach element [throttle users active -full] {
   lassign $element user_id pa timestamp hits smooth switches
   if {[string is integer $user_id]} {

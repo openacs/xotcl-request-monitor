@@ -14,7 +14,7 @@ ad_page_contract {
 
 set title "Users in Community $community_name"
 set context [list $title]
-set stat [list]
+set stat {}
 
 TableWidget create t1 \
     -columns {

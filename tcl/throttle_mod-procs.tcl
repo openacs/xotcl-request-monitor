@@ -1191,7 +1191,7 @@ if {"async-cmd" ni [ns_job queues]} {
     return [list ${:ip24} ${:auth24}]
   }
   Users proc users_per_day {} {
-    set ip [list]; set auth {}
+    set ip {}; set auth {}
     foreach i [array names :timestamp] {
       if {[::xo::is_ip $i]} {
         set var ip
