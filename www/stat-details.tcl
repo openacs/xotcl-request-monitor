@@ -58,7 +58,7 @@ if {$with_param == 0} {
     #
     # truncate tails, if we have VUHs
     #
-    set url_list {}
+    set url_list [list]
     foreach p [split $url /] {
       if {[info exists vuh($p)]} {
         lappend url_list $p
@@ -75,7 +75,7 @@ if {$with_param == 0} {
     }
     set aggr_stat($url) [list $time $cnt]
   }
-  set stat {}
+  set stat [list]
   foreach url [array names aggr_stat] {
     lassign $aggr_stat($url) time cnt
     lappend stat [list $url $time $cnt]
@@ -88,7 +88,7 @@ if {$with_apps == 1} {
     lassign $l url time cnt
     set param ""
     regexp {^(.*)([?].*$)} $url _ url param
-    set url_list {}
+    set url_list [list]
     foreach p [split $url /] {
       if {[info exists apps($p)]} {
         if {[llength $url_list]>0} {set url_list [list .../$p]}
@@ -104,7 +104,7 @@ if {$with_apps == 1} {
     }
     set aggr_stat($url) [list $time $cnt]
   }
-  set stat {}
+  set stat [list]
   foreach url [array names aggr_stat] {
     lassign $aggr_stat($url) time cnt
     lappend stat [list $url $time $cnt]
