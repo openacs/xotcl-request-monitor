@@ -246,7 +246,7 @@ if {$jsGraph} {
   }
 
 } else {
-  # no javascript graphics, use poor men's approach...
+  # no JavaScript graphics, use poor men's approach...
 
   # draw a graph in form of an html table of with 500 pixels
   proc graph values {
