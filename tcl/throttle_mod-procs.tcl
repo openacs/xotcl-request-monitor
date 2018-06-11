@@ -1623,7 +1623,7 @@ throttle proc community_access {community_id} {
 }
 
 ad_proc string_truncate_middle {{-ellipsis ...} {-len 100} string} {
-  cut middle part of a string in case it is to long
+  cut middle part of a string in case it is too long
 } {
   set string [string trim $string]
   if {[string length $string]>$len} {
