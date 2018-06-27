@@ -40,8 +40,7 @@ t1 orderby -order [expr {$order eq "asc" ? "increasing" : "decreasing"}] $att
 foreach l $stat {
   lassign $l timestamp c url ms requestor
   if {[string is integer $requestor]} {
-    acs_user::get -user_id $requestor -array user
-    set user_string "$user(first_names) $user(last_name)"
+    set user_string [person::name -person_id $requestor]
   } else {
     set user_string $requestor
   }
