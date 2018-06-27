@@ -53,8 +53,7 @@ foreach {key elapsed} $running_requests {
   lassign [split $key ,] requestor url
   set ms [format %.2f [expr {[throttle ms -start_time $elapsed]/1000.0}]]
   if {[string is integer $requestor]} {
-    acs_user::get -user_id $requestor -array user
-    set user_string "$user(first_names) $user(last_name)"
+    set user_string [person::name -person_id $requestor]
   } else {
     set user_string $requestor
   }
@@ -66,8 +65,7 @@ foreach {index entry} $background_requests {
   lassign [split $key ,] requestor url
   set ms [format %.2f [expr {[throttle ms -start_time $elapsed]/-1000.0}]]
   if {[string is integer $requestor]} {
-    acs_user::get -user_id $requestor -array user
-    set user_string "$user(first_names) $user(last_name)"
+    set user_string [person::name -person_id $requestor]
   } else {
     set user_string $requestor
   }
@@ -84,8 +82,7 @@ if {[ns_info name] eq "NaviServer"}  {
     set progress [format {%5.2f%% of %5.2f MB} $percentage [expr {$size/1000000.0}]]
     set ms [format %.2f [expr {([clock milliseconds] - $starttime*1000)/-1000.0}]]
     if {[string is integer $requestor]} {
-      acs_user::get -user_id $requestor -array user
-      set user_string "$user(first_names) $user(last_name)"
+      set user_string [person::name -person_id $requestor]      
     } else {
       set user_string $requestor
     }

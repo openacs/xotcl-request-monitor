@@ -28,8 +28,7 @@ foreach e [lsort -decreasing -index 0 \
   if {[info exists listed($requestor)]} continue
   set listed($requestor) 1
   if {[string is integer -strict $requestor]} {
-    acs_user::get -user_id $requestor -array user
-    set user_string "$user(first_names) $user(last_name)"
+    set user_string [person::name -person_id $requestor]
   } else {
     set user_string $requestor
   }
