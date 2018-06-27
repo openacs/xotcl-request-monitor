@@ -64,8 +64,8 @@ set users [list]
 foreach element [throttle users active -full] {
   lassign $element user_id pa timestamp hits smooth switches
   if {[string is integer $user_id]} {
-    acs_user::get -user_id $user_id -array user
-    set user_label "$user(last_name), $user(first_names)" 
+    set person [person::get_person_info -person_id $user_id]
+    set user_label "[dict get $person last_name], [dict get $person first_names]"
     set user_url [acs_community_member_url -user_id $user_id]
   } else {
     if {$all} continue
