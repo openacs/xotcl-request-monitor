@@ -34,8 +34,7 @@ foreach l [lsort -index 2 $data] {
     set user "Anonymous"
     set user_url ""
   } else {
-    acs_user::get -user_id $uid -array userinfo
-    set user "$userinfo(first_names) $userinfo(last_name)"
+    set user [person::name -person_id $uid]
     set user_url [acs_community_member_admin_url -user_id $uid]
   }
   set time [clock format $time -format "%Y-%m-%d %H:%M:%S"]
