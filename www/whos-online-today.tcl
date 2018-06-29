@@ -1,9 +1,9 @@
 ad_page_contract {
   Displays who was online today
-  
+
   @author Gustaf Neumann
-  
-  @cvs-id $id: whos-online.tcl,v 1.1.1.1 2004/03/16 16:11:51 nsadmin exp $
+
+  @cvs-id $Id$
 } -query {
   {orderby:token,optional "date,desc"}
   {all:optional 0}

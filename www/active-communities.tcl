@@ -1,9 +1,9 @@
 ad_page_contract {
   Displays active commnities
 
-    @author Gustaf Neumann 
+    @author Gustaf Neumann
 
-    @cvs-id $id$
+    @cvs-id $Id$
 } -query {
   {orderby:token,optional "count,desc"}
 } -properties {

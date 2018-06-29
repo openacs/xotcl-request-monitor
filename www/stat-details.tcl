@@ -1,9 +1,9 @@
 ad_page_contract {
     Displays call statistics
 
-    @author Gustaf Neumann 
+    @author Gustaf Neumann
 
-    @cvs-id $id: whos-online.tcl,v 1.1.1.1 2004/03/16 16:11:51 nsadmin exp $
+    @cvs-id $Id$
 } -query {
     {all:optional 0}
     {with_param:optional 1}

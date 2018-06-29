@@ -1,9 +1,9 @@
 ad_page_contract {
   Displays information about an ip address
 
-    @author Gustaf Neumann 
+    @author Gustaf Neumann
 
-    @cvs-id $id$
+    @cvs-id $Id$
 } -query {
     {ip}
 } -properties {

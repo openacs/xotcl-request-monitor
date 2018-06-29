@@ -1,9 +1,9 @@
 ad_page_contract {
     Displays last 100 requests in the system
 
-    @author Gustaf Neumann 
+    @author Gustaf Neumann
 
-    @cvs-id $id
+    @cvs-id $Id$
 } -query {
     {orderby:token,optional "time,desc"}
 } -properties {
