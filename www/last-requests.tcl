@@ -18,7 +18,7 @@ set context [list "Last Requests"]
 set hide_patterns [parameter::get -parameter hide-requests -default {*.css}]
 
 if {[string is integer $request_key]} {
-  set person [person::get_person_info -person_id $user_id]
+  set person [person::get_person_info -person_id $request_key]
   set user_string "[dict get $person first_names] [dict get $person last_name]"
   set tmp_url [acs_community_member_url -user_id $request_key]
   append user_string " (<a href='[ns_quotehtml $tmp_url]'>$request_key</a>)" 
