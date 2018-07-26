@@ -415,9 +415,8 @@ if {"async-cmd" ni [ns_job queues]} {
     @param report Report type of the instance. This could e.g. be hours and minutes
     @param timeoutMS How often are the statistics for this report computed
     @param stats stats keeps nr_stats_elements highest values with time stamp. These hold a list of lists of the actual stats in the form {time value}. Time is given like "Thu Sep 13 09:17:30 CEST 2007". This is used for displaying the Max values
-    @param last
     @param trend  trend keeps nr_trend_elements most recent values. This is used for displaying the graphics
-    @param c
+    @param c counter
     @param logging If set to 1 the instance current value is logged to the counter.log file
     @param nr_trend_elements Number of data points that are used for the trend calculation. The default of 48 translates into "48 minutes" for the Views per minute or 48 hours for the views per hour.
     @param nr_stats_elements Number of data points for the stats values. The default of 5 will give you the highest datapoints over the whole period.
