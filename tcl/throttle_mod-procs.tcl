@@ -845,13 +845,7 @@ if {"async-cmd" ni [ns_job queues]} {
     set :user_in_community($key) $data
     #ns_log notice "=== user $key left community $community_id at $now reason $reason after $seconds seconds clicks $clicks"
     if {[do_track_activity] && $seconds > 0} {
-      #set t0 [clock milliseconds]
-      ns_job queue -detached async-cmd \
-          [list ::xo::request_monitor_record_community_activity $key $pa $community_id $seconds $clicks $reason]
-      #set t1 [clock milliseconds]
-      #if {$t1 - $t0 > 500} {
-      #  ns_log warning "request_monitor_record_community_activity left_community slow, can lead to filter time >1sec: total time [expr {$t1 - $t0}]"
-      #}
+      xo::job_enqueue [list ::xo::request_monitor_record_community_activity $key $pa $community_id $seconds $clicks $reason]
     }
   }
 
@@ -871,13 +865,7 @@ if {"async-cmd" ni [ns_job queues]} {
     }
     ns_log notice "=== user $key left system at $now reason $reason after $seconds seconds clicks $clicks"
     if {[do_track_activity] && $seconds > 0} {
-      #set t0 [clock milliseconds]
-      ns_job queue -detached async-cmd \
-          [list ::xo::request_monitor_record_activity $key $pa $seconds $clicks $reason]
-      #set t1 [clock milliseconds]
-      #if {$t1 - $t0 > 500} {
-      #  ns_log warning "::xo::request_monitor_record_activity left_system slow, can lead to filter time >1sec: total time [expr {$t1 - $t0}]"
-      #}
+      xo::job_enqueue [list ::xo::request_monitor_record_activity $key $pa $seconds $clicks $reason]
     }
     unset -nocomplain :user_in_community($key) :refcount($key) :pa($key) :expSmooth($key) :switches($key)
   }
@@ -1051,7 +1039,7 @@ if {"async-cmd" ni [ns_job queues]} {
     }
 
     #
-    # The array "urls" keeps triples of time stamps, urls and peer
+    # The array "urls" keeps triples of time stamps, URLs and peer
     # addresses per user.
     #
     lappend :urls($key) [list ${:point_in_time} $url $pa]
@@ -1635,9 +1623,45 @@ ad_proc string_truncate_middle {{-ellipsis ...} {-len 100} string} {
 }
 
 namespace eval ::xo {
+  
   proc is_ip {key} {
     expr { [string match "*.*" $key] || [string match "*:*" $key] }
   }
+
+  #
+  # Check, if we have a NaviServer with the atomic ns_set operation
+  # with the "-reset" option
+  #
+  #    "nsv_set ?-default? ?-reset? ?--? array key ?value?"
+  #
+  # available. If so, implement an async job-queue with ltttle
+  # overhead based on it.
+  #
+  catch {nsv_set} errMsg
+  if {[string match *-reset* $errMsg]} {
+    #
+    # Yes, we have the "-reset" option.
+    #
+    proc job_enqueue {cmd} {
+      nsv_lappend request_monitor jobs $cmd
+    }
+    
+    proc job_dequeue {} {
+      foreach cmd [nsv_set -reset request_monitor jobs {}] {
+        {*}$cmd
+      }
+    }
+
+  } else {
+    #
+    # Older version of NaviServer, so the classic approach via "ns_job
+    # queue -detached async-cmd ...."
+    #
+    proc job_enqueue {cmd} {
+      ns_job queue -detached async-cmd $cmd
+    }
+  }
+  
 
   proc request_monitor_record_activity {key pa seconds clicks reason} {
     if {[::xo::is_ip $key]} {

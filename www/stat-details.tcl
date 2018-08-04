@@ -49,7 +49,7 @@ set total_avg [expr {$total_cnt>0 ? $total/($total_cnt*1000.0) : "0" }]
 set full_stat [list]
 if {$with_param == 0} {
   # without parameter
-  # add up same urls
+  # add up same URLs
   array unset aggr_stat
   foreach l $stat {
     lassign $l url time cnt

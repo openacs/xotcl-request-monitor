@@ -46,7 +46,7 @@ foreach l $stat {
   }
 
   #
-  # Provide the urls only to admins as links.
+  # Provide the URLs only to admins as links.
   #
   # First of all, it is questionable, whether this page should be
   # public. However, when this page is public, and a spider
