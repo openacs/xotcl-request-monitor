@@ -114,7 +114,7 @@ proc currentViews {} {
 if {$jsGraph} {
   set nonce [::security::nonce_token]
 
-  template::add_body_script -src "//ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"
+  template::add_body_script -src "//code.jquery.com/jquery-1.12.3.min.js"
   template::add_body_script -src "//code.highcharts.com/highcharts.js"
   template::add_body_script -src "//code.highcharts.com/modules/exporting.js"
   
