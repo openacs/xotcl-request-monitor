@@ -513,19 +513,25 @@ if {"async-cmd" ni [ns_job queues]} {
     next
   }
 
-  Class create MaxCounter -superclass Counter -instproc end {} {
-    set :c [Users nr_active]
-    if {[info exists :report]} {
-      if {[${:report} set c] < ${:c}} {
-        ${:report} set c ${:c}
+  Class create MaxCounter -superclass Counter \
+      -parameter {{metric nr_active}} \
+      -instproc end {} {
+        set :c [Users ${:metric}]
+        if {[info exists :report]} {
+          if {[${:report} set c] < ${:c}} {
+            ${:report} set c ${:c}
+          }
+        }
+        :finalize ${:c}
+        set :c 0
       }
-    }
-    :finalize ${:c}
-    set :c 0
-  }
 
   MaxCounter create user_count_hours -timeoutMs [expr {60000*60}] -logging 1
   MaxCounter create user_count_minutes -timeoutMs 60000 -report user_count_hours -logging 1
+
+  MaxCounter create authenticated_count_hours   -metric nr_authenticated -timeoutMs [expr {60000*60}] -logging 1
+  MaxCounter create authenticated_count_minutes -metric nr_authenticated -timeoutMs 60000 \
+      -report authenticated_count_hours -logging 1
 
   Class create AvgCounter -superclass Counter \
       -parameter {{t 0} {atleast 1}} -instproc end {} {
@@ -700,6 +706,11 @@ if {"async-cmd" ni [ns_job queues]} {
     @return number of active users (in time window)
   } {
     return [array size :pa]
+  }
+  Users ad_proc nr_authenticated {} {
+    @return number of authenticated users (in time window)
+  } {
+    return [lindex [:nr_users_time_window] 1]
   }
 
   Users ad_proc nr_users_time_window {} {

@@ -35,7 +35,7 @@ proc avg_last_n {list n var} {
 # collect current system statistics
 proc currentSystemLoad {} {
   #    if {[catch {return [exec "/usr/bin/uptime"]}]} {
-  #	return ""
+  #      return ""
   #    }
   set procloadavg /proc/loadavg
   if {[file readable $procloadavg]} {
@@ -46,21 +46,21 @@ proc currentSystemLoad {} {
       return $result
   }
   if {[set uptime [util::which uptime]] ne ""} {
-    return [exec $uptime]    
+    return [exec $uptime]
   } else {
     set msg "'uptime' command not found on the system"
     ad_log error $msg
     return ""
-  }  
+  }
 }
 
 # collect current response time (per minute and hour)
 proc currentResponseTime {} {
   set tm [throttle trend response_time_minutes]
   set hours [throttle trend response_time_hours]
-  if { $tm eq "" } { 
+  if { $tm eq "" } {
     set ::server_running "seconds"
-    return "NO DATA" 
+    return "NO DATA"
   }
   set avg_half_hour [avg_last_n $tm 30 cnt]
   if {$cnt > 0} {
@@ -96,7 +96,9 @@ proc currentResponseTime {} {
 proc currentViews {} {
   set vm [throttle trend minutes]
   set um [throttle trend user_count_minutes]
-  if { $vm eq "" || $um eq ""} { return "NO DATA" }
+  if { $vm eq "" || $um eq ""} {
+    return "NO DATA"
+  }
   set views_per_sec [expr {[lindex $vm end]/60.0}]
   set currentUsers [lindex $um end]
   if {$currentUsers > 0} {
@@ -105,8 +107,8 @@ proc currentViews {} {
   } else {
     set views_per_min_per_user "0"
   }
-  set view_time [expr {$views_per_min_per_user>0 ? 
-	" avg. view time: [format %4.1f [expr {60.0/$views_per_min_per_user}]]" : ""}]
+  set view_time [expr {$views_per_min_per_user>0 ?
+        " avg. view time: [format %4.1f [expr {60.0/$views_per_min_per_user}]]" : ""}]
   return "[format %4.1f $views_per_sec] views/sec, [format %4.3f $views_per_min_per_user] views/min/user,  $view_time"
 }
 
@@ -117,7 +119,7 @@ if {$jsGraph} {
   template::add_body_script -src "//code.jquery.com/jquery-1.12.3.min.js"
   template::add_body_script -src "//code.highcharts.com/highcharts.js"
   template::add_body_script -src "//code.highcharts.com/modules/exporting.js"
-  
+
   proc js_time {clock} {
     set year [clock format $clock -format %Y]
     set month [expr {[string trimleft [clock format $clock -format %N]] - 1}]
@@ -125,11 +127,13 @@ if {$jsGraph} {
   }
 
   set ::graphCount 0
-  proc graph {values label type} {
+  proc graph {valuesList labelList type} {
+    set values [lindex $valuesList 0]
+    set label [lindex $labelList 0]
     #ns_log notice "values=$values label=$label, type=$type"
 
     set size  [llength $values]
-    if {$size<12} {
+    if {$size < 12} {
       set values [concat [split [string repeat 0 [expr {12-$size}]] ""] $values]
       set size [llength $values]
     }
@@ -174,6 +178,58 @@ if {$jsGraph} {
                 }
     }}]
 
+    #
+    # Check for a secondary series
+    #
+    if {[llength $valuesList] > 1} {
+      set data {}
+      set label [lindex $labelList 1]
+      set i 0
+
+      #
+      # Transitional code: perform padding with leading zeros, in case
+      # we have less values in the secondary series.
+      #
+      set values [lindex $valuesList 1]
+      set secondarySize [llength $values]
+      if {$secondarySize < $size} {
+        set values [list {*}[lrepeat [expr {$size-$secondarySize}] 0] {*}$values]
+      }
+
+      foreach t $values {
+        set js_time [js_time [expr {$begin + $i * $interval}]]
+        lappend data [subst {{ x: $js_time, y: $t }}]
+        incr i
+      }
+      append series "," \
+          [subst {{
+            showInLegend: false,
+            type: 'areaspline',
+            threshold : null,
+            marker: {
+              enabled: true,
+              radius: 3
+            },
+            tooltip : {
+              valueDecimals : 2
+            },
+            name: '$label',
+            colorIndex: 4,
+            data: \[ [join $data ,] \],
+            fillColor : {
+                    linearGradient : {
+                        x1: 0,
+                        y1: 0,
+                        x2: 0,
+                        y2: 1
+                    },
+              stops : \[
+              \[0, Highcharts.getOptions().colors\[0\]\],
+              \[1, Highcharts.Color(Highcharts.getOptions().colors\[4\]).setOpacity(0).get('rgba')\]
+              \]
+            }}}]
+    }
+
     template::add_body_script -script [subst {
     \$('#$graphID').highcharts({
         chart: {
@@ -184,7 +240,7 @@ if {$jsGraph} {
         },
         xAxis: {
             type: 'datetime',
-	    title:  { text: 'Date'},
+            title:  { text: 'Date'},
         },
         yAxis: \[{
           min: 0,
@@ -193,7 +249,7 @@ if {$jsGraph} {
               align: 'high',
               offset: 60
             },
-	    labels: { overflow: 'justify'}
+            labels: { overflow: 'justify'}
         }\],
         plotOptions: {
             bar: {
@@ -214,30 +270,39 @@ if {$jsGraph} {
       <div id="$graphID" style="min-width: 640px; max-width: 100%; height: 240px; margin: 0 auto"></div>
     }]
   }
-  
 
 
-  proc counterTable {label objlist} {
-    foreach {t l} $objlist {
-      set trend [throttle trend $t]
+  # set users_trend [counterTable Users [list user_count_minutes Minute user_count_hours Hour]]
+
+  proc counterTable {labels objlist} {
+    foreach {trends l} $objlist {
+      set values {}
+      foreach t $trends {
+        lappend values [throttle trend $t]
+      }
+      set labelList {}
+      foreach label $labels {
+        lappend labelList "$label per $l"
+      }
       append text [subst {
-	<tr><td valign='top'>[graph $trend "$label per $l" $l]</td>
-	<td valign='top'>
-	<table><tr><td>Max</td></tr>
+        <tr><td valign='top'>[graph $values $labelList $l]</td>
+        <td valign='top'>
+        <table><tr><td>Max</td></tr>
       }]
+      set t [lindex $trends 0]
       set c 1
       foreach v [throttle max_values $t] {
-	incr c
-	switch -- $t {
-	  minutes {set rps "([format %5.2f [expr {[lindex $v 1]/60.0}]] rps)"}
-	  hours   {set rps "([format %5.2f [expr {[lindex $v 1]/(60*60.0)}]] rps)"}
-	  default {set rps ""}
-	}
-	set cl [expr {$c%2==0?"list-even":"list-odd"}]
-	append text [subst {
-	  <tr class='$cl'><td><small>[lindex $v 0]</small></td>
-	  <td align='right'><small>[lindex $v 1] $rps</small></td></tr>
-	}]
+        incr c
+        switch -- $t {
+          minutes {set rps "([format %5.2f [expr {[lindex $v 1]/60.0}]] rps)"}
+          hours   {set rps "([format %5.2f [expr {[lindex $v 1]/(60*60.0)}]] rps)"}
+          default {set rps ""}
+        }
+        set cl [expr {$c%2==0?"list-even":"list-odd"}]
+        append text [subst {
+          <tr class='$cl'><td><small>[lindex $v 0]</small></td>
+          <td align='right'><small>[lindex $v 1] $rps</small></td></tr>
+        }]
       }
       append text "</table>\n</td></tr>\n"
     }
@@ -246,9 +311,11 @@ if {$jsGraph} {
   }
 
 } else {
-  # no JavaScript graphics, use poor men's approach...
-
-  # draw a graph in form of an html table of with 500 pixels
+  #
+  # No JavaScript graphics, use poor men's approach...
+  #
+  # Draw a graph in form of an HTML table of with 500 pixels.
+  #
   proc graph values {
     set max 1
     foreach v $values {if {$v>$max} {set max $v}}
@@ -261,28 +328,32 @@ if {$jsGraph} {
     return $graph
   }
 
-  # build an HTML table from statistics of monitor thread
-  proc counterTable {label objlist} {
+  #
+  # Build an HTML table from statistics of monitor thread.
+  # If there are multiple data rows given, just take the first one.
+  #
+  proc counterTable {labels objlist} {
+    set label [lindex $labels 0]
     append text "<table>" \
-	"<tr><td width=100></td><td>Trend</td><td width=300>Max</td></tr>"
+        "<tr><td width=100></td><td>Trend</td><td width=300>Max</td></tr>"
     foreach {t l} $objlist {
-      set trend [throttle trend $t]
+      set trend [throttle trend [lindex $t 0]]
       append text [subst {
-	<tr><td style='text-align: center; border: 1px solid blue;'>$label per <br>$l</td>
-	<td style='padding: 5px; border: 1px solid blue;'>[graph $trend]<font size=-2>$trend</font></td>
-	<td style='padding: 5px; border: 1px solid blue;' valign='top'>
-	<table width='100%'>
+        <tr><td style='text-align: center; border: 1px solid blue;'>$label per <br>$l</td>
+        <td style='padding: 5px; border: 1px solid blue;'>[graph $trend]<font size=-2>$trend</font></td>
+        <td style='padding: 5px; border: 1px solid blue;' valign='top'>
+        <table width='100%'>
       }]
       set c 1
-      foreach v [throttle max_values $t] {
-	incr c
-	switch -- $t {
-	  minutes {set rps "([format %5.2f [expr {[lindex $v 1]/60.0}]] rps)"}
-	  hours   {set rps "([format %5.2f [expr {[lindex $v 1]/(60*60.0)}]] rps)"}
-	  default {set rps ""}
-	}
-	set bg [expr {$c%2==0?"white":"#EAF2FF"}]
-	append text "<tr style='background: $bg'><td><font size=-2>[lindex $v 0]</font></td>
+      foreach v [throttle max_values [lindex $t 0]] {
+        incr c
+        switch -- $t {
+          minutes {set rps "([format %5.2f [expr {[lindex $v 1]/60.0}]] rps)"}
+          hours   {set rps "([format %5.2f [expr {[lindex $v 1]/(60*60.0)}]] rps)"}
+          default {set rps ""}
+        }
+        set bg [expr {$c%2==0?"white":"#EAF2FF"}]
+        append text "<tr style='background: $bg'><td><font size=-2>[lindex $v 0]</font></td>
                      <td align='right'><font size=-2>[lindex $v 1] $rps</font></td></tr>"
       }
       append text "</td></td></table></tr>"
@@ -292,10 +363,14 @@ if {$jsGraph} {
 }
 
 # set variables for template
-set views_trend [counterTable Views [list seconds Second minutes Minute hours Hour]]
-set users_trend [counterTable Users [list user_count_minutes Minute user_count_hours Hour]]
-set response_trend [counterTable "Avg. Response <br>Time" \
-			[list response_time_minutes Minute response_time_hours Hour]]
+set views_trend [counterTable Views {seconds Second minutes Minute hours Hour}]
+set users_trend [counterTable {Users Authenticated} {
+  {user_count_minutes authenticated_count_minutes} Minute
+  {user_count_hours   authenticated_count_hours}   Hour
+}]
+set response_trend [counterTable "Avg. Response <br>Time" {
+  response_time_minutes Minute response_time_hours Hour
+}]
 
 set current_response [join [currentResponseTime] " "]
 set current_load [currentSystemLoad]
