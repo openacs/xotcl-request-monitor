@@ -885,7 +885,7 @@ if {"async-cmd" ni [ns_job queues]} {
     next
     #
     # The following event is a heart-beat just necessary for idle
-    # systems. It makes sure, that per-minute objects don't hang
+    # systems. It makes sure that per-minute objects don't hang
     # around much longer than required (maximum 1 second), but that at
     # the same time that last_mkey never points to an invalid object.
     #
