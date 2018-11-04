@@ -389,15 +389,7 @@ if {[ns_info name] eq "NaviServer"}  {
 }
 
 array set thread_avgs [throttle thread_avgs]
-
-if {[info commands ::tlf::system_activity] ne ""} {
-  array set server_stats [::tlf::system_activity]
-  set current_exercise_activity $server_stats(activity)
-  set current_system_activity "$server_stats(activity) exercises last 15 mins, "
-} else {
-  set current_system_activity ""
-}
-append current_system_activity \n[currentViews]
+set current_system_activity [currentViews]
 
 set throttle_stats  [throttle statistics]
 set active10        [throttle users nr_users_time_window]
