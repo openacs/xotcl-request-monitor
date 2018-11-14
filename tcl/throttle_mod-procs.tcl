@@ -196,7 +196,8 @@ if {"async-cmd" ni [ns_job queues]} {
     #
     set is_embedded_request [expr {
                                    [string match "image/*" $content_type]
-                                   || $content_type in { application/vnd.apple.mpegurl video/MP2T text/css application/javascript application/x-javascript }
+                                   || [string match "video/*" $content_type]
+                                   || $content_type in { application/vnd.apple.mpegurl text/css application/javascript application/x-javascript }
                                  }]
     if {[info exists $var] && !$is_embedded_request && !${:off}} {
       #ns_log notice  "### already $var"
