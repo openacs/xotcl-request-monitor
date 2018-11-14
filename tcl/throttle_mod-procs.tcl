@@ -33,12 +33,13 @@ if {"async-cmd" ni [ns_job queues]} {
   package_parameter log-dir \
       -default [file dirname [file rootname [ns_config ns/parameters ServerLog]]]
 
-  package_parameter max-url-stats      -default 500
-  package_parameter time-window        -default 10
-  package_parameter trend-elements     -default 48
-  package_parameter max-stats-elements -default 5
-  package_parameter do_throttle        -default on
-  package_parameter do_track_activity  -default off
+  package_parameter max-url-stats          -default 500
+  package_parameter time-window            -default 10
+  package_parameter trend-elements         -default 48
+  package_parameter max-stats-elements     -default 5
+  package_parameter do_throttle            -default on
+  package_parameter do_track_activity      -default off
+  package_parameter do_slowdown_overactive -default off
 
   #
   # When updates happen on
@@ -197,8 +198,12 @@ if {"async-cmd" ni [ns_job queues]} {
     set is_embedded_request [expr {
                                    [string match "image/*" $content_type]
                                    || [string match "video/*" $content_type]
-                                   || $content_type in { application/vnd.apple.mpegurl text/css application/javascript application/x-javascript }
-                                 }]
+                                   || $content_type in {
+                                     application/vnd.apple.mpegurl
+                                     text/css
+                                     application/javascript
+                                     application/x-javascript
+                                   }}]
     if {[info exists $var] && !$is_embedded_request && !${:off}} {
       #ns_log notice  "### already $var"
       return [list 0 0 1]
@@ -227,7 +232,7 @@ if {"async-cmd" ni [ns_job queues]} {
       #
       return [list 0 0 0]
 
-    } else {
+    } elseif {[do_slowdown_overactive]} {
       #
       # Check, whether the last request from a user was within
       # the minimum time interval. We are not keeping a full table
@@ -236,8 +241,10 @@ if {"async-cmd" ni [ns_job queues]} {
       #
       incr :alerts
       if {[info exists :active($requestKey)]} {
-        # if more than one request for this key is already active,
-        # return blocking time
+        #
+        # If more than one request for this key is already active,
+        # return blocking time.
+        #
         lassign [set :active($requestKey)] to cnt
         set retMs [expr {$cnt > ${:startThrottle} ? 500 : 0}]
         # cancel the timeout
@@ -254,6 +261,8 @@ if {"async-cmd" ni [ns_job queues]} {
         set cnt 0
       }
       return [list $cnt $retMs 0]
+    } else {
+      return [list 0 0 1]
     }
   }
 
@@ -1527,8 +1536,11 @@ throttle ad_proc check {} {
       toMuch ms repeat
   #set t1 [clock milliseconds]
 
-  if {$repeat} {
+  if {$repeat > 0} {
     :add_statistics repeat ${:requestor} ${:pa} ${:url} ${:query}
+    if {$repeat > 1} {
+      :log "*** requestor (user ${:requestor}) would be blocked, when parameter do_slowdown_overactive would be activated"
+    }
     set result -1
   } elseif {$toMuch} {
     :log "*** we have to refuse user ${:requestor} with $toMuch requests"
@@ -1635,7 +1647,7 @@ ad_proc string_truncate_middle {{-ellipsis ...} {-len 100} string} {
 }
 
 namespace eval ::xo {
-  
+
   proc is_ip {key} {
     expr { [string match "*.*" $key] || [string match "*:*" $key] }
   }
@@ -1657,7 +1669,7 @@ namespace eval ::xo {
     proc job_enqueue {cmd} {
       nsv_lappend request_monitor jobs $cmd
     }
-    
+
     proc job_dequeue {} {
       foreach cmd [nsv_set -reset request_monitor jobs {}] {
         {*}$cmd
@@ -1673,7 +1685,7 @@ namespace eval ::xo {
       ns_job queue -detached async-cmd $cmd
     }
   }
-  
+
 
   proc request_monitor_record_activity {key pa seconds clicks reason} {
     if {[::xo::is_ip $key]} {

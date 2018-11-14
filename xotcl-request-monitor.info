@@ -8,7 +8,7 @@
     <singleton-p>t</singleton-p>
     <auto-mount>request-monitor</auto-mount>
 
-    <version name="0.52" url="http://media.wu-wien.ac.at/download/xotcl-request-monitor-0.52.apm">
+    <version name="0.53" url="http://media.wu-wien.ac.at/download/xotcl-request-monitor-0.53.apm">
         <owner url="mailto:neumann@wu-wien.ac.at">Gustaf Neumann</owner>
         <vendor url="http://wu.ac.at">WU Vienna</vendor>
         <summary>Request Monitor with user tracking functionality</summary>
@@ -34,7 +34,7 @@ Updated for circumventing handler calls OpenACS 5.2 for /resources/*.
         <license>BSD-Style</license>
         <maturity>2</maturity>
 
-        <provides url="xotcl-request-monitor" version="0.52"/>
+        <provides url="xotcl-request-monitor" version="0.53"/>
 	<requires url="acs-kernel" version="5.9.1"/>
         <requires url="xotcl-core" version="0.122"/>
 
@@ -45,6 +45,9 @@ Updated for circumventing handler calls OpenACS 5.2 for /resources/*.
             <parameter datatype="string"  min_n_values="1"
 		       max_n_values="1"  name="do_track_activity"
 		       default="off" description="turn activity monitoring on or off (default off)"/>
+            <parameter datatype="string"  min_n_values="0"
+		       max_n_values="1"  name="do_slowdown_overactive"
+		       default="off" description="slowdown overactive users (default off)"/>
             <parameter datatype="string"  min_n_values="1"  max_n_values="1"  name="hide-requests"  default="*.css *.ico" description="List of glob patterns to be used for hiding entries from request lists. Only requests that do not match any of these patterns are displayed unless all requests are forced. Affected pages:   - stat-details (list of all recorded URLs with timings) - last-requests (tracking activity of a user)
 "/>
             <parameter datatype="number"  min_n_values="1"  max_n_values="1"  name="max-stats-elements"  default="5" description="Number of highest data points in the reporting period. The default of 5 will e.g. show you the top 5 times of requests per minute, hour aso."/>
