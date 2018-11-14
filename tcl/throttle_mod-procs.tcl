@@ -1540,8 +1540,10 @@ throttle ad_proc check {} {
     :add_statistics repeat ${:requestor} ${:pa} ${:url} ${:query}
     if {$repeat > 1} {
       :log "*** requestor (user ${:requestor}) would be blocked, when parameter do_slowdown_overactive would be activated"
+      set result 1
+    } else {
+      set result -1
     }
-    set result -1
   } elseif {$toMuch} {
     :log "*** we have to refuse user ${:requestor} with $toMuch requests"
     :add_statistics reject ${:requestor} ${:pa} ${:url} ${:query}
