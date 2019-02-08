@@ -514,11 +514,16 @@ if {"async-cmd" ni [ns_job queues]} {
   user_count_day proc end {} {
     lassign [throttle users nr_users_per_day] auth ip
     set now [clock format [clock seconds]]
-    # The counter logs its intrinsic value (c) anyhow, which are the
+    #
+    # The counter logs its intrinsic value (:c) anyhow, which are the
     # authenticated users. We also want to record the number of
     # unauthenticated users, and do this here manually.
+    #
     :log_to_file $now [self]-non-auth $ip
     set :c $auth
+    #
+    # Perform as well bookkeeping (per default once per hour)
+    #
     Users perDayCleanup
     next
   }
@@ -817,9 +822,9 @@ if {"async-cmd" ni [ns_job queues]} {
   }
 
   Users proc current_object {} {
-    set now     [clock seconds]
-    set mkey     [expr { ($now / 60) % [throttler timeWindow]}]
-    set obj     [self]::users::$mkey
+    set now   [clock seconds]
+    set mkey  [expr { ($now / 60) % [throttler timeWindow]}]
+    set obj   [self]::users::$mkey
 
     if {$mkey ne ${:last_mkey}} {
       if {${:last_mkey} ne ""} {:purge_access_stats}
