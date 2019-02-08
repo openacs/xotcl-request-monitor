@@ -571,19 +571,20 @@ if {"async-cmd" ni [ns_job queues]} {
     my ++
     # :log "[self proc] $url /$ms/ $requestor (${:c})"
     incr :t $ms
-
-    ### set up a value for the right ordering in last 100.
-    ### We take the difference in seconds since start, multiply by
-    ### 10000 (there should be no overflow); there should be less
-    ### than this number requests per minute.
+    #
+    # Set up a value for the right ordering in last 100.  We take the
+    # difference in seconds since start, multiply by 10000 (there
+    # should be no overflow); there should be less than this number
+    # requests per minute.
+    #
     set now [clock seconds]
-    set order [expr {($now-[[self class] set seconds])*10000 + ${:c}}]
+    set order [expr {($now - [[self class] set seconds]) * 10000 + ${:c}}]
     set :last100([expr {$order%99}]) [list $now $order $url $ms $requestor]
 
     set has_param [regexp {^(.*)[?]} $url _ url]
     if {$has_param} {set url $url?...}
 
-    ### Add statistics in detail
+    ### Add statistics
     incr :stat($url) $ms
     incr :cnt($url)
   }
@@ -605,12 +606,14 @@ if {"async-cmd" ni [ns_job queues]} {
     return $result
   }
   UrlCounter instproc check_truncate_stats {} {
-    # truncate statistics if necessary
+    #
+    # Truncate statistics if necessary.
+    #
     set max [max-url-stats]
     if {$max>1} {
       set result [:url_stats]
       set l [llength $result]
-      for {set i $max} {$i<$l} {incr i} {
+      for {set i $max} {$i < $l} {incr i} {
         set url [lindex $result $i 0]
         unset :stat($url) :cnt($url)
       }
@@ -620,9 +623,9 @@ if {"async-cmd" ni [ns_job queues]} {
     return ""
   }
   UrlCounter instproc cleanup_stats {} {
-    # truncate statistics if necessary
-    # :check_truncate_stats
-    # we use the timer to check other parameters as well here
+    #
+    # We use the timer to check other parameters as well here.
+    #
     set time_window [time-window]
     if {$time_window != [throttler timeWindow]} {
       throttler timeWindow $time_window
@@ -639,7 +642,9 @@ if {"async-cmd" ni [ns_job queues]} {
   }
   UrlCounter instproc finalize args {
     next
-    # each time the timer runs out, perform the cleanup
+    #
+    # Each time the timer runs out, perform the cleanup.
+    #
     after 0 [list [self] cleanup_stats]
   }
 
@@ -1212,8 +1217,11 @@ if {"async-cmd" ni [ns_job queues]} {
   }
 
   Users proc time_window_cleanup {} {
+    #
+    # Purge stale entries (maintenance only)
+    #
+
     #ns_log notice "=== time_window_cleanup"
-    # purge stale entries (maintenance only)
     set now [clock seconds]
     set maxdiff [expr {[throttler timeWindow] * 60}]
     foreach i [lsort [array names :pa]] {
@@ -1244,26 +1252,27 @@ if {"async-cmd" ni [ns_job queues]} {
   }
 
   Users proc perDayCleanup {} {
+    #
+    # Get rid of overdue elements.
+    #
+    :time_window_cleanup
+    #
+    # Refresh per day counter.
+    #
     set :ip24 0
     set :auth24 0
     set secsPerDay [expr {3600*24}]
+    set now [clock seconds]
     foreach i [lsort [array names :timestamp]] {
-      set secs [expr {[clock seconds]-[set :timestamp($i)]}]
-      # :log "--- $i: last click $secs secs ago"
-      if {$secs > $secsPerDay} {
-        #foreach {d h m s} [clock format [expr {$secs-$secsPerDay}] \
-                                    #               -format {%j %H %M %S}] break
-        #regexp {^[0]+(.*)$} $d match d
-        #regexp {^[0]+(.*)$} $h match h
-        #incr d -1
-        #incr h -1
-        # :log "--- $i expired $d days $h hours $m minutes ago"
+      if {$now - [set :timestamp($i)] > $secsPerDay} {
         unset :timestamp($i)
-        ns_log notice "UNSET timestamp($i) deleted due to perDayCleanup after $secs seconds (> $secsPerDay)"
       } else {
         if {[::xo::is_ip $i]} {incr :ip24} {incr :auth24}
       }
     }
+    #
+    # Save a dump, in case we have an unexpected restart.
+    #
     #ns_log notice "=== auth24 perDayCleanup -> ${:ip24} ${:auth24}"
     dump write
   }
@@ -1281,7 +1290,7 @@ if {"async-cmd" ni [ns_job queues]} {
       }
     }
     # The dump file data is merged with maybe preexisting data
-    # make sure to adjust the counters and timings
+    # make sure to adjust the counters and timings.
     Users time_window_cleanup
     Users compute_nr_users_per_day
     #
