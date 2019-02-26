@@ -29,13 +29,15 @@ proc ::xo::subst_user_link {prefix uid} {
     return $prefix[::xo::userid_link $uid]
 }
 
-nsf::proc ::xo::colorize_slow_calls {-warning:required -danger:required value} {
+nsf::proc ::xo::colorize_slow_calls {-fast:required -warning:required -danger:required value} {
     if {$value > $danger} {
         return danger
     } elseif {$value > $warning} {
         return warning
-    } else {
+    } elseif {$value > $fast} {
         return info
+    } else {
+        return success
     }
 }
 
@@ -62,15 +64,15 @@ foreach line [lreverse [split $c1 \n]] {
         set filtertime [dict get $time filtertime]
         set runtime    [dict get $time runtime]
         set totaltime  [format %8.6f [expr {$queuetime + $filtertime + $runtime}]]
-        set color(queuetime)  [::xo::colorize_slow_calls -warning 1.000 -danger 5.000  $queuetime]
-        set color(filtertime) [::xo::colorize_slow_calls -warning 0.500 -danger 1.000  $filtertime]
-        set color(runtime)    [::xo::colorize_slow_calls -warning 3.000 -danger 5.000  $runtime]
-        set color(totaltime)  [::xo::colorize_slow_calls -warning 6.000 -danger 10.000 $totaltime]
+        set color(queuetime)  [::xo::colorize_slow_calls -fast 0.001 -warning 0.50 -danger 1.00 $queuetime]
+        set color(filtertime) [::xo::colorize_slow_calls -fast 0.010 -warning 1.00 -danger 2.00 $filtertime]
+        set color(runtime)    [::xo::colorize_slow_calls -fast 0.010 -warning 5.00 -danger 10.00 $runtime]
+        set color(totaltime)  [::xo::colorize_slow_calls -fast 0.010 -warning 5.00 -danger 10.00 $totaltime]
     } else {
         lassign {"" "" ""} queuetime filtertime runtime
         lassign {"" "" ""} color(queuetime) color(filtertime) color(runtime)
         set totaltime $time
-        set color(totaltime)  [::xo::colorize_slow_calls -warning 6000 -danger 10000 $totaltime]
+        set color(totaltime)  [::xo::colorize_slow_calls -fast 0.010 -warning 3.00 -danger 10.00 $totaltime]
     }
     if {$time < 6000} {
         set class info
@@ -81,15 +83,15 @@ foreach line [lreverse [split $c1 \n]] {
     }
     set request [ns_quotehtml $url]
     set request [::xo::regsub_eval {user_id=([0-9]+)} $request {::xo::subst_user_link user_id= \1} user_id=]
-    append rows "<tr class='$color(totaltime)'>" \
-        "<td class='text-right'>$queuetime</td>" \
-        "<td class='text-right'>$filtertime</td>" \
-        "<td class='text-right'>$runtime</td>" \
-        "<td class='text-right'><strong>$totaltime</strong></td>" \
-        "<td>$year&nbsp;$mon&nbsp;$day&nbsp;$hours</td>" \
-        "<td class='text-right'>$userinfo</td>" \
-        "<td>$iplink</td>" \
-        "<td>$request</td></tr>\n"
+    append rows "<tr class=''>" \
+        "<td class='text-right $color(queuetime)'><span class='info'>$queuetime</span></td>" \
+        "<td class='text-right $color(filtertime)'>$filtertime</td>" \
+        "<td class='text-right $color(runtime)'>$runtime</td>" \
+        "<td class='text-right $color(totaltime)'><strong>$totaltime</strong></td>" \
+        "<td class='$color(totaltime)'>$year&nbsp;$mon&nbsp;$day&nbsp;$hours</td>" \
+        "<td class='text-right  $color(totaltime)'>$userinfo</td>" \
+        "<td class='$color(totaltime)'>$iplink</td>" \
+        "<td class='$color(totaltime)'>$request</td></tr>\n"
 }
 
 set doc(title) "Long Calls"
