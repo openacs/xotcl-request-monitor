@@ -236,7 +236,7 @@ if {"async-cmd" ni [ns_job queues]} {
       #
       # Check, whether the last request from a user was within
       # the minimum time interval. We are not keeping a full table
-      # of all request keys, but use an timeout triggered mechanism
+      # of all request keys, but use a timeout triggered mechanism
       # to keep only the active request keys in an associative array.
       #
       incr :alerts
