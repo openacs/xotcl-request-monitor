@@ -8,7 +8,7 @@
     <singleton-p>t</singleton-p>
     <auto-mount>request-monitor</auto-mount>
 
-    <version name="0.53" url="http://media.wu-wien.ac.at/download/xotcl-request-monitor-0.53.apm">
+    <version name="0.54" url="http://media.wu-wien.ac.at/download/xotcl-request-monitor-0.54.apm">
         <owner url="mailto:neumann@wu-wien.ac.at">Gustaf Neumann</owner>
         <vendor url="http://wu.ac.at">WU Vienna</vendor>
         <summary>Request Monitor with user tracking functionality</summary>
@@ -34,9 +34,10 @@ Updated for circumventing handler calls OpenACS 5.2 for /resources/*.
         <license>BSD-Style</license>
         <maturity>2</maturity>
 
-        <provides url="xotcl-request-monitor" version="0.53"/>
+        <provides url="xotcl-request-monitor" version="0.54"/>
 	<requires url="acs-kernel" version="5.9.1"/>
         <requires url="xotcl-core" version="0.122"/>
+	<requires url="acs-templating" version="5.10.0d9"/>
 
         <callbacks>
         </callbacks>

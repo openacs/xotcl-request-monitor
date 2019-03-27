@@ -116,9 +116,16 @@ proc currentViews {} {
 if {$jsGraph} {
   set nonce [::security::csp::nonce]
 
-  template::add_body_script -src "//code.jquery.com/jquery-1.12.3.min.js"
+  if {[template::head::can_resolve_urn urn:ad:js:jquery]} {
+    template::add_body_script -src urn:ad:js:jquery
+  } else {
+    template::add_body_script -src "//code.jquery.com/jquery-1.12.3.min.js"
+    security::csp::require script-src code.jquery.com
+  }
+
   template::add_body_script -src "//code.highcharts.com/highcharts.js"
   template::add_body_script -src "//code.highcharts.com/modules/exporting.js"
+  security::csp::require script-src code.highcharts.com
 
   proc js_time {clock} {
     set year [clock format $clock -format %Y]
