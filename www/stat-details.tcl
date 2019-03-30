@@ -137,9 +137,9 @@ set with_apps_label(0) "Strip communities"
 set with_apps_tooltip(0) "Statistics without Communities"
 set not_with_apps [expr {!$with_apps}]
 
-set url_all [export_vars -base [ad_conn url] [list [list all $not_all] with_apps with_param]]
-set url_apps [export_vars -base [ad_conn url] [list all [list with_apps $not_with_apps] with_param]]
-set url_param [export_vars -base [ad_conn url] [list all with_apps [list with_param $not_with_param]]]
+set url_all   [export_vars -base [ad_conn url] {{all $not_all} with_apps with_param}]
+set url_apps  [export_vars -base [ad_conn url] {all {with_apps $not_with_apps} with_param}]
+set url_param [export_vars -base [ad_conn url] {all with_apps {with_param $not_with_param}}]
 
 switch -glob $orderby {
   *,desc {set order -decreasing}
