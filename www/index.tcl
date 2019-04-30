@@ -108,7 +108,7 @@ proc currentViews {} {
     set views_per_min_per_user "0"
   }
   set view_time [expr {$views_per_min_per_user>0 ?
-        " avg. view time: [format %4.1f [expr {60.0/$views_per_min_per_user}]]" : ""}]
+        " avg. view time: [format %4.1f [expr {60.0/$views_per_min_per_user}]] secs" : ""}]
   return "[format %4.1f $views_per_sec] views/sec, [format %4.3f $views_per_min_per_user] views/min/user,  $view_time"
 }
 
