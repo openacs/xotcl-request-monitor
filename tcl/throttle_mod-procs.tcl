@@ -1467,7 +1467,7 @@ throttle proc destroy {} {
 # use "ns_conn partialtimes". We can't use the latter directly, since
 # this file is typically loaded from a non-connection thread.
 #
-if {[catch {ns_server unmap "GET /*JUST_FOR_TESTING*"}]} {
+if {![::acs::icanuse "ns_conn partialtimes"]} {
   #
   # Older version of NaviServer or AOLserver
   #
