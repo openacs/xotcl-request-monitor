@@ -70,15 +70,52 @@ if {"async-cmd" ni [ns_job queues]} {
   # AsyncDiskWriter from bgdelivery
   #
   Class create AsyncLogFile -parameter {filename {mode a}}
+
   AsyncLogFile instproc init {} {
     if {![info exists :filename]} {
       set :filename $::logdir/[namespace tail [self]]
     }
-    set :handle [bgdelivery do AsyncDiskWriter new -autoflush true]
-    bgdelivery do ${:handle} open -filename ${:filename} -mode ${:mode}
+    :open
   }
-  AsyncLogFile instproc write {msg} {
-    bgdelivery do ${:handle} async_write $msg\n
+
+  if {[acs::icanuse ns_asynclogfile]} {
+
+    ns_log notice "... AsyncLogFile uses NaviServer ns_asynclogfile"
+
+    AsyncLogFile instproc open {} {
+      #
+      # The open "append" mode is the default mode, we use nothing
+      # else here.
+      #
+      set :handle [ns_asynclogfile open ${:filename}]
+    }
+
+    AsyncLogFile instproc write {msg} {
+      ns_asynclogfile write ${:handle} $msg\n
+    }
+
+    AsyncLogFile instproc destroy {} {
+      ns_asynclogfile close ${:handle}
+      next
+    }
+
+  } else {
+    ns_log notice "... AsyncLogFile uses bgdelivery"
+
+    AsyncLogFile instproc open {} {
+      set :handle [bgdelivery do AsyncDiskWriter new -autoflush true]
+      bgdelivery do ${:handle} open -filename ${:filename} -mode ${:mode}
+    }
+
+    AsyncLogFile instproc write {msg} {
+      bgdelivery do ${:handle} async_write $msg\n
+    }
+
+    AsyncLogFile instproc destroy {} {
+      catch {bgdelivery do ${:handle} close}
+      next
+    }
+
   }
 
   # open the used log-files
@@ -1325,10 +1362,9 @@ if {"async-cmd" ni [ns_job queues]} {
       puts -nonewline $dumpFile $cmd
       close $dumpFile
     } else {
-      set dumpFile [bgdelivery do AsyncDiskWriter new]
-      bgdelivery do $dumpFile open -filename ${:file}
-      bgdelivery do $dumpFile async_write $cmd
-      bgdelivery do $dumpFile close
+      set dumpFile [AsyncLogFile new -filename ${:file}]
+      $dumpFile write $cmd
+      $dumpFile destroy
     }
   }
 
