@@ -66,8 +66,7 @@ if {"async-cmd" ni [ns_job queues]} {
   if {![file isdirectory $logdir]} {file mkdir $logdir}
 
   #
-  # Create AsyncLogFile class, which is one client of the
-  # AsyncDiskWriter from bgdelivery
+  # Create AsyncLogFile class
   #
   Class create AsyncLogFile -parameter {filename {mode a}}
 
@@ -79,7 +78,9 @@ if {"async-cmd" ni [ns_job queues]} {
   }
 
   if {[acs::icanuse ns_asynclogfile]} {
-
+    #
+    # Use NaviServer builtin async disk writer.
+    #
     ns_log notice "... AsyncLogFile uses NaviServer ns_asynclogfile"
 
     AsyncLogFile instproc open {} {
@@ -100,6 +101,10 @@ if {"async-cmd" ni [ns_job queues]} {
     }
 
   } else {
+    #
+    # Make AsyncLogFile a client of the
+    # AsyncDiskWriter in bgdelivery.
+    #
     ns_log notice "... AsyncLogFile uses bgdelivery"
 
     AsyncLogFile instproc open {} {
