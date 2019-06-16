@@ -19,7 +19,7 @@ if {!$admin_p} {
 }
 
 set running_requests [throttle running]
-if {[info commands bgdelivery] ne ""} {
+if {[info commands bgdelivery] ne "" && [nsv_array names ::xotcl::THREAD ::bgdelivery] ne ""} {
   set background_requests [bgdelivery running]
 } else {
   set background_requests [list]

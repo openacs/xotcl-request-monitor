@@ -385,7 +385,7 @@ array set current_threads [throttle server_threads]
 
 set running_requests [throttle running]
 set running [expr {[llength $running_requests]/2}]
-if {![catch {ns_conn contentsentlength}]} {
+if {![catch {ns_conn contentsentlength}] && [nsv_array names ::xotcl::THREAD ::bgdelivery] ne ""} {
   set background_requests [bgdelivery running]
   set background  [expr {[llength $background_requests]/2}]
   append running /$background
