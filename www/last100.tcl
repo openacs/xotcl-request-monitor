@@ -22,7 +22,7 @@ Class create CustomField -volatile \
     -instproc render-data {row} {
       html::div -style {
 	border: 1px solid #a1a5a9; padding: 0px 5px 0px 5px; background: #e2e2e2} {
-	  html::t  [$row set [:name]]
+	  html::t  [$row set ${:name}]
 	}
     }
 
