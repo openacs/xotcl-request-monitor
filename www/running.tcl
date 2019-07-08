@@ -74,8 +74,13 @@ foreach {index entry} $background_requests {
 }
 if {[ns_info name] eq "NaviServer"}  {
   foreach {entry} $writer_requests {
-    if {[llength $entry] != 8} continue
-    lassign $entry starttime  thread driver ip fd remaining done clientdata
+    if {[llength $entry] == 8} {
+      lassign $entry starttime thread driver ip fd remaining done clientdata
+    } elseif {[llength $entry] == 11} {
+      lassign $entry starttime thread driver pool ip fd remaining done targetRate actualRate clientdata
+    } else {
+      ns_log notice "ns_writer list returns unknown number ([llength $entry]) of elements"
+    }
     lassign $clientdata requestor url
     set size [expr {$remaining+$done}]
     set percentage [expr {$done*100.0/$size}]
