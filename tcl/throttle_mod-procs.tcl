@@ -1367,6 +1367,7 @@ if {"async-cmd" ni [ns_job queues]} {
       puts -nonewline $dumpFile $cmd
       close $dumpFile
     } else {
+      file delete -force ${:file}
       set dumpFile [AsyncLogFile new -filename ${:file}]
       $dumpFile write $cmd
       $dumpFile destroy
