@@ -871,7 +871,7 @@ if {"async-cmd" ni [ns_job queues]} {
     if {$mkey ne ${:last_mkey}} {
       if {${:last_mkey} ne ""} {:purge_access_stats}
       # create or recreate the container object for that minute
-      if {[:isobject $obj]} {
+      if {[nsf::is object $obj]} {
         $obj destroy
       }
       Users create $obj -point_in_time $now
@@ -1369,7 +1369,11 @@ if {"async-cmd" ni [ns_job queues]} {
     } else {
       file delete -force ${:file}
       set dumpFile [AsyncLogFile new -filename ${:file}]
-      $dumpFile write $cmd
+      # Split the cmd to avoid sanitizer without the need to check, if
+      # the server has support
+      foreach l [split $cmd \n] {
+        $dumpFile write $l
+      }
       $dumpFile destroy
     }
   }
@@ -1425,7 +1429,7 @@ if {"async-cmd" ni [ns_job queues]} {
       while {-1 != [gets $f line]} {
         regexp {(.*) -- (.*) ::(.*) (.*)} $line match timestamp server counter value
         #ns_log notice "$counter add_value $timestamp $value"
-        if {[::xotcl::Object isobject $counter]} {
+        if {[nsf::is object $counter]} {
           $counter add_value $timestamp $value
         } elseif {![info exists complain($counter)]} {
           ns_log notice "request-monitor: ignore reload of value $value for counter $counter"
