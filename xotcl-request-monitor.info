@@ -56,7 +56,7 @@ Updated for circumventing handler calls OpenACS 5.2 for /resources/*.
             <parameter datatype="number"  min_n_values="1"  max_n_values="1"  name="max-url-stats"  default="100" description="Number of URL entries to be kept in the detailed view of the request statistics"/>
             <parameter datatype="string"  min_n_values="1"  max_n_values="1"  name="peer-groups"  default="*wlan* *dsl* *.com *.net *.org" description="List of glob patterns for the summary of sites when an admin uses .../whos-online/. These patterns are matched against the domain names of the peer addresses."/>
             <parameter datatype="number"  min_n_values="1"  max_n_values="1"  name="request-blocking-off"  default="0" description="switch request blocking on/off"/>
-            <parameter datatype="number"  min_n_values="1"  max_n_values="1"  name="time-window"  default="10" description="Defines the time window in minutes which is used for detailed monitoring (e.g. calculate the number of active uses and the history of the requests of these users, the numer of ip switches, etc.)"/>
+            <parameter datatype="number"  min_n_values="1"  max_n_values="1"  name="time-window"  default="10" description="Defines the time window in minutes which is used for detailed monitoring (e.g. calculate the number of active uses and the history of the requests of these users, the number of ip switches, etc.)"/>
             <parameter datatype="number"  min_n_values="1"  max_n_values="1"  name="trend-elements"  default="48" description="Number of data points used for displaying the trend graphs. The default will show the trend for the last 48 seconds,minutes,hours. It is also the maximum reporting period possible"/>
         </parameters>
 

@@ -1050,7 +1050,7 @@ if {"async-cmd" ni [ns_job queues]} {
     #ns_log notice "=== [self] addKey $key $pa $url '$community_id' $is_embedded_request"
     #
     # This method stores information about the current request partly
-    # in the round-robbin objects of the specified time windows, and
+    # in the round-robin objects of the specified time windows, and
     # keeps global information in the class objects.
     #
     # key: either user_id or peer address
@@ -1185,7 +1185,7 @@ if {"async-cmd" ni [ns_job queues]} {
 
   Users proc incrRefCount {key pa} {
     #
-    # Whis method is called whenever the user (key) was seen the first
+    # This method is called whenever the user (key) was seen the first
     # time in the current minute.
     #
     if {[incr :refcount($key)] == 1} {
@@ -1476,10 +1476,13 @@ if {"async-cmd" ni [ns_job queues]} {
   <li><em>timeWindow:</em>Time window for computing detailed statistics; can
   be configured via OACS package parameter <code>time-window</code></li>
   <li><em>timeoutMs:</em> Time window to keep statistics for a user</li>
-  <li><em>startThrottle:</em> If user requests more than this #, thre requests are delayed. When larger than toMuc, the parameter is ignored</li>
-  <li><em>toMuch:</em> If user requests more than this #, he is kicked out</li>
+  <li><em>startThrottle:</em> If user requests more than this #, her
+  requests are delayed. When larger than toMuch, the parameter is ignored</li>
+  <li><em>toMuch:</em> If user requests more than this #, she is kicked out</li>
   </ul>
-  The throttler is defined as a class running in a detached thread. See <a href='/api-doc/procs-file-view?path=packages/xotcl-core/tcl/40-thread-mod-procs.tcl'>XOTcl API for Thread management</a> for more details.
+  The throttler is defined as a class running in a detached thread.
+  See <a href='/api-doc/procs-file-view?path=packages/xotcl-core/tcl/40-thread-mod-procs.tcl'>XOTcl
+  API for Thread management</a> for more details.
   It can be subclassed to define e.g. different kinds of throttling policies for
   different kind of request keys. Note that the throttle thread itself
   does not block, only the connection thread blocks if necessary (on throttles).
