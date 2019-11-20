@@ -42,7 +42,7 @@ lassign [throttle users users_per_day] ip auth
 if {!$all} {set elements [concat $ip $auth]} {set elements $auth}
 set summary "We noticed in [expr {[llength $ip]+[llength $auth]}] users in total, containing [llength $auth] authenticated users"
 
-set now_ansi  [clock_to_ansi [clock seconds]]
+set now_ansi  [lc_clock_to_ansi [clock seconds]]
 
 foreach element $elements {
   lassign $element user_id timestamp
@@ -60,7 +60,7 @@ foreach element $elements {
 		     $user_url \
 		     $timestamp \
                      [util::age_pretty \
-                          -timestamp_ansi [clock_to_ansi $timestamp] \
+                          -timestamp_ansi [lc_clock_to_ansi $timestamp] \
                           -sysdate_ansi $now_ansi \
                           -mode_3_fmt "%d %b %Y, at %X"] \
 		    ]
