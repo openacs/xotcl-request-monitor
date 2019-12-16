@@ -73,7 +73,7 @@ foreach element [lsort -index 0 -decreasing $requests] {
     if {$exclude} continue
   }
   set diff [expr {$last_timestamp-$timestamp}]
-  set url_label [string_truncate_middle -len 70 $url]
+  set url_label [ad_string_truncate_middle -len 70 $url]
   t1 add       -time [clock format $timestamp] \
 	       -timediff $diff \
       	       -url $url_label \

@@ -1698,19 +1698,6 @@ throttle proc community_access {community_id} {
   }
 }
 
-ad_proc string_truncate_middle {{-ellipsis ...} {-len 100} string} {
-  cut middle part of a string in case it is too long
-} {
-  set string [string trim $string]
-  if {[string length $string]>$len} {
-    set half  [expr {($len-2)/2}]
-    set left  [string trimright [string range $string 0 $half]]
-    set right [string trimleft  [string range $string end-$half end]]
-    return $left$ellipsis$right
-  }
-  return $string
-}
-
 namespace eval ::xo {
 
   proc is_ip {key} {
