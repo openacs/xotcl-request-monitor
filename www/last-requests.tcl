@@ -21,9 +21,9 @@ if {[string is integer $request_key]} {
   set person [person::get_person_info -person_id $request_key]
   set user_string "[dict get $person first_names] [dict get $person last_name]"
   set tmp_url [acs_community_member_url -user_id $request_key]
-  append user_string " (<a href='[ns_quotehtml $tmp_url]'>$request_key</a>)" 
+  append user_string " (<a href='[ns_quotehtml $tmp_url]'>$request_key</a>)"
 } else {
-   set user_string $request_key 
+   set user_string $request_key
 }
 
 append title $user_string
@@ -51,7 +51,7 @@ TableWidget create t1 \
       AnchorField url -label "URL"
       Field pa        -label "Peer Address"
     } \
-    -no_data "no requests for this user recorded" 
+    -no_data "no requests for this user recorded"
 
 set all [expr {!$all}]
 set requests [throttle users last_requests $request_key]
@@ -65,9 +65,9 @@ foreach element [lsort -index 0 -decreasing $requests] {
     set exclude 0
     foreach pattern $hide_patterns {
       if {[string match $pattern $url]} {
-	set exclude 1
-	incr hidden
-	break
+        set exclude 1
+        incr hidden
+        break
       }
     }
     if {$exclude} continue
@@ -75,10 +75,10 @@ foreach element [lsort -index 0 -decreasing $requests] {
   set diff [expr {$last_timestamp-$timestamp}]
   set url_label [ad_string_truncate_middle -len 70 $url]
   t1 add       -time [clock format $timestamp] \
-	       -timediff $diff \
-      	       -url $url_label \
-      	       -url.href "[ad_url]$url" \
-	       -pa $pa
+               -timediff $diff \
+               -url $url_label \
+               -url.href "[ad_url]$url" \
+               -pa $pa
 }
 
 set user_string "$hidden requests hidden."

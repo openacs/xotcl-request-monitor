@@ -26,9 +26,9 @@ if {!$admin_p} {
 
 set hide_patterns [parameter::get -parameter hide-requests -default {*.css}]
 array set apps {
-  calendar 1 acs-templating 1 forums 1 file-storage 1 one-community 1 
-  xowiki 1 
-  annotations 1 gradebook 1 homework 1 lecturecast 1 res 1 
+  calendar 1 acs-templating 1 forums 1 file-storage 1 one-community 1
+  xowiki 1
+  annotations 1 gradebook 1 homework 1 lecturecast 1 res 1
 }
 array set vuh {
   ical 1
@@ -144,7 +144,7 @@ set url_param [export_vars -base [ad_conn url] {all with_apps {with_param $not_w
 switch -glob $orderby {
   *,desc {set order -decreasing}
   *,asc  {set order -increasing}
-} 
+}
 switch -glob $orderby {
   url,*       {set index 0; set type -dictionary}
   totaltime,* {set index 1; set type -integer}
@@ -159,7 +159,7 @@ TableWidget create t1 -volatile \
       Action new -label "$with_param_label($with_param)" -url $url_param -tooltip "with_param_tooltip($with_param)"
       Action new -label "$with_apps_label($with_apps)" -url $url_apps -tooltip "with_apps_tooltip($with_apps)"
       Action new -label "Delete Statistics" -url flush-url-statistics \
-	  -tooltip "Delete URL Statistics"
+          -tooltip "Delete URL Statistics"
     }] \
     -columns {
       AnchorField url   -label "Request" -orderby url
@@ -179,28 +179,28 @@ TableWidget create t1 -volatile \
     if {!$all} {
       set exclude 0
       foreach pattern $hide_patterns {
-	if {[string match $pattern $url]} {
-	  set exclude 1
-	  incr hidden
-	  break
-	}
+        if {[string match $pattern $url]} {
+          set exclude 1
+          incr hidden
+          break
+        }
       }
       if {$exclude} continue
     }
-    
-    t1 add 	-url [ad_string_truncate_middle -len 80 $url] \
-  	        -url.href [expr {[string match "*...*" $url] ? "" : "[ad_url]$url" }] \
-		-totaltime [lindex $l 1] \
-		-cnt [lindex $l 2] \
-		-avg $avg \
-		-total [format %.2f%% [expr {[lindex $l 1]*100.0/$total}]] 
+
+    t1 add      -url [ad_string_truncate_middle -len 80 $url] \
+                -url.href [expr {[string match "*...*" $url] ? "" : "[ad_url]$url" }] \
+                -totaltime [lindex $l 1] \
+                -cnt [lindex $l 2] \
+                -avg $avg \
+                -total [format %.2f%% [expr {[lindex $l 1]*100.0/$total}]]
   }
 
 set t1 [t1 asHTML]
 
 append user_string "<b>Grand Total Avg Response time: </b>" \
-	[format %6.2f $total_avg] " seconds/call " \
-	"(base: $total_cnt requests)<br>"
+        [format %6.2f $total_avg] " seconds/call " \
+        "(base: $total_cnt requests)<br>"
 
 append user_string "$hidden requests hidden."
 if {$hidden>0} {

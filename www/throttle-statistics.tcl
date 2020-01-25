@@ -17,12 +17,12 @@ set data [throttle url_statistics]
 
 template::list::create \
     -name url_statistics \
-    -elements { 
+    -elements {
       time {label Time}
       type {label Type}
       user {
-	label Userid
-	link_url_col user_url}
+        label Userid
+        link_url_col user_url}
       IPaddress  {label "IP Address"}
       URL {label "URL"}
     }

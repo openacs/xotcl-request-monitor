@@ -23,7 +23,7 @@ TableWidget create t1 \
     }
 
 foreach e [lsort -decreasing -index 0 \
-	       [throttle users in_community $community_id]] {
+               [throttle users in_community $community_id]] {
   lassign $e timestamp requestor
   if {[info exists listed($requestor)]} continue
   set listed($requestor) 1

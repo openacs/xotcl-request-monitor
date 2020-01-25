@@ -1,7 +1,7 @@
 ad_page_contract {
     Displays last 100 requests in the system
 
-    @author Gustaf Neumann 
+    @author Gustaf Neumann
 
     @cvs-id $Id$
 } -query {
@@ -21,9 +21,9 @@ foreach {key value} [throttle last100] {lappend stat $value}
 Class create CustomField -volatile \
     -instproc render-data {row} {
       html::div -style {
-	border: 1px solid #a1a5a9; padding: 0px 5px 0px 5px; background: #e2e2e2} {
-	  html::t  [$row set ${:name}]
-	}
+        border: 1px solid #a1a5a9; padding: 0px 5px 0px 5px; background: #e2e2e2} {
+          html::t  [$row set ${:name}]
+        }
     }
 
 TableWidget create t1 -volatile \
