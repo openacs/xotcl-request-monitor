@@ -32,9 +32,9 @@ TableWidget create t1 \
     -columns [subst {
       AnchorField name  -label "User" -orderby name
       Field date -label "Last Activity" -html { align right } \
-	  -orderby date
+          -orderby date
       }] \
-    -no_data "no registered online today" 
+    -no_data "no registered online today"
 
 
 set users [list]
@@ -54,11 +54,11 @@ foreach element $elements {
     # it was an IP address
     set user_label $user_id
     set user_url ""
-  } 
+  }
 
   lappend users [list $user_label \
-		     $user_url \
-		     $timestamp \
+                     $user_url \
+                     $timestamp \
                      [::xowiki::utility pretty_age \
                           -timestamp [clock scan [lc_clock_to_ansi $timestamp]]] \
                     ]
@@ -67,7 +67,7 @@ foreach element $elements {
 switch -glob $orderby {
   *,desc {set order -decreasing}
   *,asc  {set order -increasing}
-} 
+}
 switch -glob $orderby {
   name,*         {set index 0; set type -dictionary}
   date,*         {set index 2; set type -integer}
@@ -75,9 +75,9 @@ switch -glob $orderby {
 
 foreach e [lsort $type $order -index $index $users] {
   if {$admin} {
-    t1 add 	-name         [lindex $e 0] \
+    t1 add      -name         [lindex $e 0] \
                 -name.href    [lindex $e 1] \
-		-date         [lindex $e 3] \
+                -date         [lindex $e 3] \
   }
 }
 
