@@ -5,7 +5,7 @@ ad_page_contract {
     @cvs-id $Id$
 } -query {
   request_key
-  {all:optional 1}
+  {all:boolean,optional 1}
   {orderby:token,optional "last_modified,desc"}
 } -properties {
     title:onevalue

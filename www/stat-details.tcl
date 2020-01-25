@@ -5,7 +5,7 @@ ad_page_contract {
 
     @cvs-id $Id$
 } -query {
-    {all:optional 0}
+    {all:boolean,optional 0}
     {with_param:optional 1}
     {with_apps:optional 0}
     {orderby:token,optional "totaltime,desc"}
