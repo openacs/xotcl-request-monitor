@@ -59,11 +59,9 @@ foreach element $elements {
   lappend users [list $user_label \
 		     $user_url \
 		     $timestamp \
-                     [util::age_pretty \
-                          -timestamp_ansi [lc_clock_to_ansi $timestamp] \
-                          -sysdate_ansi $now_ansi \
-                          -mode_3_fmt "%d %b %Y, at %X"] \
-		    ]
+                     [::xowiki::utility pretty_age \
+                          -timestamp [clock scan [lc_clock_to_ansi $timestamp]]] \
+                    ]
 }
 
 switch -glob $orderby {
