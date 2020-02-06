@@ -1349,46 +1349,52 @@ if {"async-cmd" ni [ns_job queues]} {
     }
   }
   dump proc collect {} {
-    set cmd ""
-    # dump all variables of the object ::Users
+    set cmds {}
+    #
+    # Dump all variables of the object ::Users
+    #
     set o ::Users
     foreach var [$o info vars] {
+      #
       # last_mkey is just for internal purposes
       if {$var eq "last_mkey"} continue
-      # the remainder are primarily runtime statistics
+
+      #
+      # The remainder are primarily runtime statistics
+      #
       if {[$o array exists $var]} {
-        append cmd [list $o array set $var [$o array get $var]] \n
+        lappend cmds [list $o array set $var [$o array get $var]]
       } else {
-        append cmd [list $o set $var [$o set $var]] \n
+        lappend cmds [list $o set $var [$o set $var]]
       }
     }
-    return $cmd
+    return $cmds
   }
 
   dump proc write {{-sync false}} {
-    set cmd [:collect]
+    set cmds [:collect]
     if {$sync} {
       set dumpFile [open ${:file} w]
-      puts -nonewline $dumpFile $cmd
+      puts -nonewline $dumpFile [join $cmds \n]\n
       close $dumpFile
     } else {
       file delete -force ${:file}
       set dumpFile [AsyncLogFile new -filename ${:file}]
-      # Split the cmd to avoid sanitizer without the need to check, if
-      # the server has support
-      foreach l [split $cmd \n] {
-        $dumpFile write $l
+      #
+      # Write the content in smaller chunks.
+      #
+      foreach cmd $cmds {
+        $dumpFile write $cmd
       }
       $dumpFile destroy
     }
   }
 
-
   # dump proc write {{-sync false}} {
   #   # -sync is currently ignored
   #   ns_job queue -detached async-cmd [subst {
   #     set dumpFile \[open ${:file} w\]
-  #     puts -nonewline \$dumpFile [list [:collect]]
+  #     puts \$dumpFile [list [join [:collect] \n]]
   #     close \$dumpFile
   #   }]
   # }
