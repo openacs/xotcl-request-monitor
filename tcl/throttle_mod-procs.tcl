@@ -91,8 +91,8 @@ if {"async-cmd" ni [ns_job queues]} {
       set :handle [ns_asynclogfile open ${:filename}]
     }
 
-    AsyncLogFile instproc write {msg} {
-      ns_asynclogfile write ${:handle} $msg\n
+    AsyncLogFile instproc write {{-sanitize 0} msg} {
+      ns_asynclogfile write -sanitize $sanitize ${:handle} $msg\n
     }
 
     AsyncLogFile instproc destroy {} {
@@ -112,7 +112,7 @@ if {"async-cmd" ni [ns_job queues]} {
       bgdelivery do ${:handle} open -filename ${:filename} -mode ${:mode}
     }
 
-    AsyncLogFile instproc write {msg} {
+    AsyncLogFile instproc write {{-sanitize 0} msg} {
       bgdelivery do ${:handle} async_write $msg\n
     }
 
@@ -552,7 +552,7 @@ if {"async-cmd" ni [ns_job queues]} {
   # per day. It differs from other counters by keeping track of a pair
   # of values (authenticated and non-authenticated).
 
-  Counter user_count_day -timeoutMs [expr {60000*60}] -logging 1
+  Counter user_count_day -timeoutMs [expr {71000*60}] -logging 1
   user_count_day proc end {} {
     lassign [throttle users nr_users_per_day] auth ip
     set now [clock format [clock seconds]]
@@ -1348,7 +1348,7 @@ if {"async-cmd" ni [ns_job queues]} {
       Users array unset user_in_community
     }
   }
-  dump proc write {{-sync false}} {
+  dump proc collect {} {
     set cmd ""
     # dump all variables of the object ::Users
     set o ::Users
@@ -1362,6 +1362,11 @@ if {"async-cmd" ni [ns_job queues]} {
         append cmd [list $o set $var [$o set $var]] \n
       }
     }
+    return $cmd
+  }
+
+  dump proc write {{-sync false}} {
+    set cmd [:collect]
     if {$sync} {
       set dumpFile [open ${:file} w]
       puts -nonewline $dumpFile $cmd
@@ -1377,6 +1382,16 @@ if {"async-cmd" ni [ns_job queues]} {
       $dumpFile destroy
     }
   }
+
+
+  # dump proc write {{-sync false}} {
+  #   # -sync is currently ignored
+  #   ns_job queue -detached async-cmd [subst {
+  #     set dumpFile \[open ${:file} w\]
+  #     puts -nonewline \$dumpFile [list [:collect]]
+  #     close \$dumpFile
+  #   }]
+  # }
 
   # initialization of Users class object
   #Users perDayCleanup
