@@ -123,8 +123,8 @@ if {$jsGraph} {
     security::csp::require script-src code.jquery.com
   }
 
-  template::add_body_script -src "//code.highcharts.com/highcharts.js"
-  template::add_body_script -src "//code.highcharts.com/modules/exporting.js"
+  template::add_body_script -src "//code.highcharts.com/7.0/highcharts.js"
+  template::add_body_script -src "//code.highcharts.com/7.0/modules/exporting.js"
   security::csp::require script-src code.highcharts.com
 
   proc js_time {clock} {
