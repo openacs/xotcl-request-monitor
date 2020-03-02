@@ -114,17 +114,17 @@ proc currentViews {} {
 
 
 if {$jsGraph} {
-  set nonce [::security::csp::nonce]
+  #set nonce [::security::csp::nonce]
+  #
+  # if {[template::head::can_resolve_urn urn:ad:js:jquery]} {
+  #   template::add_body_script -src urn:ad:js:jquery
+  # } else {
+  #   template::add_body_script -src "//code.jquery.com/jquery-1.12.3.min.js"
+  #   security::csp::require script-src code.jquery.com
+  # }
 
-  if {[template::head::can_resolve_urn urn:ad:js:jquery]} {
-    template::add_body_script -src urn:ad:js:jquery
-  } else {
-    template::add_body_script -src "//code.jquery.com/jquery-1.12.3.min.js"
-    security::csp::require script-src code.jquery.com
-  }
-
-  template::add_body_script -src "//code.highcharts.com/7.0/highcharts.js"
-  template::add_body_script -src "//code.highcharts.com/7.0/modules/exporting.js"
+  template::add_body_script -src "//code.highcharts.com/highcharts.js"
+  template::add_body_script -src "//code.highcharts.com/modules/exporting.js"
   security::csp::require script-src code.highcharts.com
 
   proc js_time {clock} {
@@ -171,18 +171,13 @@ if {$jsGraph} {
       },
       name: '$label',
       data: \[ [join $data ,] \],
-      fillColor : {
-                    linearGradient : {
-                        x1: 0,
-                        y1: 0,
-                        x2: 0,
-                        y2: 1
-                    },
-                    stops : \[
-                        \[0, Highcharts.getOptions().colors\[0\]\],
-                        \[1, Highcharts.Color(Highcharts.getOptions().colors\[0\]).setOpacity(0).get('rgba')\]
-                    \]
-                }
+      fillColor: {
+                linearGradient: \[0, 0, 0, 300\],
+                stops: \[
+                    \[0, Highcharts.getOptions().colors\[0\]\],
+                    \[1, Highcharts.color(Highcharts.getOptions().colors\[0\]).setOpacity(0).get('rgba')\]
+                \]
+            }
     }}]
 
     #
@@ -223,22 +218,17 @@ if {$jsGraph} {
             name: '$label',
             colorIndex: 4,
             data: \[ [join $data ,] \],
-            fillColor : {
-                    linearGradient : {
-                        x1: 0,
-                        y1: 0,
-                        x2: 0,
-                        y2: 1
-                    },
-              stops : \[
-              \[0, Highcharts.getOptions().colors\[0\]\],
-              \[1, Highcharts.Color(Highcharts.getOptions().colors\[4\]).setOpacity(0).get('rgba')\]
-              \]
+            fillColor: {
+                linearGradient: \[0, 0, 0, 300\],
+                stops: \[
+                    \[0, Highcharts.getOptions().colors\[0\]\],
+                    \[1, Highcharts.color(Highcharts.getOptions().colors\[4\]).setOpacity(0).get('rgba')\]
+                \]
             }}}]
     }
 
     template::add_body_script -script [subst {
-    \$('#$graphID').highcharts({
+      Highcharts.chart('$graphID', {
         chart: {
             type: 'line'
         },
@@ -269,7 +259,7 @@ if {$jsGraph} {
             enabled: false
         },
         series: \[$series\]
-    });
+      });
     }]
 
     #ns_log notice diagram=$diagram
