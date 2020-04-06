@@ -729,21 +729,24 @@ if {"async-cmd" ni [ns_job queues]} {
   }
 
   Users ad_proc active {-full:switch}  {
+
     Return a list of lists containing information about current
-    users. If the switch 'full' is used this list contains
-    these users who have used the server within the
-    monitoring time window (per default: 10 minutes). Otherwise,
-    just a list of requestors (user_ids or peer addresses for unauthenticated
-                               requests) is returned.
-    <p>
-    If -full is used for each requestor the last
-    peer address, the last timestamp, the number of hits, a list
-    of values for the activity calculations and the number of ip-switches
-    the user is returned.
-    <p>
-    The activity calculations are performed on base of an exponential smoothing
-    algorithm which is calculated through an aggregated value, a timestamp
-    (in minutes) and the number of hits in the monitored time window.
+    users. If the switch 'full' is used this list contains these users
+    who have used the server within the monitoring time window (per
+    default: 10 minutes). Otherwise, just a list of requestors
+    (user_ids or peer addresses for unauthenticated requests) is
+    returned.
+
+    If "-full" is used for each requestor the last peer address, the
+    last timestamp, the number of hits, a list of values for the
+    activity calculations and the number of ip-switches the user is
+    returned.
+
+    The activity calculations are performed on base of an exponential
+    smoothing algorithm which is calculated through an aggregated
+    value, a timestamp (in minutes) and the number of hits in the
+    monitored time window.
+
     @return list with detailed user info
   } {
     if {$full} {
@@ -775,15 +778,47 @@ if {"async-cmd" ni [ns_job queues]} {
     return [lindex [:nr_users_time_window] 1]
   }
 
+  # Users ad_proc nr_users_time_window {} {
+  #   @return number of different ip addresses and authenticated users (in time window)
+  # } {
+  #   set ip 0; set auth 0
+  #   foreach i [array names :pa] {
+  #     if {[::xo::is_ip $i]} {incr ip} {incr auth}
+  #   }
+  #   return [list $ip $auth]
+  # }
+
   Users ad_proc nr_users_time_window {} {
     @return number of different ip addresses and authenticated users (in time window)
   } {
-    set ip 0; set auth 0
-    foreach i [array names :pa] {
-      if {[::xo::is_ip $i]} {incr ip} {incr auth}
+    set ip 0; set auth 0; set reverseAuthDict {}; set ipDict {}
+    #
+    # Separate "pa" data into authenticated and not-authenticated, where
+    # we use the authenticated data as a reverse lookup dict later.
+    #
+    foreach {k v} [array get :pa] {
+      if {[::xo::is_ip $k]} {
+        lappend ipDict $k $v
+      } else {
+        lappend reverseAuthDict $v $k
+        incr auth
+      }
+    }
+    #
+    # Don't count cases from the ipDict which are already counted in
+    # for the auth cases. This assumes that from one IP address, there
+    # is never a person connected authenticated and not authrenticated
+    # at the same time in the give time window. if it is, it is
+    # ignored in the statistics.
+    #
+    foreach {k v} $ipDict {
+      if {![dict exists $reverseAuthDict $v]} {
+        incr ip
+      }
     }
     return [list $ip $auth]
   }
+
   Users ad_proc user_is_active {uid} {
     @return boolean value whether user is active
   } {
@@ -818,15 +853,16 @@ if {"async-cmd" ni [ns_job queues]} {
     }
   }
   Users proc last_requests {uid} {
+    set urls {}
     if {[info exists :pa($uid)]} {
-      set urls [list]
       foreach i [Users info instances] {
         if {[$i exists urls($uid)]} {
           foreach u [$i set urls($uid)] { lappend urls $u }
         }
       }
-      return [lsort -index 0 $urls]
-    } else { return "" }
+      set urls [lsort -index 0 $urls]
+    }
+    return $urls
   }
 
   Users proc active_communities {} {
@@ -1418,7 +1454,7 @@ if {"async-cmd" ni [ns_job queues]} {
   Value instproc updateValue {} {set :handle [after ${:refresh} [list [self] updateValue]]}
 
   #
-  # define a object loadAvg.
+  # Define an object loadAvg.
   #
   # query with: "throttle do loadAvg value"
   #
