@@ -7,7 +7,6 @@ ad_library {
     @author mbryzek@arsdigita.com
     @creation-date Wed Feb 21 17:10:24 2001
     @cvs-id $Id$
-
 }
 
 ad_proc -public -callback subsite::parameter_changed -impl xotcl-request-monitor {
@@ -26,7 +25,7 @@ ad_proc -public -callback subsite::parameter_changed -impl xotcl-request-monitor
 
     @see package::set_value
 } {
-    
+
     if {$package_id == [apm_package_id_from_key "xotcl-request-monitor"]} {
       ns_log debug "subsite::parameter_changed -impl xotcl-request-monitor changing $parameter to $value"
       #
