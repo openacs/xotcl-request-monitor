@@ -34,7 +34,7 @@ foreach {community_id users} [throttle users active_communities] {
   if {$community_name eq ""} {
     set community_name [::xo::db::sql::apm_package name -package_id $community_id]
   }
-  
+
   t1 add \
       -community $community_name \
       -community.href [export_vars -base users-in-community {community_id community_name}] \

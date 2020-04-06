@@ -16,8 +16,9 @@ proc ::xo::userid_link {uid} {
     if {![string is integer -strict $uid]} {
         set userinfo 0
     } else {
-        set user_url [acs_community_member_admin_url -user_id $uid]
-        set userinfo "<a href='$user_url'>$uid</a>"
+        set user_info [xo::request_monitor_user_info $uid]
+        set user_url [dict get $user_info url]
+        set userinfo "<a href='[ns_quotehtml $user_url]'>$uid</a>"
     }
     return $userinfo
 }

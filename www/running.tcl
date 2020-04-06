@@ -46,17 +46,14 @@ TableWidget create t1 -volatile \
       Field background -label "Background"
       Field progress   -label "Progress"
     } \
-    -no_data "Currently no running requests" 
+    -no_data "Currently no running requests"
 
 set sortable_requests [list]
 foreach {key elapsed} $running_requests {
   lassign [split $key ,] requestor url
   set ms [format %.2f [expr {[throttle ms -start_time $elapsed]/1000.0}]]
-  if {[string is integer $requestor]} {
-    set user_string [person::name -person_id $requestor]
-  } else {
-    set user_string $requestor
-  }
+  set user_info [xo::request_monitor_user_info $requestor]
+  set user_string [dict get $user_info label]
   set user_url "last-requests?request_key=$requestor"
   lappend sortable_requests [list $user_string $user_url $url $ms ""]
 }
@@ -64,11 +61,8 @@ foreach {index entry} $background_requests {
   lassign $entry key elapsed
   lassign [split $key ,] requestor url
   set ms [format %.2f [expr {[throttle ms -start_time $elapsed]/-1000.0}]]
-  if {[string is integer $requestor]} {
-    set user_string [person::name -person_id $requestor]
-  } else {
-    set user_string $requestor
-  }
+  set user_info [xo::request_monitor_user_info $requestor]
+  set user_string [dict get $user_info label]
   set user_url "last-requests?request_key=$requestor"
   lappend sortable_requests [list $user_string $user_url $url $ms "::bgdelivery"]
 }
@@ -96,7 +90,7 @@ if {[ns_info name] eq "NaviServer"}  {
     set progress [format {%5.2f%% of %5.2f MB} $percentage [expr {$size/1000000.0}]]
     set ms [format %.2f [expr {([clock milliseconds] - $starttime*1000)/-1000.0}]]
     if {[string is integer $requestor]} {
-      set user_string [person::name -person_id $requestor]      
+      set user_string [person::name -person_id $requestor]
     } else {
       set user_string $requestor
     }

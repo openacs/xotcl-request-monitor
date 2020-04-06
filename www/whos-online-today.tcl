@@ -46,18 +46,9 @@ set now_ansi  [lc_clock_to_ansi [clock seconds]]
 
 foreach element $elements {
   lassign $element user_id timestamp
-  if {[string is integer $user_id]} {
-    set person [person::get_person_info -person_id $user_id]
-    set user_label "[dict get $person last_name], [dict get $person first_names]"
-    set user_url [acs_community_member_url -user_id $user_id]
-  } else {
-    # it was an IP address
-    set user_label $user_id
-    set user_url ""
-  }
-
-  lappend users [list $user_label \
-                     $user_url \
+  set user_info [xo::request_monitor_user_info $user_id]
+  lappend users [list [dict get $user_info label] \
+                     [dict get $user_info url] \
                      $timestamp \
                      [::xowiki::utility pretty_age \
                           -timestamp [clock scan [lc_clock_to_ansi $timestamp]]] \

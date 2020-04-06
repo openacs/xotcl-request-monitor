@@ -1795,6 +1795,30 @@ namespace eval ::xo {
     }
   }
 
+  ad_proc -private request_monitor_user_info {key} {
+  } {
+    if {[string is integer $key]} {
+      #
+      # It looks like a user_id
+      #
+      set person [person::get_person_info -person_id $key]
+      if {[dict exists $person last_name]} {
+        set user_label "[dict get $person last_name], [dict get $person first_names]"
+        set user_url [acs_community_member_url -user_id $key]
+      } else {
+        #
+        # Maybe, the user was deleted in the meanwhile
+        #
+        set user_label "Unknown user_id $key"
+        set user_url ""
+      }
+    } else {
+      # it was an IP address
+      set user_label $user_id
+      set user_url ""
+    }
+    return [list label $user_label url $user_url]
+  }
 
   proc request_monitor_record_activity {key pa seconds clicks reason} {
     if {[::xo::is_ip $key]} {
