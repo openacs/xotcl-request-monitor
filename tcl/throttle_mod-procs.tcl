@@ -1814,7 +1814,7 @@ namespace eval ::xo {
       }
     } else {
       # it was an IP address
-      set user_label $user_id
+      set user_label $key
       set user_url ""
     }
     return [list label $user_label url $user_url]
