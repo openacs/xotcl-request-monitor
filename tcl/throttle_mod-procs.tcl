@@ -389,12 +389,30 @@ if {"async-cmd" ni [ns_job queues]} {
     #ns_log notice "conntime $conntime totaltime $totaltime url=<$url>"
     if { $url in {/register/ / /dotlrn/} } {
       #
-      # Calculate for certain URLs separate statistics
+      # Calculate for certain URLs separate statistics.  These can be
+      # used via munin with the responsetime plugin, configured e.g. as
+      #
+      # [naviserver_production_responsetime]
+      #    env.urls / /register/ /dotlrn/
       #
       incr ::agg_time($url) $totaltime
       incr ::count(calls:$url)
     }
-
+    #
+    # NaviServer connection pool management: when we have a connection
+    # pool for slow requests, and the query took longer than 3
+    # seconds, and the URL is not / or /dotlrn, then move this request
+    # to the "slow" pool.
+    #
+    if {[dict get $partialtimes runtime] > 3.0
+        && [::acs::icanuse "ns_conn partialtimes"]
+        && "slow" in [ns_server pools]
+        && [ns_server mapped [list $method $url]] eq ""
+        && $url ni {/ /dotlrn/}
+      } {
+        ns_server -pool slow map -noinherit [list $method $url]
+        ns_log Notice "slow request: '$url' moved to slow connection pool"
+    }
     #
     # Handling of longcalls counter
     #

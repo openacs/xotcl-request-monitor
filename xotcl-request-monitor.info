@@ -16,7 +16,7 @@
         <description format="text/html">&lt;pre&gt;
 This package provides a Request Monitor for OpenACS applications. It computes performance 
 summary information such as requests/views per seconds, average response time, number
- of users connected, lists currently active threads, etc. Furthermore it can block 
+ of users connected, lists currently active threads, etc. Furthermore, it can block 
 overactive users (e.g. automated web-bots mirroring the site, users repeating running 
 queries, etc.). It provides as well some user tracking (such as whos-online) with 
 activity measures, it blocks repeated requests (impatient reloads), tracks switching 
