@@ -245,7 +245,11 @@ if {"async-cmd" ni [ns_job queues]} {
                                      text/css
                                      application/javascript
                                      application/x-javascript
-                                   }}]
+                                   }
+                                   || [string match "/system/*" $url]
+                                   || [string match "/shared/ajax/*" $url]
+                                   || [string match "/*proctoring-upload" $url]
+                                 }]
     if {[info exists $var] && !$is_embedded_request && !${:off}} {
       #ns_log notice  "### already $var"
       return [list 0 0 1]
@@ -405,7 +409,7 @@ if {"async-cmd" ni [ns_job queues]} {
     # to the "slow" pool.
     #
     if {[dict get $partialtimes runtime] > 3.0
-        && [::acs::icanuse "ns_conn partialtimes"]
+        && [::acs::icanuse "ns_server unmap"]
         && "slow" in [ns_server pools]
         && [ns_server mapped [list $method $url]] eq ""
         && $url ni {/ /dotlrn/}
@@ -1736,12 +1740,13 @@ throttle proc postauth args {
   set r [:check]
   if {$r < 0} {
     set url ${:url}
-    ns_return 200 text/html "
+    catch {ns_log notice "blocked request for user ${:user} url ${:url}"}
+    ns_return 429 text/html "
       <h1>[_ xotcl-request-monitor.repeated_operation]</h1>
       [_ xotcl-request-monitor.operation_blocked]<p>"
     return filter_return
   } elseif {$r > 0} {
-    ns_return 200 text/html "
+    ns_return 429 text/html "
       <h1>Invalid Operation</h1>
       This web server is only open for interactive usage.<br>
       Automated copying and mirroring is not allowed!<p>
@@ -1785,7 +1790,7 @@ namespace eval ::xo {
   #
   #    "nsv_set ?-default? ?-reset? ?--? array key ?value?"
   #
-  # available. If so, implement an async job-queue with ltttle
+  # available. If so, implement an async job-queue with little
   # overhead based on it.
   #
   catch {nsv_set} errMsg
