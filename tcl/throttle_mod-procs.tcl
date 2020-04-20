@@ -247,7 +247,7 @@ if {"async-cmd" ni [ns_job queues]} {
                                      application/x-javascript
                                    }
                                    || [string match "/system/*" $url]
-                                   || [string match "/shared/ajax/*" $url]
+                                   || [string match "/shared/*" $url]
                                    || [string match "/*proctoring-upload" $url]
                                  }]
     if {[info exists $var] && !$is_embedded_request && !${:off}} {
