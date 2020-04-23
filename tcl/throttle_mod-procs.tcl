@@ -1368,7 +1368,7 @@ if {"async-cmd" ni [ns_job queues]} {
     set :auth24 0
     set secsPerDay [expr {3600*24}]
     set now [clock seconds]
-    foreach i [lsort [array names :timestamp]] {
+    foreach i [array names :timestamp] {
       if {$now - [set :timestamp($i)] > $secsPerDay} {
         unset :timestamp($i)
       } else {
@@ -1415,7 +1415,9 @@ if {"async-cmd" ni [ns_job queues]} {
     foreach var [$o info vars] {
       #
       # last_mkey is just for internal purposes
-      if {$var eq "last_mkey"} continue
+      if {$var in {last_mkey hits}} {
+        continue
+      }
 
       #
       # The remainder are primarily runtime statistics
@@ -1657,7 +1659,7 @@ throttle proc get_context {} {
   if {${:query} ne ""} {
     append :url ?${:query}
   }
-  # :log "### setting url to ${:url}"
+  #ns_log notice log "### setting url to ${:url} Q=${:query}"
   #xo::show_stack
   set :context_initialized 1
   # :log "--i leaving [ns_conn url] vars=[lsort [info vars]]"
