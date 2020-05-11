@@ -14,6 +14,15 @@ if {"async-cmd" ni [ns_job queues]} {
 ::xotcl::THREAD create throttle {
 
   #
+  # Never block the following provided Sec-Fetch-Dest values.
+  #
+  # set ::never_blocked_fetchDest {image script}
+  set ::never_blocked_fetchDest {image iframe script}
+  set ::monitor_urls {/ /register/ /dotlrn/}
+
+  set ::verbose_blocking 1
+
+  #
   # A simple helper class to provide a faster an easier-to-use
   # interface to package parameters. Eventually, this will move in a
   # more general way into xotcl-core.
@@ -224,61 +233,81 @@ if {"async-cmd" ni [ns_job queues]} {
                 current [format %.2f [expr {1.0 * $::threads_current / $::threads_datapoints}]]]
   }
 
-  Throttle instproc throttle_check {requestKey pa url conn_time content_type community_id} {
+  Throttle instproc throttle_check {requestKey pa url conn_time content_type community_id {context ""}} {
+    #
+    # Return: toMuch ms repeat
+    #
     #set t0 [clock milliseconds]
+    #ns_log notice "throttle_check context <$context>"
 
     seconds ++
-
     :update_threads_state
 
-    set var :running_url($requestKey,$url)
+    set fetchDest [expr {[dict exists $context Sec-Fetch-Dest] ? [dict get $context Sec-Fetch-Dest] : "document"}]
+    set range     [expr {[dict exists $context Range]          ? [dict get $context Range]          : ""}]
+
     #
-    # Check first, whether the same user has already the same request
-    # issued; if yes, block this request. Caveat: some html-pages
-    # use the same image in many places, so we can't block it.
+    # Check whether request blocking is turned off.
     #
-    set is_embedded_request [expr {
-                                   [string match "image/*" $content_type]
-                                   || [string match "video/*" $content_type]
-                                   || $content_type in {
-                                     application/vnd.apple.mpegurl
-                                     text/css
-                                     application/javascript
-                                     application/x-javascript
-                                   }
-                                   || [string match "/system/*" $url]
-                                   || [string match "/shared/*" $url]
-                                   || [string match "/*proctoring-upload" $url]
-                                 }]
-    if {[info exists $var] && !$is_embedded_request && !${:off}} {
-      #ns_log notice  "### already $var"
-      return [list 0 0 1]
-    } else {
-      set $var $conn_time
-      #ns_log notice  "### new $var"
+    if {${:off}} {
+      return [list 0 0 0]
     }
+
+    set var :running_url($requestKey,$url)
+
+    #
+    # Never block embedded requests
+    #
+    if {
+        $fetchDest in $::never_blocked_fetchDest
+        || $range ne ""
+        || [dict get $context pool] eq "fast"
+        || [string match "image/*" $content_type]
+        || [string match "video/*" $content_type]
+        || $content_type in {
+          application/vnd.apple.mpegurl
+          text/css
+          application/javascript
+          application/x-javascript
+        }
+        || [string match "/system/*" $url]
+        || [string match "/shared/*" $url]
+        || [string match "/*proctoring-upload" $url]
+      } {
+
+      if {$::verbose_blocking && [info exists $var]} {
+        catch {ns_log notice "request not blocked although apparently running: fetchDest $fetchDest $requestKey $url"}
+      }
+      set $var $conn_time
+
+      return [list 0 0 0]
+    }
+
+    #
+    # Check whether the same user has already the same request issued;
+    # if yes, block this request. Caveat: some html-pages use the same
+    # image in many places, so we can't block it, but this is already
+    # covered above.
+    #
+    if {[info exists $var]} {
+      #
+      # Request already running
+      # ns_log notice  "### already $var"
+      #
+      return [list 0 0 1]
+    }
+
+    set $var $conn_time
+    #ns_log notice  "### new $var"
     #set t1 [clock milliseconds]
-    :register_access $requestKey $pa $url $community_id $is_embedded_request
+    :register_access $requestKey $pa $url $community_id 0 ;# $is_embedded_request
     #set t2 [clock milliseconds]
 
     #if {$t2 - $t0 > 500} {
     #  ns_log warning "throttle_check slow, can lead to filter time >1sec: total time [expr {$t2 - $t0}], t1 [expr {$t1 - $t0}]"
     #}
 
-    #
-    # Allow up to 14 requests to be executed concurrently.... the
-    # number of 14 is arbitrary. One of our single real request might
-    # have up to 14 subrequests (through iframes)....
-    #
-    if {${:off} || $is_embedded_request || [array size :running_url] < 14} {
-      #
-      # Maybe the throttler is off, or we have an embedded request or
-      # less than 14 running requests running. Everything is
-      # fine, let people do what they want.
-      #
-      return [list 0 0 0]
-
-    } elseif {[do_slowdown_overactive]} {
+    if {[do_slowdown_overactive]} {
       #
       # Check, whether the last request from a user was within
       # the minimum time interval. We are not keeping a full table
@@ -307,9 +336,9 @@ if {"async-cmd" ni [ns_job queues]} {
         set cnt 0
       }
       return [list $cnt $retMs 0]
-    } else {
-      return [list 0 0 1]
     }
+
+    return [list 0 0 0]
   }
 
   Throttle instproc statistics {} {
@@ -391,7 +420,7 @@ if {"async-cmd" ni [ns_job queues]} {
     set totaltime [dict get $partialtimes ms]
 
     #ns_log notice "conntime $conntime totaltime $totaltime url=<$url>"
-    if { $url in {/register/ / /dotlrn/} } {
+    if { $url in $::monitor_urls } {
       #
       # Calculate for certain URLs separate statistics.  These can be
       # used via munin with the responsetime plugin, configured e.g. as
@@ -457,7 +486,7 @@ if {"async-cmd" ni [ns_job queues]} {
   # request" reply.
   #
   Class create BanUser
-  # BanUser instproc throttle_check {requestKey pa url conn_time content_type community_id} {
+  # BanUser instproc throttle_check {requestKey pa url conn_time content_type community_id {context ""}} {
   #   #if {$requestKey eq 37958315} {return [list 0 0 1]}
   #   #if {[string match "155.69.25.*" $pa]} {return [list 0 0 1]}
   #   next
@@ -830,7 +859,7 @@ if {"async-cmd" ni [ns_job queues]} {
     # Don't count cases from the ipDict which are already counted in
     # for the auth cases. This assumes that from one IP address, there
     # is never a person connected authenticated and not authrenticated
-    # at the same time in the give time window. if it is, it is
+    # at the same time in the give time window. If it is, it is
     # ignored in the statistics.
     #
     foreach {k v} $ipDict {
@@ -1666,17 +1695,33 @@ throttle proc get_context {} {
 }
 
 throttle ad_proc check {} {
-  This method should be called once per request that is monitored.
-  It should be called after authentication such we have already
-  the userid if the user is authenticated
+
+  This method should be called once per request that is monitored.  It
+  should be called after authentication such we have already the
+  userid if the user is authenticated.
+
 } {
   #set t0 [clock milliseconds]
 
   :get_context
   # :log "### check"
 
+  #
+  # We could as well pass the whole header set via
+  #
+  #  {*}[ns_set array [ns_conn  headers]]
+  #
+  # but since this code is time critical, just pass the information
+  # actually needed.
+  #
+  set hdrs [ns_conn headers]
   lassign [:throttle_check ${:requestor} ${:pa} ${:url} \
-               [ns_conn start] [ns_guesstype [ns_conn url]] ${:community_id}] \
+               [ns_conn start] [ns_guesstype [ns_conn url]] ${:community_id} \
+               [list \
+                    pool [ns_conn pool] \
+                    Sec-Fetch-Dest [ns_set iget $hdrs Sec-Fetch-Dest] \
+                    Range [ns_set iget $hdrs Range] \
+                   ]] \
       toMuch ms repeat
   #set t1 [clock milliseconds]
 
@@ -1709,8 +1754,8 @@ throttle ad_proc check {} {
   return $result
 }
 ####
-# the following procs are forwarder to the monitoring thread
-# for convenience
+# The following procs are forwarder to the monitoring thread
+# for convenience.
 ####
 throttle forward statistics              %self do throttler %proc
 throttle forward url_statistics          %self do throttler %proc
@@ -1742,7 +1787,10 @@ throttle proc postauth args {
   set r [:check]
   if {$r < 0} {
     set url ${:url}
-    catch {ns_log notice "blocked request for user ${:user} url ${:url}"}
+
+    catch {ns_log notice "blocked request for user ${:user} Sec-Fetch-Dest [ns_set iget [ns_conn headers] Sec-Fetch-Dest] url ${:url}"}
+    catch { ns_log notice ".... [ns_set array [ns_conn  headers]]" }
+
     ns_return 429 text/html "
       <h1>[_ xotcl-request-monitor.repeated_operation]</h1>
       [_ xotcl-request-monitor.operation_blocked]<p>"
