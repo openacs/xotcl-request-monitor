@@ -67,7 +67,7 @@ if {"async-cmd" ni [ns_job queues]} {
   }
   do_throttle proc update {value} {
     next
-    throttler set off $value
+    throttler set do_throttle $value
   }
 
   # get the value from the logdir parameter
@@ -154,7 +154,7 @@ if {"async-cmd" ni [ns_job queues]} {
   }
 
   Throttle instproc init {} {
-    set :off [do_throttle]
+    set :do_throttle [do_throttle]
     Object create [self]::stats
     Object create [self]::users
     next
@@ -249,7 +249,7 @@ if {"async-cmd" ni [ns_job queues]} {
     #
     # Check whether request blocking is turned off.
     #
-    if {${:off}} {
+    if {!${:do_throttle}} {
       return [list 0 0 0]
     }
 
@@ -300,6 +300,7 @@ if {"async-cmd" ni [ns_job queues]} {
     set $var $conn_time
     #ns_log notice  "### new $var"
     #set t1 [clock milliseconds]
+
     :register_access $requestKey $pa $url $community_id 0 ;# $is_embedded_request
     #set t2 [clock milliseconds]
 
@@ -1766,8 +1767,8 @@ throttle forward add_statistics          %self do throttler %proc
 throttle forward throttle_check          %self do throttler %proc
 throttle forward last100                 %self do throttler %proc
 throttle forward thread_avgs             %self do throttler %proc
-throttle forward off                     %self do throttler set off 1
-throttle forward on                      %self do throttler set off 0
+throttle forward off                     %self do throttler set do_throttle 0
+throttle forward on                      %self do throttler set do_throttle 1
 throttle forward running                 %self do throttler %proc
 throttle forward server_threads          %self do throttler %proc
 throttle forward nr_running              %self do throttler array size running_url
