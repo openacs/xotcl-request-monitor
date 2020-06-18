@@ -449,8 +449,10 @@ if {"async-cmd" ni [ns_job queues]} {
     }
     #
     # Handling of longcalls counter
-    #
-    if {$conntime > 3000} {
+    if {$conntime > 3000
+        || [dict get $partialtimes filtertime] > 1.0
+        || [dict get $partialtimes queuetime] > 0.5
+      } {
       if {$url eq "/register/"} {
         set color unexpected
       } elseif {$conntime > 7000} {
@@ -463,13 +465,13 @@ if {"async-cmd" ni [ns_job queues]} {
       incr ::count(longcalls:$color)
 
       #
-      # Add url, in case it is not too long
+      # Add URL, in case it is not too long
       #
       set ql [string length $query]
       if {$ql > 0 && $ql < 60} {
         set loggedUrl $url?$query
       } else {
-        set loggedUrl $url
+        set loggedUrl $url?...long-list....
       }
 
       #
