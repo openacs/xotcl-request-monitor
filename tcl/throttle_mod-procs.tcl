@@ -469,10 +469,10 @@ if {"async-cmd" ni [ns_job queues]} {
       #
       set ql [string length $query]
       if {$ql > 0} {
-        if $ql < 60} {
+        if {$ql < 60} {
           set loggedUrl $url?$query
         } else {
-          set loggedUrl $url?[sring range $query 0 57]...
+          set loggedUrl $url?[string range $query 0 57]...
         }
       }
 
