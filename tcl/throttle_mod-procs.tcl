@@ -465,13 +465,15 @@ if {"async-cmd" ni [ns_job queues]} {
       incr ::count(longcalls:$color)
 
       #
-      # Add URL, in case it is not too long
+      # Add query to URL, truncate in case it is not too long.
       #
       set ql [string length $query]
-      if {$ql > 0 && $ql < 60} {
-        set loggedUrl $url?$query
-      } else {
-        set loggedUrl $url?...long-list....
+      if {$ql > 0} {
+        if $ql < 60} {
+          set loggedUrl $url?$query
+        } else {
+          set loggedUrl $url?[sring range $query 0 57]...
+        }
       }
 
       #
