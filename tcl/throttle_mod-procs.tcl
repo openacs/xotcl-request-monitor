@@ -522,7 +522,10 @@ if {"async-cmd" ni [ns_job queues]} {
 
     @param report Report type of the instance. This could e.g. be hours and minutes
     @param timeoutMS How often are the statistics for this report computed
-    @param stats stats keeps nr_stats_elements highest values with time stamp. These hold a list of lists of the actual stats in the form {time value}. Time is given like "Thu Sep 13 09:17:30 CEST 2007". This is used for displaying the Max values
+    @param stats stats keeps nr_stats_elements highest values with timestamp.
+           These hold a list of lists of the actual stats in the form {time value}.
+           Time is given like "Thu Sep 13 09:17:30 CEST 2007".
+           This is used for displaying the maximum values
     @param trend  trend keeps nr_trend_elements most recent values. This is used for displaying the graphics
     @param c counter
     @param logging If set to 1 the instance current value is logged to the counter.log file
@@ -567,7 +570,7 @@ if {"async-cmd" ni [ns_job queues]} {
       set :trend [lrange ${:trend} $lt-${:nr_trend_elements} end]
     }
     #
-    # stats keeps nr_stats_elements highest values with time stamp
+    # stats keeps nr_stats_elements highest values with timestamp
     #
     lappend :stats [list $timestamp $n]
     set :stats [lrange [lsort -real -decreasing -index 1 ${:stats}] 0 ${:nr_stats_elements}-1]
@@ -1204,7 +1207,7 @@ if {"async-cmd" ni [ns_job queues]} {
     }
 
     #
-    # The array "urls" keeps triples of time stamps, URLs and peer
+    # The array "urls" keeps triples of timestamps, URLs and peer
     # addresses per user.
     #
     lappend :urls($key) [list ${:point_in_time} $url $pa]
@@ -1454,7 +1457,7 @@ if {"async-cmd" ni [ns_job queues]} {
       }
 
       #
-      # The remainder are primarily runtime statistics
+      # The remainder are primarily run time statistics
       #
       if {[$o array exists $var]} {
         lappend cmds [list $o array set $var [$o array get $var]]
