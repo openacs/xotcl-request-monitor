@@ -72,7 +72,7 @@ if {"async-cmd" ni [ns_job queues]} {
 
   # get the value from the logdir parameter
   set ::logdir [log-dir]
-  if {![file isdirectory $logdir]} {file mkdir $logdir}
+  if {![ad_file isdirectory $logdir]} {file mkdir $logdir}
 
   #
   # Create AsyncLogFile class
@@ -1424,7 +1424,7 @@ if {"async-cmd" ni [ns_job queues]} {
   dump proc read {} {
     # make sure, timestamp exists as an array
     array set Users::timestamp [list]
-    if {[file readable ${:file}]} {
+    if {[ad_file readable ${:file}]} {
       # in case of disk-full, the file might be damaged, so make sure,
       # we can continue
       if {[catch {source ${:file}} errorMsg]} {
@@ -1439,7 +1439,7 @@ if {"async-cmd" ni [ns_job queues]} {
     # When old data is restored, don't trust user-info unless it is
     # very recent (e.g. younger than 3 munutes)
     #
-    if {[file readable ${:file}] && ([clock seconds] - [file mtime ${:file}] > 180)} {
+    if {[ad_file readable ${:file}] && ([clock seconds] - [ad_file mtime ${:file}] > 180)} {
       Users array unset user_in_community
     }
   }
@@ -1522,7 +1522,7 @@ if {"async-cmd" ni [ns_job queues]} {
   Value create loadAvg
   loadAvg proc updateValue {} {
     set procloadavg /proc/loadavg
-    if {[file readable $procloadavg]} {
+    if {[ad_file readable $procloadavg]} {
       set f [open $procloadavg];
       set :value [lrange [read $f] 0 2]
       close $f
@@ -1532,7 +1532,7 @@ if {"async-cmd" ni [ns_job queues]} {
   loadAvg updateValue
 
   set tail [::util::which tail]
-  if {[file readable ${logdir}/counter.log] && $tail ne ""} {
+  if {[ad_file readable ${logdir}/counter.log] && $tail ne ""} {
     #
     # Populate the counters from log file
     #

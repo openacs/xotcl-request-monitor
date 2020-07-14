@@ -43,7 +43,7 @@ nsf::proc ::xo::colorize_slow_calls {-fast:required -warning:required -danger:re
 }
 
 set long_calls_file [file dirname [ns_info log]]/long-calls.log
-set filesize [file size $long_calls_file]
+set filesize [ad_file size $long_calls_file]
 
 set F [open $long_calls_file]
 if {$readsize < $filesize} {
