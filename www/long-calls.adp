@@ -25,7 +25,8 @@
 	<th class='text-right'>Totaltime</th>
         <th>Date</th>
         <th>User ID</th>
-        <th>IP</th>
+        <th>IP</th>	
+        <th>Pool</th>
         <th>URL</th>
       </tr>
     </thead>

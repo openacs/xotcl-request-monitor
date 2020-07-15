@@ -367,7 +367,7 @@ if {"async-cmd" ni [ns_job queues]} {
     return [array get :active]
   }
 
-  Throttle instproc add_url_stat {method url partialtimes key pa content_type} {
+  Throttle instproc add_url_stat {method url partialtimes key pa content_type pool} {
     #ns_log notice "Throttle.add_url_stat($method,$url,$partialtimes,$key,$pa,$content_type)"
     unset -nocomplain :running_url($key,$url)
     # :log "### unset running_url($key,$url) $errmsg"
@@ -411,7 +411,7 @@ if {"async-cmd" ni [ns_job queues]} {
     [self class] incr count
   }
 
-  TraceLongCalls instproc add_url_stat {method url partialtimes key pa content_type} {
+  TraceLongCalls instproc add_url_stat {method url partialtimes key pa content_type pool} {
     regexp {^([^?]+)[?]?(.*)$} $url . url query
     #
     # conntime: time spent in connection thread in ms, not including queuing times
@@ -444,8 +444,8 @@ if {"async-cmd" ni [ns_job queues]} {
         && [ns_server mapped [list $method $url]] eq ""
         && $url ni {/ /dotlrn/}
       } {
-        ns_server -pool slow map -noinherit [list $method $url]
-        ns_log Notice "slow request: '$url' moved to slow connection pool"
+      ns_server -pool slow map -noinherit [list $method $url]
+      ns_log notice "slow request: '$url' moved to slow connection pool"
     }
     #
     # Handling of longcalls counter
@@ -474,12 +474,16 @@ if {"async-cmd" ni [ns_job queues]} {
         } else {
           set loggedUrl $url?[string range $query 0 57]...
         }
+      } else {
+        set loggedUrl $url
       }
 
       #
       # Finally, log the entry with to log/long-calls.log
       #
-      catch {:log [list $loggedUrl $partialtimes $key $pa $content_type]}
+      if {[catch {:log [list $loggedUrl $partialtimes $key $pa $content_type $pool]} errorMsg]} {
+        ns_log error "long-call error: $errorMsg"
+      }
 
     }
     next
@@ -523,9 +527,9 @@ if {"async-cmd" ni [ns_job queues]} {
     @param report Report type of the instance. This could e.g. be hours and minutes
     @param timeoutMS How often are the statistics for this report computed
     @param stats stats keeps nr_stats_elements highest values with timestamp.
-           These hold a list of lists of the actual stats in the form {time value}.
-           Time is given like "Thu Sep 13 09:17:30 CEST 2007".
-           This is used for displaying the maximum values
+    These hold a list of lists of the actual stats in the form {time value}.
+    Time is given like "Thu Sep 13 09:17:30 CEST 2007".
+    This is used for displaying the maximum values
     @param trend  trend keeps nr_trend_elements most recent values. This is used for displaying the graphics
     @param c counter
     @param logging If set to 1 the instance current value is logged to the counter.log file
@@ -792,7 +796,7 @@ if {"async-cmd" ni [ns_job queues]} {
     Return a list of lists containing information about current
     users. If the switch 'full' is used this list contains these users
     who have used the server within the monitoring time window (per
-    default: 10 minutes). Otherwise, just a list of requestors
+                                                                default: 10 minutes). Otherwise, just a list of requestors
     (user_ids or peer addresses for unauthenticated requests) is
     returned.
 
@@ -1824,7 +1828,7 @@ throttle proc trace args {
   # :log "CT=[ns_set array [ns_conn outputheaders]] -- ${:url}"
 
   :add_url_stat ${:method} ${:url} [:partialtimes] ${:requestor} ${:pa} \
-      [ns_set get [ns_conn outputheaders] Content-Type]
+      [ns_set iget [ns_conn outputheaders] Content-Type] [ns_conn pool]
   unset :context_initialized
   return filter_ok
 }

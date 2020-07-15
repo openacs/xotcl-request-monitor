@@ -57,7 +57,7 @@ set c1 [string range $c [lindex $o 0]+1 end]
 set rows ""
 foreach line [lreverse [split $c1 \n]] {
     if {$line eq ""} continue
-    lassign $line wday mon day hours tz year dash url time uid ip fmt
+    lassign $line wday mon day hours tz year dash url time uid ip contentType pool
     set userinfo [::xo::userid_link $uid]
     set iplink [subst {<a href="[export_vars -base ip-info {ip}]">[ns_quotehtml $ip]</a>}]
     if {[llength $time] > 1} {
@@ -92,7 +92,9 @@ foreach line [lreverse [split $c1 \n]] {
         "<td class='$color(totaltime)'>$year&nbsp;$mon&nbsp;$day&nbsp;$hours</td>" \
         "<td class='text-right  $color(totaltime)'>$userinfo</td>" \
         "<td class='$color(totaltime)'>$iplink</td>" \
-        "<td class='$color(totaltime)'>$request</td></tr>\n"
+        "<td class='$color(totaltime)'>$pool</td>" \
+        "<td class='$color(totaltime)'>$request</td>" \
+        "</tr>\n"
 }
 
 set doc(title) "Long Calls"
