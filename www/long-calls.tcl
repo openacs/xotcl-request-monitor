@@ -100,13 +100,19 @@ foreach line [lreverse [split $c1 \n]] {
 set doc(title) "Long Calls"
 set context [list $doc(title)]
 
+#
+# We always want bootstrap for the coloring.
+#
 if {[template::head::can_resolve_urn urn:ad:js:bootstrap3]} {
-    template::head::add_css -href urn:ad:js:bootstrap3 -media all
+    template::head::add_css -href urn:ad:css:bootstrap3 -media all
 } else {
-    template::head::add_css -href //maxcdn.bootstrapcdn.com/bootstrap/3.3.1/css/bootstrap.min.css -media all
+    #
+    # We have no xowiki or bootstrap based theme installed, so load it
+    # manually.
+    #
+    template::head::add_css -href //maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css -media all
+    security::csp::require style-src maxcdn.bootstrapcdn.com
 }
-template::head::add_css -href //maxcdn.bootstrapcdn.com/bootstrap/3.3.1/css/bootstrap-theme.min.css -media all
-security::csp::require style-src maxcdn.bootstrapcdn.com
 
 # Local variables:
 #    mode: tcl

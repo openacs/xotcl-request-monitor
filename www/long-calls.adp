@@ -34,5 +34,3 @@
     @rows;noquote@
     </tbody>
 </table>
-
-	      
