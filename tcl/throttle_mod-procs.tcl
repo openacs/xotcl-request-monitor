@@ -1794,7 +1794,7 @@ throttle forward user_is_active          %self do Users %proc
 # the next procs are for the filters (registered from the -init file)
 ####
 throttle proc postauth args {
-  # :log "+++ [self proc] [ad_conn url] auth ms [:partialtimes] [ad_conn isconnected]"
+  # :log "+++ [self proc] [ad_conn url] auth ms [:partialtimes] [ns_conn isconnected]"
   # :do set ::cookies(${:requestor}) [ns_set get [ns_conn headers] Cookie]
   set r [:check]
   if {$r < 0} {
@@ -1820,7 +1820,7 @@ throttle proc postauth args {
   }
 }
 throttle proc trace args {
-  # :log "+++ [self proc] <$args> [ad_conn url] [:partialtimes] [ad_conn isconnected]"
+  # :log "+++ [self proc] <$args> [ad_conn url] [:partialtimes] [ns_conn isconnected]"
   # OpenACS 5.2 bypasses for requests to /resources the user filter
   # in these cases pre- or postauth are not called, but only trace.
   # So we have to make sure we have the needed context here
