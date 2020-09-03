@@ -7,11 +7,13 @@ if {[ns_server connections] == 0 && [info commands ::throttle] ne ""} {
   #
   ns_register_filter trace GET * throttle
   ns_register_filter trace POST * throttle
+  ns_register_filter trace HEAD * throttle  
 
   #ns_register_filter postauth GET * throttle
   #ns_register_filter postauth POST * throttle
   ad_register_filter -priority 1000 postauth GET * throttle
   ad_register_filter -priority 1000 postauth POST * throttle
+  ad_register_filter -priority 1000 postauth HEAD * throttle  
 }
 
 #
