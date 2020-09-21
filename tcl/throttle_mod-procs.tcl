@@ -272,7 +272,7 @@ if {"async-cmd" ni [ns_job queues]} {
         }
         || [string match "/system/*" $url]
         || [string match "/shared/*" $url]
-        || [string match "/*proctoring-upload" $url]
+        || "/proctoring/upload" eq $url]
       } {
 
       if {$::verbose_blocking && [info exists $var]} {
