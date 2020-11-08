@@ -1,5 +1,5 @@
 ad_page_contract {
-  Displays information about an ip address
+  Displays information about an IP address
 
     @author Gustaf Neumann
 

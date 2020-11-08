@@ -842,7 +842,7 @@ if {"async-cmd" ni [ns_job queues]} {
   }
 
   # Users ad_proc nr_users_time_window {} {
-  #   @return number of different ip addresses and authenticated users (in time window)
+  #   @return number of different IP addresses and authenticated users (in time window)
   # } {
   #   set ip 0; set auth 0
   #   foreach i [array names :pa] {
@@ -852,7 +852,7 @@ if {"async-cmd" ni [ns_job queues]} {
   # }
 
   Users ad_proc nr_users_time_window {} {
-    @return number of different ip addresses and authenticated users (in time window)
+    @return number of different IP addresses and authenticated users (in time window)
   } {
     set ip 0; set auth 0; set reverseAuthDict {}; set ipDict {}
     #
@@ -1001,7 +1001,7 @@ if {"async-cmd" ni [ns_job queues]} {
   }
 
   Users proc entered_community {key now community_id data reason} {
-    ns_log notice "=== user $key entered community $community_id at $now reason $reason"
+    #ns_log notice "=== user $key entered community $community_id at $now reason $reason"
     set :user_in_community($key) [dict replace $data \
                                       community_id $community_id \
                                       community_clicks 1 \
@@ -1035,7 +1035,7 @@ if {"async-cmd" ni [ns_job queues]} {
         set clicks -1
       }
     }
-    ns_log notice "=== user $key left system at $now reason $reason after $seconds seconds clicks $clicks"
+    #ns_log notice "=== user $key left system at $now reason $reason after $seconds seconds clicks $clicks"
     if {[do_track_activity] && $seconds > 0} {
       xo::job_enqueue [list ::xo::request_monitor_record_activity $key $pa $seconds $clicks $reason]
     }
@@ -1130,7 +1130,7 @@ if {"async-cmd" ni [ns_job queues]} {
       # same user, when the requests were within a short time period.
       #
       if {[$class exists timestamp($pa)] && [clock seconds] - [$class set timestamp($pa)] < 60} {
-        ns_log notice "=== turn anonymous user from $pa into authenticated user $key"
+        #ns_log notice "=== turn anonymous user from $pa into authenticated user $key"
 
         if {[$class exists user_in_community($pa)]} {
           $class set user_in_community($key) [$class set user_in_community($pa)]
@@ -1621,6 +1621,7 @@ if {"async-cmd" ni [ns_job queues]} {
 throttle proc destroy {} {
   #puts stderr throttle-DESTROY
   ns_log notice throttle-DESTROY-shutdownpending->[ns_info shutdownpending]
+  #::xo::show_stack
   if {[ns_info shutdownpending] && [nsv_exists ::xotcl::THREAD [self]]} {
     set tid [nsv_get ::xotcl::THREAD [self]]
     ns_log notice =========throttle-DESTROY-shutdown==========================$tid-??[::thread::exists $tid]
