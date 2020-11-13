@@ -43,6 +43,12 @@ if {$do_track_activity && [info commands ::xo::job_dequeue] ne ""} {
   ad_schedule_proc -thread t 61 ::xo::job_dequeue
 }
 
+#
+# Launch the pool remapper background job to move requests to the slow
+# pool, even before these are finished. This is necessary for jobs
+# which are never finishing.
+# 
+ad_schedule_proc -thread t 59 ::xo::pool_remap_watchdog
 
 # Local variables:
 #    mode: tcl

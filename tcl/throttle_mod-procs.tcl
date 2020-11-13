@@ -432,23 +432,12 @@ if {"async-cmd" ni [ns_job queues]} {
       incr ::agg_time($url) $totaltime
       incr ::count(calls:$url)
     }
-    #
-    # NaviServer connection pool management: when we have a connection
-    # pool for slow requests, and the query took longer than 3
-    # seconds, and the URL is not / or /dotlrn, then move this request
-    # to the "slow" pool.
-    #
-    if {[dict get $partialtimes runtime] > 3.0
-        && [::acs::icanuse "ns_server unmap"]
-        && "slow" in [ns_server pools]
-        && [ns_server mapped [list $method $url]] eq ""
-        && $url ni {/ /dotlrn/}
-      } {
-      ns_server -pool slow map -noinherit [list $method $url]
-      ns_log notice "slow request: '$url' moved to slow connection pool"
-    }
+    
+    ::xo::remap_pool -runtime [dict get $partialtimes runtime] $method $url
+    
     #
     # Handling of longcalls counter
+    #
     if {$conntime > 3000
         || [dict get $partialtimes filtertime] > 1.0
         || [dict get $partialtimes queuetime] > 0.5
@@ -796,7 +785,7 @@ if {"async-cmd" ni [ns_job queues]} {
     Return a list of lists containing information about current
     users. If the switch 'full' is used this list contains these users
     who have used the server within the monitoring time window (per
-                                                                default: 10 minutes). Otherwise, just a list of requestors
+    default: 10 minutes). Otherwise, just a list of requestors
     (user_ids or peer addresses for unauthenticated requests) is
     returned.
 
@@ -1843,6 +1832,39 @@ throttle proc community_access {community_id} {
 
 namespace eval ::xo {
 
+  ad_proc ::xo::remap_pool {-runtime method url} {
+    #
+    # NaviServer connection pool management: when we have a connection
+    # pool for slow requests, and the query took longer than 3
+    # seconds, and the URL is not / or /dotlrn, then move this request
+    # to the "slow" pool.
+    #
+    if {$runtime > 3.0
+        && [::acs::icanuse "ns_server unmap"]
+        && "slow" in [ns_server pools]
+        && [ns_server mapped [list $method $url]] eq ""
+        && $url ni {/ /dotlrn/}
+      } {
+      ns_server -pool slow map -noinherit [list $method $url]
+      ns_log notice "slow request: '$url' moved to slow connection pool"
+    }
+  }
+
+  ad_proc ::xo::pool_remap_watchdog {} {
+    foreach s [ns_info servers] {
+      set reqs [ns_server -server $s -pool "" all]
+      foreach req $reqs {
+        set runtime [lindex $req end-1]
+        if {$runtime >= 3.0} {
+          set method [lindex $req 3]
+          set url [lindex $req 4]
+          ns_log notice "CALL REMAP ::xo::remap_pool -runtime $runtime $method $url"
+          ::xo::remap_pool -runtime $runtime $method $url
+        }
+      }
+    }
+  }
+  
   proc is_ip {key} {
     expr { [string match "*.*" $key] || [string match "*:*" $key] }
   }
