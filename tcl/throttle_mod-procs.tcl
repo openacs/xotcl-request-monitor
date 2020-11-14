@@ -432,9 +432,9 @@ if {"async-cmd" ni [ns_job queues]} {
       incr ::agg_time($url) $totaltime
       incr ::count(calls:$url)
     }
-    
+
     ::xo::remap_pool -runtime [dict get $partialtimes runtime] $method $url
-    
+
     #
     # Handling of longcalls counter
     #
@@ -1851,20 +1851,46 @@ namespace eval ::xo {
   }
 
   ad_proc ::xo::pool_remap_watchdog {} {
+    set maxWaiting 10
     foreach s [ns_info servers] {
-      set reqs [ns_server -server $s -pool "" all]
+      set reqs [ns_server -server $s -pool "" active]
       foreach req $reqs {
         set runtime [lindex $req end-1]
         if {$runtime >= 3.0} {
           set method [lindex $req 3]
           set url [lindex $req 4]
-          ns_log notice "CALL REMAP ::xo::remap_pool -runtime $runtime $method $url"
+          ns_log notice "CALL TRY REMAP ::xo::remap_pool -runtime $runtime $method $url"
           ::xo::remap_pool -runtime $runtime $method $url
+        }
+      }
+      set waiting [ns_server -server $s -pool "" waiting]
+      if {$waiting >= $maxWaiting} {
+        set threadInfo [ns_server -server $s -pool "" threads]
+        lappend threadInfo waiting $waiting
+        set message ""
+        append message \
+            "Server $s on [ad_system_name]: " \
+            "more than $maxWaiting requests are waiting ($threadInfo)" \n \
+            "Currently running requests:" \n \
+            "   " [join $reqs "\n   "] \n
+        ns_log warning $message
+        try {
+          #
+          # Try to send a mail to the webmaster and include a link to
+          # the recommended nsstats location.
+          #
+          acs_mail_lite::send -send_immediately \
+              -to_addr [ad_host_administrator] \
+              -from_addr [ad_system_owner] \
+              -subject "High load warning on [ad_system_name]" \
+              -body "$message\nVisit:  [ad_url]/admin/nsstats/admin/nsstats"
+        } on error {errorMsg} {
+          ns_log error "Cound not send high-load warning: $errorMsg"
         }
       }
     }
   }
-  
+
   proc is_ip {key} {
     expr { [string match "*.*" $key] || [string match "*:*" $key] }
   }
