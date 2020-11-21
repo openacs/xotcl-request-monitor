@@ -42,13 +42,15 @@ if {"async-cmd" ni [ns_job queues]} {
   package_parameter log-dir \
       -default [file dirname [file rootname [ns_config ns/parameters ServerLog]]]
 
-  package_parameter max-url-stats          -default 500
-  package_parameter time-window            -default 10
-  package_parameter trend-elements         -default 48
-  package_parameter max-stats-elements     -default 5
-  package_parameter do_throttle            -default on
-  package_parameter do_track_activity      -default off
-  package_parameter do_slowdown_overactive -default off
+  package_parameter do_double_click_prevention -default on
+  package_parameter do_slowdown_overactive     -default off
+  package_parameter do_throttle                -default on
+  package_parameter do_track_activity          -default off
+  package_parameter max-stats-elements         -default 5
+  package_parameter max-url-stats              -default 500
+  package_parameter monitor_urls               -default "/ /register/ /dotlrn/"
+  package_parameter time-window                -default 10
+  package_parameter trend-elements             -default 48
 
   #
   # When updates happen on
@@ -68,6 +70,14 @@ if {"async-cmd" ni [ns_job queues]} {
   do_throttle proc update {value} {
     next
     throttler set do_throttle $value
+  }
+  do_double_click_prevention proc update {value} {
+    next
+    throttler set do_double_click_prevention $value
+  }
+  monitor_urls proc update {value} {
+    next
+    set ::monitor_urls $value
   }
 
   # get the value from the logdir parameter
@@ -155,6 +165,7 @@ if {"async-cmd" ni [ns_job queues]} {
 
   Throttle instproc init {} {
     set :do_throttle [do_throttle]
+    set :do_double_click_prevention [do_double_click_prevention]    
     Object create [self]::stats
     Object create [self]::users
     next
@@ -195,6 +206,7 @@ if {"async-cmd" ni [ns_job queues]} {
   }
 
   Throttle instproc register_access {requestKey pa url community_id is_embedded_request} {
+    ns_log notice "register_access $requestKey $pa $url "    
     set obj [Users current_object]
     $obj addKey $requestKey $pa $url $community_id $is_embedded_request
     Users expSmooth [$obj point_in_time] $requestKey
@@ -247,7 +259,8 @@ if {"async-cmd" ni [ns_job queues]} {
     set range     [expr {[dict exists $context Range]          ? [dict get $context Range]          : ""}]
 
     #
-    # Check whether request blocking is turned off.
+    # Check whether all request monitor performance tracking is turned
+    # off. If so, it does not even track the number of active users.
     #
     if {!${:do_throttle}} {
       return [list 0 0 0]
@@ -289,7 +302,7 @@ if {"async-cmd" ni [ns_job queues]} {
     # image in many places, so we can't block it, but this is already
     # covered above.
     #
-    if {[info exists $var]} {
+    if {${:do_double_click_prevention} && [info exists $var]} {
       #
       # Request already running
       # ns_log notice  "### already $var"
@@ -303,10 +316,6 @@ if {"async-cmd" ni [ns_job queues]} {
 
     :register_access $requestKey $pa $url $community_id 0 ;# $is_embedded_request
     #set t2 [clock milliseconds]
-
-    #if {$t2 - $t0 > 500} {
-    #  ns_log warning "throttle_check slow, can lead to filter time >1sec: total time [expr {$t2 - $t0}], t1 [expr {$t1 - $t0}]"
-    #}
 
     if {[do_slowdown_overactive]} {
       #
@@ -1236,7 +1245,7 @@ if {"async-cmd" ni [ns_job queues]} {
   Users instproc destroy {} {
     set class [self class]
     #ns_log notice "=== [self] destroy [array names :active]"
-    if {[Users set last_mkey] eq [self]} {
+    if {[Users exists last_mkey] && [Users set last_mkey] eq [self]} {
       Users set last_mkey ""
     }
     foreach key [array names :active] {
