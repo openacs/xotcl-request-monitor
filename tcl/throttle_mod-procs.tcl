@@ -1332,6 +1332,22 @@ if {"async-cmd" ni [ns_job queues]} {
     }
   }
 
+  Users proc forget_community {community_id} {
+    #
+    # Forget all the data about users in a community, meant to be
+    # called when a community is being deleted, so that we stop its
+    # tracking.
+    #
+    foreach {key data} [array get :user_in_community] {
+      if {[dict get $data community_id] == $community_id} {
+        unset -nocomplain :user_in_community($key)
+      }
+    }
+    foreach i [Users info instances] {
+      $i unset -nocomplain in_community($community_id)
+    }
+  }
+
   Users proc compute_nr_users_per_day {} {
     #
     # this method is just for maintenance issues and updates the
