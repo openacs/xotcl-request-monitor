@@ -20,7 +20,7 @@ if {"async-cmd" ni [ns_job queues]} {
   set ::never_blocked_fetchDest {image iframe script}
   set ::monitor_urls {/ /register/ /dotlrn/}
 
-  set ::verbose_blocking 1
+  set ::verbose_blocking 0
 
   #
   # A simple helper class to provide a faster an easier-to-use
@@ -165,7 +165,7 @@ if {"async-cmd" ni [ns_job queues]} {
 
   Throttle instproc init {} {
     set :do_throttle [do_throttle]
-    set :do_double_click_prevention [do_double_click_prevention]    
+    set :do_double_click_prevention [do_double_click_prevention]
     Object create [self]::stats
     Object create [self]::users
     next
@@ -206,7 +206,7 @@ if {"async-cmd" ni [ns_job queues]} {
   }
 
   Throttle instproc register_access {requestKey pa url community_id is_embedded_request} {
-    ns_log notice "register_access $requestKey $pa $url "    
+    ns_log notice "register_access $requestKey $pa $url "
     set obj [Users current_object]
     $obj addKey $requestKey $pa $url $community_id $is_embedded_request
     Users expSmooth [$obj point_in_time] $requestKey
@@ -289,7 +289,7 @@ if {"async-cmd" ni [ns_job queues]} {
       } {
 
       if {$::verbose_blocking && [info exists $var]} {
-        catch {ns_log notice "request not blocked although apparently running: fetchDest $fetchDest $requestKey $url"}
+        ns_log notice "request not blocked although apparently running: fetchDest $fetchDest $requestKey $url"
       }
       set $var $conn_time
 
@@ -308,6 +308,8 @@ if {"async-cmd" ni [ns_job queues]} {
       # ns_log notice  "### already $var"
       #
       return [list 0 0 1]
+    } elseif {$::verbose_blocking && [info exists $var]} {
+      ns_log notice "would block: fetchDest $fetchDest $requestKey $url"
     }
 
     set $var $conn_time
@@ -1384,28 +1386,19 @@ if {"async-cmd" ni [ns_job queues]} {
     #ns_log notice "=== time_window_cleanup"
     set now [clock seconds]
     set maxdiff [expr {[throttler timeWindow] * 60}]
-    foreach i [lsort [array names :pa]] {
-      set purge 0
-      if {![info exists :timestamp($i)]} {
-        ns_log notice "throttle: no timestamp for $i"
-        set purge 1
-      } else {
-        set age [expr {$now - [set :timestamp($i)]}]
-        if {$age > $maxdiff} {
-          if {[info exists :pa($i)]} {
-            ns_log notice "throttle: entry stale $i => [info exists :pa($i)], age=$age"
-            set purge 1
-          }
-        }
-      }
-      if {$purge} {
-        ns_log notice "=== time_window_cleanup unsets pa($i)"
+
+    foreach i [array names :pa] {
+      if {![info exists :timestamp($i)]
+        || ($now - [set :timestamp($i)] > $maxdiff)
+      } {
+        #ns_log notice "=== time_window_cleanup unsets pa($i)"
         unset -nocomplain :pa($i) :refcount($i) :expSmooth($i) :switches($i)
       }
     }
-    foreach i [lsort [array names :refcount]] {
+
+    foreach i [array names :refcount] {
       if {![info exists :pa($i)]} {
-        ns_log notice "throttle: void refcount for $i"
+        #ns_log notice "throttle: void refcount for $i"
         unset :refcount($i)
       }
     }
@@ -1464,12 +1457,14 @@ if {"async-cmd" ni [ns_job queues]} {
   dump proc collect {} {
     set cmds {}
     #
-    # Dump all variables of the object ::Users
+    # Dump most variables of the object ::Users
     #
     set o ::Users
     foreach var [$o info vars] {
       #
-      # last_mkey is just for internal purposes
+      # No need to preserve "last_mkey" (just for internal purposes)
+      # and "hits" (might be large).
+      #
       if {$var in {last_mkey hits}} {
         continue
       }
