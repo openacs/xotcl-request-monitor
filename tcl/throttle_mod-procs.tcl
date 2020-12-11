@@ -2021,10 +2021,21 @@ namespace eval ::xo {
     #
     # Data model for per-community / per-subsite activity statistics
     #
+    # we had previously an FK on community_id to acs_objects:
+    #
+    #     community_id {integer references acs_objects(object_id) on delete cascade}
+    #
+    # When a user deletes a community, then also the traces of this
+    # activity in the community will be deleted, allthough the fact
+    # that the users did something there will be flushed as well. This
+    # can be a problem, when communities are created and deleted
+    # frequently. Furthermore, during deletion FK violations might
+    # have appeared for the deleting user.
+    #
     ::xo::db::require table request_monitor_community_activities {
       user_id      {integer references parties(party_id) on delete cascade}
       peer_address text
-      community_id {integer references acs_objects(object_id) on delete cascade}
+      community_id integer
       start_time   timestamptz
       end_time     timestamptz
       clicks       integer

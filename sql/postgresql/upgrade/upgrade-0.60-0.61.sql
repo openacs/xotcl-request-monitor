@@ -1,0 +1,3 @@
+
+ALTER TABLE IF EXISTS request_monitor_community_activities
+DROP CONSTRAINT IF EXISTS request_monitor_community_activities_community_id_fkey;
