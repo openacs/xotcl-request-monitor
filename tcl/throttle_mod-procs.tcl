@@ -206,7 +206,7 @@ if {"async-cmd" ni [ns_job queues]} {
   }
 
   Throttle instproc register_access {requestKey pa url community_id is_embedded_request} {
-    ns_log notice "register_access $requestKey $pa $url "
+    #ns_log notice "register_access $requestKey $pa $url "
     set obj [Users current_object]
     $obj addKey $requestKey $pa $url $community_id $is_embedded_request
     Users expSmooth [$obj point_in_time] $requestKey
@@ -870,7 +870,7 @@ if {"async-cmd" ni [ns_job queues]} {
     #
     # Don't count cases from the ipDict which are already counted in
     # for the auth cases. This assumes that from one IP address, there
-    # is never a person connected authenticated and not authrenticated
+    # is never a person connected authenticated and not authenticated
     # at the same time in the give time window. If it is, it is
     # ignored in the statistics.
     #
@@ -1598,14 +1598,14 @@ if {"async-cmd" ni [ns_job queues]} {
 
 } -persistent 1 -ad_doc {
   This is a small request-throttle application that handles simple
-  DOS-attracks on an AOL-server.  A user (request key) is identified
+  DoS-attacks on the server.  A user (request key) is identified
   via ipAddr or some other key, such as an authenticated userid.
   <p>
   XOTcl Parameters for Class <a
   href='/xotcl/show-object?object=%3a%3athrottle+do+%3a%3aThrottle'>Throttle</a>:
   <ul>
   <li><em>timeWindow:</em>Time window for computing detailed statistics; can
-  be configured via OACS package parameter <code>time-window</code></li>
+  be configured via OpenACS package parameter <code>time-window</code></li>
   <li><em>timeoutMs:</em> Time window to keep statistics for a user</li>
   <li><em>startThrottle:</em> If user requests more than this #, her
   requests are delayed. When larger than toMuch, the parameter is ignored</li>
@@ -1831,9 +1831,12 @@ throttle proc postauth args {
 }
 throttle proc trace args {
   # :log "+++ [self proc] <$args> [ad_conn url] [:partialtimes] [ns_conn isconnected]"
-  # OpenACS 5.2 bypasses for requests to /resources the user filter
-  # in these cases pre- or postauth are not called, but only trace.
-  # So we have to make sure we have the needed context here
+  #
+  # OpenACS 5.2 bypasses for requests to /resources the user filter,
+  # thesefore, the pre- or postauth are not called in these cases, but
+  # only trace.  So we have to make sure we have the needed context
+  # here.
+  #
   :get_context
   # :log "CT=[ns_set array [ns_conn outputheaders]] -- ${:url}"
 
@@ -1852,25 +1855,43 @@ throttle proc community_access {community_id} {
 
 namespace eval ::xo {
 
-  ad_proc ::xo::remap_pool {-runtime method url} {
-    #
-    # NaviServer connection pool management: when we have a connection
-    # pool for slow requests, and the query took longer than 3
-    # seconds, and the URL is not / or /dotlrn, then move this request
-    # to the "slow" pool.
-    #
-    if {$runtime > 3.0
+  ad_proc -private ::xo::remap_pool {
+    {-threshold 3.0}
+    {-except {/ /dotlrn/}}
+    -runtime
+    method
+    url
+  } {
+    
+    Function for dynamically managing connection pool mappings.  When
+    a connection pool "slow", is defined, and the query took longer
+    than "threshold" seconds, and the URL is not 'except' list, then
+    move this request to the "slow" pool.
+    
+  } {
+    if {$runtime > $threshold
         && [::acs::icanuse "ns_server unmap"]
         && "slow" in [ns_server pools]
         && [ns_server mapped [list $method $url]] eq ""
-        && $url ni {/ /dotlrn/}
+        && $url ni $except
       } {
       ns_server -pool slow map -noinherit [list $method $url]
-      ns_log notice "slow request: '$url' moved to slow connection pool"
+      ns_log notice "slow request: '$url' moved to 'slow' connection pool"
     }
   }
 
-  ad_proc ::xo::pool_remap_watchdog {} {
+  ad_proc -private ::xo::pool_remap_watchdog {} {
+    
+    Watchdoc function to ensure liveliness of the server.
+
+    This watchdog checks every minute the running jobs and maps very
+    slow requests to the slow pool (if configured) to avoid that the
+    default pool is getting filled up with more stuck requests.
+
+    The watchdog is managed via an ad_schedule_proc started from the
+    init-procs.
+    
+  } {
     set maxWaiting 10
     foreach s [ns_info servers] {
       set reqs [ns_server -server $s -pool "" active]
@@ -2026,7 +2047,7 @@ namespace eval ::xo {
     #     community_id {integer references acs_objects(object_id) on delete cascade}
     #
     # When a user deletes a community, then also the traces of this
-    # activity in the community will be deleted, allthough the fact
+    # activity in the community will be deleted, although the fact
     # that the users did something there will be flushed as well. This
     # can be a problem, when communities are created and deleted
     # frequently. Furthermore, during deletion FK violations might
