@@ -51,6 +51,8 @@ if {"async-cmd" ni [ns_job queues]} {
   package_parameter monitor_urls               -default "/ /register/ /dotlrn/"
   package_parameter time-window                -default 10
   package_parameter trend-elements             -default 48
+  package_parameter map-slow-pool-duration     -default [expr {12*60*60*1000}]  ;# 12h
+  #package_parameter map-slow-pool-duration     -default [expr {60*1000}]
 
   #
   # When updates happen on
@@ -1854,34 +1856,50 @@ throttle proc community_access {community_id} {
 }
 
 namespace eval ::xo {
+  
+  ad_proc -private ::xo::unmap_pool {
+    {-pool slow}
+    method
+    url
+  } {
+    ns_server -pool $pool unmap -noinherit [list $method $url]
+    ns_log notice "slow request: mapping of ' $method $url' to pool $pool canceled"
+  }
 
   ad_proc -private ::xo::remap_pool {
     {-threshold 3.0}
     {-except {/ /dotlrn/}}
+    {-pool slow}
     -runtime
     method
     url
   } {
-    
+
     Function for dynamically managing connection pool mappings.  When
     a connection pool "slow", is defined, and the query took longer
     than "threshold" seconds, and the URL is not 'except' list, then
     move this request to the "slow" pool.
-    
+
   } {
     if {$runtime > $threshold
         && [::acs::icanuse "ns_server unmap"]
-        && "slow" in [ns_server pools]
+        && $pool in [ns_server pools]
         && [ns_server mapped [list $method $url]] eq ""
         && $url ni $except
       } {
-      ns_server -pool slow map -noinherit [list $method $url]
-      ns_log notice "slow request: '$url' moved to 'slow' connection pool"
+      ns_server -pool $pool map -noinherit [list $method $url]
+      ns_log notice "slow request: '$url' moved to '$pool' connection pool"
+
+      if {[info commands ::map-slow-pool-duration] ne ""} {
+        set ms [::map-slow-pool-duration]
+        after $ms [list ::xo::unmap_pool -pool $pool $method $url]
+        ns_log notice "slow request: mapping of '$url' moved to '$pool' connection pool will be canceled in $ms ms"
+      }
     }
   }
 
   ad_proc -private ::xo::pool_remap_watchdog {} {
-    
+
     Watchdoc function to ensure liveliness of the server.
 
     This watchdog checks every minute the running jobs and maps very
@@ -1890,7 +1908,7 @@ namespace eval ::xo {
 
     The watchdog is managed via an ad_schedule_proc started from the
     init-procs.
-    
+
   } {
     set maxWaiting 10
     foreach s [ns_info servers] {
@@ -1926,7 +1944,7 @@ namespace eval ::xo {
               -subject "High load warning on [ad_system_name]" \
               -body "$message\nVisit:  [ad_url]/admin/nsstats/admin/nsstats"
         } on error {errorMsg} {
-          ns_log error "Cound not send high-load warning: $errorMsg"
+          ns_log error "Could not send high-load warning: $errorMsg"
         }
       }
     }
