@@ -52,7 +52,7 @@ if {"async-cmd" ni [ns_job queues]} {
   package_parameter time-window                -default 10
   package_parameter trend-elements             -default 48
   package_parameter map-slow-pool-duration     -default [expr {12*60*60*1000}]  ;# 12h
-  #package_parameter map-slow-pool-duration     -default [expr {60*1000}]
+  #package_parameter map-slow-pool-duration     -default [expr {20*1000}] ;# 20s
 
   #
   # When updates happen on
@@ -1432,6 +1432,23 @@ if {"async-cmd" ni [ns_job queues]} {
     dump write
   }
 
+  ad_proc -private ::unmap_pool {
+    {-pool slow}
+    {-ms}
+    method
+    url
+  } {
+    Function within throttle monitor thread for registering pool
+    unmapping reuests after a specified time. This function has to run
+    in this thread to be able to use "::after".
+  } {
+    if {![info exists ms]} {
+      set ms [::map-slow-pool-duration]
+    }
+    after $ms [list ::xo::unmap_pool -pool $pool $method $url]
+    ns_log notice "slow request: mapping of '$url' moved to '$pool' connection pool will be canceled in $ms ms"
+  }
+
   Object create dump
   dump set file ${logdir}/throttle-data.dump
   dump proc read {} {
@@ -1856,7 +1873,7 @@ throttle proc community_access {community_id} {
 }
 
 namespace eval ::xo {
-  
+
   ad_proc -private ::xo::unmap_pool {
     {-pool slow}
     method
@@ -1890,11 +1907,13 @@ namespace eval ::xo {
       ns_server -pool $pool map -noinherit [list $method $url]
       ns_log notice "slow request: '$url' moved to '$pool' connection pool"
 
-      if {[info commands ::map-slow-pool-duration] ne ""} {
-        set ms [::map-slow-pool-duration]
-        after $ms [list ::xo::unmap_pool -pool $pool $method $url]
-        ns_log notice "slow request: mapping of '$url' moved to '$pool' connection pool will be canceled in $ms ms"
-      }
+      #
+      # In case, we are executing in the throttle monitor thread, call
+      # the register unmap function directly, otherwise instruct the
+      # monitor thread to do so.
+      #
+      set prefix [expr {[ns_thread name] eq "::throttle" ? {} : {::throttle do}}]
+      {*}$prefix ::unmap_pool -pool $pool $method $url
     }
   }
 
