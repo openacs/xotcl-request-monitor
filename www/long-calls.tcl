@@ -24,7 +24,7 @@ proc ::xo::userid_link {uid} {
 }
 proc ::xo::regsub_eval {re string cmd {prefix ""}} {
     set map { \" \\\" \[ \\[ \] \\] \$ \\$ \\ \\\\}
-    return [uplevel [list subst [regsub -all $re [string map $map $string] "\[$cmd\]"]]]
+    return [uplevel [list subst [regsub -all -- $re [string map $map $string] "\[$cmd\]"]]]
 }
 proc ::xo::subst_user_link {prefix uid} {
     return $prefix[::xo::userid_link $uid]

@@ -1507,7 +1507,7 @@ if {"async-cmd" ni [ns_job queues]} {
       puts -nonewline $dumpFile [join $cmds \n]\n
       close $dumpFile
     } else {
-      file delete -force ${:file}
+      file delete -force -- ${:file}
       set dumpFile [AsyncLogFile new -filename ${:file}]
       #
       # Write the content in smaller chunks.
