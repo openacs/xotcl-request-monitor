@@ -1439,7 +1439,7 @@ if {"async-cmd" ni [ns_job queues]} {
     url
   } {
     Function within throttle monitor thread for registering pool
-    unmapping reuests after a specified time. This function has to run
+    unmapping requests after a specified time. This function has to run
     in this thread to be able to use "::after".
   } {
     if {![info exists ms]} {
