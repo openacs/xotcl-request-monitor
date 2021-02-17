@@ -314,8 +314,7 @@ if {$jsGraph} {
   # Draw a graph in form of an HTML table of with 500 pixels.
   #
   proc graph values {
-    set max 1
-    foreach v $values {if {$v>$max} {set max $v}}
+    set max [tcl::mathfunc::max {*}$values]
     set graph "<table cellpadding=0 cellspacing=1 style='background: #EAF2FF;'>\n"
     foreach v $values {
       set bar "<div style='height: 2px; background-color: #859db8; width: [expr {340*$v/$max}]px;'>"
