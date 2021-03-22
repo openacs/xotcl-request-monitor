@@ -5,7 +5,7 @@ ad_page_contract {
 
     @cvs-id $Id$
 } -query {
-    {ip}
+    {ip:token}
 } -properties {
     title:onevalue
     context:onevalue

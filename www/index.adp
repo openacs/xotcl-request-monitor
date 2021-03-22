@@ -1,5 +1,6 @@
 <master>
 <property name="doc(title)">@title;literal@</property>
+<property name="context">@title;literal@</property>
 
 <table style="border: 0px solid blue; padding: 10px;">
   <tr><td><strong>Active Users:</strong></td><td>@active_user_string;noquote@</td><if @param_url@ ne "">

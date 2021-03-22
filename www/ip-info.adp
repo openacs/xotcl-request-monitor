@@ -1,5 +1,6 @@
 <master>
 <property name="doc(title)">Information about IP Address @ip@</property>
+<property name="context">@context;literal@</property>
 
 <h1>Information about IP Address @ip@</h1>
 
