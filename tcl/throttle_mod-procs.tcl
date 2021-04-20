@@ -1698,7 +1698,11 @@ throttle proc get_context {} {
   # :log "--t [info exists :context_initialized] url=[ns_conn url]"
   if {[info exists :context_initialized]} return
 
-  set :url [ns_conn url]
+  set url [string trimright [ns_conn url] "/"]
+  if {$url eq ""} {
+    set url "/"
+  }
+  set :url $url
   set :method [ns_conn method]
 
   set :community_id 0
