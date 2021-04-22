@@ -1698,11 +1698,17 @@ throttle proc get_context {} {
   # :log "--t [info exists :context_initialized] url=[ns_conn url]"
   if {[info exists :context_initialized]} return
 
-  set url [string trimright [ns_conn url] "/"]
-  if {$url eq ""} {
-    set url "/"
+  #
+  # In case, the connection got terminated due to e.g. invalid URLs
+  # earlier, fall back to URL "/" to avoid hard DB errors resulting
+  # from the sitemap lookup of the URL.
+  #
+  if {[ns_conn isconnected]} {
+    set :url [ns_conn url]
+    ns_log notice "URL <${:url}> invalid? [regexp  {[^[:print:]]} ${:url}]"
+  } else {
+    set :url /
   }
-  set :url $url
   set :method [ns_conn method]
 
   set :community_id 0
