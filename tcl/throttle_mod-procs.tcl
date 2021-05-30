@@ -1705,7 +1705,7 @@ throttle proc get_context {} {
   #
   if {[ns_conn isconnected]} {
     set :url [ns_conn url]
-    ns_log notice "URL <${:url}> invalid? [regexp  {[^[:print:]]} ${:url}]"
+    #ns_log notice "URL <${:url}> invalid? [regexp  {[^[:print:]]} ${:url}]"
   } else {
     set :url /
   }
