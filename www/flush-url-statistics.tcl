@@ -8,7 +8,7 @@ ad_page_contract {
 }
 
 throttle flush_url_stats
-ad_returnredirect stat-details
+ad_returnredirect ./stat-details
 # Local variables:
 #    mode: tcl
 #    tcl-indent-level: 2
