@@ -1895,7 +1895,7 @@ namespace eval ::xo {
 
   ad_proc -private ::xo::remap_pool {
     {-threshold 3.0}
-    {-except {/ /dotlrn/}}
+    {-except {/ /dotlrn/ /dotlrn}}
     {-pool slow}
     -runtime
     method
