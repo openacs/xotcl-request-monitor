@@ -52,9 +52,16 @@ if {$readsize < $filesize} {
 set c [read $F]; close $F
 
 set offsets [regexp -indices -all -inline \n $c]
-set o [lindex $offsets end-$lines]
-set c1 [string range $c [lindex $o 0]+1 end]
+set offset [lindex $offsets end-$lines 0]
+if {$offset eq ""} {
+    #
+    # Trim potential partial lines
+    #
+    set offset [lindex $offsets 0 0]
+}
+set c1 [string range $c $offset+1 end]
 set rows ""
+
 foreach line [lreverse [split $c1 \n]] {
     if {$line eq ""} continue
     lassign $line wday mon day hours tz year dash url time uid ip contentType pool
