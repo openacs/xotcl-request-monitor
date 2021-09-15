@@ -34,10 +34,10 @@ Updated for circumventing handler calls OpenACS 5.2 for /resources/*.
         <license>BSD-Style</license>
         <maturity>2</maturity>
         <provides url="xotcl-request-monitor" version="0.61"/>
-	<requires url="acs-kernel" version="5.10.0b1"/>
-	<requires url="acs-tcl" version="5.10.0b1"/>
-        <requires url="xotcl-core" version="5.10.0b1"/>
-	<requires url="acs-templating" version="5.10.0b1"/>
+	<requires url="acs-kernel" version="5.10.0"/>
+	<requires url="acs-tcl" version="5.10.0"/>
+        <requires url="xotcl-core" version="5.10.0"/>
+	<requires url="acs-templating" version="5.10.0"/>
 
         <callbacks>
           <callback type="after-upgrade"  proc="::request_monitor::upgrade_callback"/>
