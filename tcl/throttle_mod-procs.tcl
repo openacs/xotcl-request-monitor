@@ -1760,7 +1760,7 @@ throttle ad_proc check {} {
   #
   # We could as well pass the whole header set via
   #
-  #  {*}[ns_set array [ns_conn  headers]]
+  #  {*}[ns_set array [ns_conn headers]]
   #
   # but since this code is time critical, just pass the information
   # actually needed.
