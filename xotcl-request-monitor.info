@@ -35,7 +35,7 @@ Updated for circumventing handler calls OpenACS 5.2 for /resources/*.
         <maturity>2</maturity>
         <provides url="xotcl-request-monitor" version="0.61"/>
 	<requires url="acs-kernel" version="5.10.0"/>
-	<requires url="acs-tcl" version="5.10.0"/>
+	<requires url="acs-tcl" version="5.10.1d7"/>
         <requires url="xotcl-core" version="5.10.0"/>
 	<requires url="acs-templating" version="5.10.0"/>
 

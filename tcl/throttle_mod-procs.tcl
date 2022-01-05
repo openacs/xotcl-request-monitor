@@ -51,8 +51,7 @@ if {"async-cmd" ni [ns_job queues]} {
   package_parameter monitor_urls               -default "/ /register/ /dotlrn/"
   package_parameter time-window                -default 10
   package_parameter trend-elements             -default 48
-  package_parameter map-slow-pool-duration     -default [expr {12*60*60*1000}]  ;# 12h
-  #package_parameter map-slow-pool-duration     -default [expr {20*1000}] ;# 20s
+  package_parameter map-slow-pool-duration     -default [expr {[ns_baseunit -time 12h]*1000}]
 
   #
   # When updates happen on
