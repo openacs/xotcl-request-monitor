@@ -123,11 +123,15 @@ switch -glob $orderby {
 if {$admin} {
   set total $peer_cat_count(others)
   foreach cat $peer_groups {incr total $peer_cat_count($cat)}
-  set summarize_categories "$total users logged in from: "
-  foreach cat $peer_groups {
-    append summarize_categories "$cat [format %.2f [expr {$peer_cat_count($cat)*100.0/$total}]]%, "
+  if {$total > 0} {
+    set summarize_categories "$total users logged in from: "
+    foreach cat $peer_groups {
+      append summarize_categories "$cat [format %.2f [expr {$peer_cat_count($cat)*100.0/$total}]]%, "
+    }
+    append summarize_categories "others [format %.2f [expr {$peer_cat_count(others)*100.0/$total}]]%. "
+  } else {
+    set summarize_categories "$total users logged in"
   }
-  append summarize_categories "others [format %.2f [expr {$peer_cat_count(others)*100.0/$total}]]%. "
 } else {
   set summarize_categories ""
 }
