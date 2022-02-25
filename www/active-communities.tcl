@@ -32,7 +32,7 @@ foreach {community_id users} [throttle users active_communities] {
     set community_name ""
   }
   if {$community_name eq ""} {
-    set community_name [::xo::db::sql::apm_package name -package_id $community_id]
+    set community_name [::acs::dc call apm_package name -package_id $community_id]
   }
 
   t1 add \
