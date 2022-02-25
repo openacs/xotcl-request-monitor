@@ -1571,9 +1571,9 @@ if {"async-cmd" ni [ns_job queues]} {
 
     # Create the file to load. This is per hour = 60*3 + 2 lines
     set number_of_lines [expr {182 * [trend-elements]}]
-    exec $tail -n $number_of_lines ${logdir}/counter.log >${logdir}/counter-new.log
 
     try {
+      exec $tail -n $number_of_lines ${logdir}/counter.log >${logdir}/counter-new.log
       set f [open $logdir/counter-new.log]
       while {-1 != [gets $f line]} {
         regexp {(.*) -- (.*) ::(.*) (.*)} $line match timestamp server counter value
@@ -1585,10 +1585,14 @@ if {"async-cmd" ni [ns_job queues]} {
           set complain($counter) 1
         }
       }
+    } on error {errorMsg} {
+      ns_log Warning "+++ request-monitor: error initializing counters: $errorMsg"
     } finally {
-      close $f
+      if {[info exists f]} {
+        close $f
+        unset f
+      }
     }
-    unset f
   }
 
   #
