@@ -792,6 +792,13 @@ if {"async-cmd" ni [ns_job queues]} {
     @cvs-id $Id$
   }
 
+  #
+  # Make sure to always provide initialized aggregated values in case
+  # that "dump read" fails to initialized these.
+  #
+  Users set ip24 0
+  Users set auth24 0
+
   Users ad_proc active {-full:switch}  {
 
     Return a list of lists containing information about current
