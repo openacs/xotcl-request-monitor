@@ -160,7 +160,7 @@ TableWidget create t1 -volatile \
   set nr 0
   set hidden 0
   set all [expr {!$all}]
-  foreach l [lsort $type $order -index $index $full_stat] {
+  foreach l $full_stat {
     set avg [expr {[lindex $l 1]/[lindex $l 2]}]
     set rel [expr {($avg/1000.0)/$total_avg}]
     set url [lindex $l 0]

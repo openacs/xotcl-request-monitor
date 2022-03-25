@@ -31,7 +31,8 @@ TableWidget create t1 \
     }] \
     -columns [subst {
       AnchorField name  -label "User" -orderby name
-      Field date -label "Last Activity" -html { align right } \
+      HiddenField date
+      Field last -label "Last Activity" -html { align right } \
           -orderby date
       }] \
     -no_data "no registered online today"
@@ -39,7 +40,11 @@ TableWidget create t1 \
 
 set users [list]
 lassign [throttle users users_per_day] ip auth
-if {!$all} {set elements [concat $ip $auth]} {set elements $auth}
+if {!$all} {
+  set elements [concat $ip $auth]
+} {
+  set elements $auth
+}
 set summary "We noticed in [expr {[llength $ip]+[llength $auth]}] users in total, containing [llength $auth] authenticated users"
 
 set now_ansi  [lc_clock_to_ansi [clock seconds]]
@@ -55,11 +60,22 @@ foreach element $elements {
                     ]
 }
 
+
+foreach e $users {
+  if {$admin} {
+    t1 add  -name   [lindex $e 0] \
+        -name.href  [lindex $e 1] \
+        -date       [lindex $e 2] \
+        -last       [lindex $e 3] \
+      }
+}
+
 lassign [split $orderby ,] att order
 t1 orderby \
     -order [ad_decode $order desc decreasing asc increasing increasing] \
     -type [ad_decode $att date integer dictionary] \
     $att
+
 set t1 [t1 asHTML]
 
 # Local variables:
