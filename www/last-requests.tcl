@@ -65,7 +65,7 @@ set requests [throttle users last_requests $request_key]
 set last_timestamp [clock seconds]
 
 set hidden 0
-foreach element [lsort -index 0 -decreasing $requests] {
+foreach element $requests {
   lassign $element timestamp url pa
   if {!$all} {
     set exclude 0
