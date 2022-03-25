@@ -55,23 +55,11 @@ foreach element $elements {
                     ]
 }
 
-switch -glob $orderby {
-  *,desc {set order -decreasing}
-  *,asc  {set order -increasing}
-}
-switch -glob $orderby {
-  name,*         {set index 0; set type -dictionary}
-  date,*         {set index 2; set type -integer}
-}
-
-foreach e [lsort $type $order -index $index $users] {
-  if {$admin} {
-    t1 add      -name         [lindex $e 0] \
-                -name.href    [lindex $e 1] \
-                -date         [lindex $e 3] \
-  }
-}
-
+lassign [split $orderby ,] att order
+t1 orderby \
+    -order [ad_decode $order desc decreasing asc increasing increasing] \
+    -type [ad_decode $att date integer dictionary] \
+    $att
 set t1 [t1 asHTML]
 
 # Local variables:

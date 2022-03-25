@@ -53,6 +53,12 @@ TableWidget create t1 \
     } \
     -no_data "no requests for this user recorded"
 
+lassign [split $orderby ,] att order
+t1 orderby \
+    -order [ad_decode $order desc decreasing asc increasing increasing] \
+    -type [ad_decode $att diff integer dictionary] \
+    $att
+
 set all [expr {!$all}]
 set requests [throttle users last_requests $request_key]
 #set last_timestamp [lindex $requests end 0]

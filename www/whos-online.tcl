@@ -59,7 +59,7 @@ proc my_hostname pa {
   return "$peer ($pa)"
   #return "$peer"
 }
-
+ns_log notice USERS=[throttle users active -full]
 set users [list]
 foreach element [throttle users active -full] {
   lassign $element user_id pa timestamp hits smooth switches
@@ -106,19 +106,12 @@ foreach element [throttle users active -full] {
                     ]
 }
 
-switch -glob $orderby {
-  *,desc {set order -decreasing}
-  *,asc  {set order -increasing}
-}
-switch -glob $orderby {
-  name,*         {set index 0; set type -dictionary}
-  online_time,*  {set index 3; set type -dictionary}
-  activity,*     {set index 5; set type -integer}
-  hits,*         {set index 5; set type -dictionary}
-  switches,*     {set index 8; set type -integer}
-  peer_address,* {set index 9; set type -dictionary}
-  vpm,*          {set index 11; set type -real}
-}
+lassign [split $orderby ,] att order
+set order [ad_decode $order desc decreasing asc increasing increasing]
+set type [ad_decode $att activity integer switches integer vpm real dictionary]
+
+ns_log notice "ORDERBY $orderby -> [list t1 orderby -order $order -type $type $att]"
+t1 orderby -order $order -type $type $att
 
 if {$admin} {
   set total $peer_cat_count(others)
@@ -136,8 +129,7 @@ if {$admin} {
   set summarize_categories ""
 }
 
-
-foreach e [lsort $type $order -index $index $users] {
+foreach e $users {
   if {$admin} {
     t1 add      -name         [lindex $e 0] \
                 -name.href    [lindex $e 1] \

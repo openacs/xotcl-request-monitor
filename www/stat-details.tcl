@@ -141,18 +141,6 @@ set url_all   [export_vars -base [ad_conn url] {{all $not_all} with_apps with_pa
 set url_apps  [export_vars -base [ad_conn url] {all {with_apps $not_with_apps} with_param}]
 set url_param [export_vars -base [ad_conn url] {all with_apps {with_param $not_with_param}}]
 
-switch -glob $orderby {
-  *,desc {set order -decreasing}
-  *,asc  {set order -increasing}
-}
-switch -glob $orderby {
-  url,*       {set index 0; set type -dictionary}
-  totaltime,* {set index 1; set type -integer}
-  cnt,*       {set index 2; set type -integer}
-  avg,*       {set index 3; set type -real}
-}
-
-
 TableWidget create t1 -volatile \
     -actions [subst {
       Action new -label "$show_all_label($all)" -url $url_all -tooltip "show_all_tooltip($all)"
@@ -195,6 +183,12 @@ TableWidget create t1 -volatile \
                 -avg $avg \
                 -total [format %.2f%% [expr {[lindex $l 1]*100.0/$total}]]
   }
+
+lassign [split $orderby ,] att order
+t1 orderby \
+    -order [ad_decode $order desc decreasing asc increasing increasing] \
+    -type [ad_decode $att totaltime integer cnt integer avg real dictionary] \
+    $att
 
 set t1 [t1 asHTML]
 

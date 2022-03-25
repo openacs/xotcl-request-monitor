@@ -21,7 +21,10 @@ TableWidget create t1 \
     }
 
 lassign [split $orderby ,] att order
-t1 orderby -order [expr {$order eq "asc" ? "increasing" : "decreasing"}] $att
+t1 orderby \
+    -order [ad_decode $order desc decreasing asc increasing increasing] \
+    -type [ad_decode $att count integer dictionary] \
+    $att
 
 foreach {community_id users} [throttle users active_communities] {
   if {$community_id eq ""} continue

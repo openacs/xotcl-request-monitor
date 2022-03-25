@@ -33,7 +33,10 @@ TableWidget create t1 -volatile \
     }
 
 lassign [split $orderby ,] att order
-t1 orderby -order [expr {$order eq "asc" ? "increasing" : "decreasing"}] $att
+t1 orderby \
+    -order [ad_decode $order desc decreasing asc increasing increasing] \
+    -type [ad_decode $att ms integer dictionary] \
+    $att
 
 foreach l $stat {
   lassign $l timestamp c url ms requestor
