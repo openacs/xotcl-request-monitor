@@ -1937,7 +1937,7 @@ namespace eval ::xo {
     }
   }
 
-  ad_proc -private ::xo::pool_remap_watchdog {} {
+  ad_proc -private ::xo::pool_remap_watchdog {{-maxWaiting 10} {-maxRunning 100}} {
 
     Watchdoc function to ensure liveliness of the server.
 
@@ -1949,7 +1949,6 @@ namespace eval ::xo {
     init-procs.
 
   } {
-    set maxWaiting 10
     foreach s [ns_info servers] {
       set reqs [ns_server -server $s -pool "" active]
       foreach req $reqs {
@@ -1962,7 +1961,8 @@ namespace eval ::xo {
         }
       }
       set waiting [ns_server -server $s -pool "" waiting]
-      if {$waiting >= $maxWaiting} {
+      set running [llength $reqs]
+      if {$waiting >= $maxWaiting || $running >= $maxRunning} {
         set threadInfo [ns_server -server $s -pool "" threads]
         lappend threadInfo waiting $waiting
         set message ""
