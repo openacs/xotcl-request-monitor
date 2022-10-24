@@ -123,9 +123,21 @@ if {$jsGraph} {
   #   security::csp::require script-src code.jquery.com
   # }
 
-  template::add_body_script -src "//code.highcharts.com/highcharts.js"
-  template::add_body_script -src "//code.highcharts.com/modules/exporting.js"
-  security::csp::require script-src code.highcharts.com
+  if {[template::head::can_resolve_urn urn:ad:js:highcharts]} {
+    #
+    # The highcharts package is available
+    #
+    template::add_body_script -src urn:ad:js:highcharts
+    template::add_body_script -src urn:ad:js:highcharts/modules/exporting
+    template::add_body_script -src urn:ad:js:highcharts/modules/accessibility
+  } else {
+    #
+    # The highcharts package is not available, go straight to the CDN.
+    #
+    template::add_body_script -src "//code.highcharts.com/highcharts.js"
+    template::add_body_script -src "//code.highcharts.com/modules/exporting.js"
+    security::csp::require script-src code.highcharts.com
+  }
 
   proc js_time {clock} {
     set year [clock format $clock -format %Y]
