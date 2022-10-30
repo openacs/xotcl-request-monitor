@@ -270,7 +270,8 @@ if {"async-cmd" ni [ns_job queues]} {
     set var :running_url($requestKey,$url)
 
     #
-    # Never block embedded requests
+    # Never block certain requests, such as embedded requests, range
+    # requests, system requests, requests from the fast pool, ...
     #
     if {
         $fetchDest in $::never_blocked_fetchDest
@@ -284,7 +285,7 @@ if {"async-cmd" ni [ns_job queues]} {
           application/javascript
           application/x-javascript
         }
-        || [string match "/system/*" $url]
+        || [string match "/SYSTEM/*" $url]
         || [string match "/shared/*" $url]
         || "/proctoring/upload" eq $url
       } {

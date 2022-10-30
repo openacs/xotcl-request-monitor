@@ -3,6 +3,20 @@
 <master>
 
 <h1>Long Calls</h1>
+<div style="float:left">
+<form action="./long-calls" class="form-inline">
+Connection Pools:&nbsp;
+  <multiple name="poolcheckboxes">
+    <div class="form-check form-check-inline form-group">
+      <input class="form-check-input" type="checkbox" id="inlineCheckbox-@poolcheckboxes.name@" name="pool" value="@poolcheckboxes.name@" @poolcheckboxes.checked@>
+      <label class="form-check-label" for="inlineCheckbox-$pool">@poolcheckboxes.name@</label>
+    </div>
+  </multiple>
+  <button type="submit" class="btn btn-outline-secondary">Filter</button>
+  <input type="hidden" name="lines" value="@lines@">
+</form>
+</div>
+
 <div style="float:right">
 &nbsp;Lines: <a href="long-calls?lines=20">20</a>,
 <a href="long-calls?lines=50">50</a>,

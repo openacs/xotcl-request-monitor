@@ -7,6 +7,7 @@ ad_page_contract {
 } -query {
     {lines:naturalnum 20}
     {readsize:naturalnum 100000}
+    {pool:word,multiple ""}
 } -properties {
     title:onevalue
     context:onevalue
@@ -32,13 +33,13 @@ proc ::xo::subst_user_link {prefix uid} {
 
 nsf::proc ::xo::colorize_slow_calls {-fast:required -warning:required -danger:required value} {
     if {$value > $danger} {
-        return danger
+        return "danger bg-danger bg-opacity-10"
     } elseif {$value > $warning} {
-        return warning
+        return "warning bg-warning bg-opacity-10"
     } elseif {$value > $fast} {
-        return info
+        return "info bg-info bg-opacity-10"
     } else {
-        return success
+        return "success bg-success bg-opacity-10"
     }
 }
 
@@ -60,11 +61,53 @@ if {$offset eq ""} {
     set offset [lindex $offsets 0 0]
 }
 set c1 [string range $c $offset+1 end]
-set rows ""
+set logLines [lreverse [split $c1 \n]]
 
-foreach line [lreverse [split $c1 \n]] {
+#
+# Determine the pools which where used in line range of the log lines,
+# that we are looking at?
+#
+set foundPoolsDict ""
+foreach line $logLines {
+    if {$line eq ""} continue
+    dict set foundPoolsDict [lindex $line 12] 1
+}
+#
+# Map in the found pools empty to "default"
+#
+set foundPools [lmap p [lsort [dict keys $foundPoolsDict]] {
+    expr {$p eq "" ? "default" : $p}
+}]
+
+#
+# In case, no "pool" filter value was provided, show all found pools.
+#
+if {$pool eq ""} {
+    set pool $foundPools
+}
+set inputPools $pool
+
+#
+# Create a multirow to let templating make some work
+#
+template::multirow create  poolcheckboxes name checked
+foreach name $foundPools {
+    template::multirow append poolcheckboxes $name [expr {$name in $inputPools ? "checked" : ""}]
+}
+
+#
+# Provide the reverse mapping for "default" to "" avoid doing the test
+# in the loop.
+#
+set pools  [lmap p $inputPools {expr {$p eq "default" ? "" : $p}}]
+
+set rows ""
+foreach line $logLines {
     if {$line eq ""} continue
     lassign $line wday mon day hours tz year dash url time uid ip contentType pool
+    if {$pool ni $pools} {
+        continue
+    }
     set userinfo [::xo::userid_link $uid]
     set iplink [subst {<a href="[export_vars -base ip-info {ip}]">[ns_quotehtml $ip]</a>}]
     if {[llength $time] > 1} {
@@ -108,14 +151,17 @@ set doc(title) "Long Calls"
 set context [list $doc(title)]
 
 #
-# We always want bootstrap for the coloring.
+# We always want bootstrap for the coloring and the filter. The markup
+# in the .adp file is supposed to render reasonably for Bootstrap 3
+# and Bootstrap 5 themes to ease maintenance.
 #
-if {[template::head::can_resolve_urn urn:ad:js:bootstrap3]} {
+if {[template::head::can_resolve_urn urn:ad:css:bootstrap5] && [string match "*bootstrap5*" [subsite::get_theme]]} {
+    template::head::add_css -href urn:ad:css:bootstrap5 -media all
+} elseif {[template::head::can_resolve_urn urn:ad:css:bootstrap3]} {
     template::head::add_css -href urn:ad:css:bootstrap3 -media all
 } else {
     #
-    # We have no xowiki or bootstrap based theme installed, so load it
-    # manually.
+    # We have no Bootstrap based theme installed, so load it manually.
     #
     template::head::add_css -href //maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css -media all
     security::csp::require style-src maxcdn.bootstrapcdn.com

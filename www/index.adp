@@ -4,7 +4,8 @@
 
 <table style="border: 0px solid blue; padding: 10px;">
   <tr><td><strong>Active Users:</strong></td><td>@active_user_string;noquote@</td><if @param_url@ ne "">
-<td align="right"><a class="button" href="@param_url@">#acs-subsite.parameters#</a></td>
+<td align="right"><a class="button btn" href="@param_url@">#acs-subsite.parameters#
+<adp:icon name="cog"></a></td>
 </if>
 </tr>
   <tr><td><strong>Current System Activity:</strong></td><td>@current_system_activity@</td></tr>

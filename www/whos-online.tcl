@@ -33,7 +33,7 @@ set url [export_vars -base [ad_conn url] {request_key all}]
 
 TableWidget create t1 \
     -actions [subst {
-      Action new -label "$label($all)" -url $url -tooltip "$tooltip($all)"
+      Action new -CSSclass "double-click-prevention btn" -label "$label($all)" -url $url -tooltip "$tooltip($all)"
     }] \
     -columns [subst {
       AnchorField name  -label "User" -orderby name
@@ -59,7 +59,8 @@ proc my_hostname pa {
   return "$peer ($pa)"
   #return "$peer"
 }
-ns_log notice USERS=[throttle users active -full]
+
+#ns_log notice USERS=[throttle users active -full]
 set users [list]
 foreach element [throttle users active -full] {
   lassign $element user_id pa timestamp hits smooth switches
