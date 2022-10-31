@@ -73,6 +73,10 @@ foreach line $logLines {
     dict set foundPoolsDict [lindex $line 12] 1
 }
 #
+# Remember pool settings for the number-of-lines filter
+#
+set filterQuery &[export_vars {pool:multiple}]
+#
 # Map in the found pools empty to "default"
 #
 set foundPools [lmap p [lsort [dict keys $foundPoolsDict]] {
@@ -84,6 +88,7 @@ set foundPools [lmap p [lsort [dict keys $foundPoolsDict]] {
 #
 if {$pool eq ""} {
     set pool $foundPools
+    set filterQuery ""
 }
 set inputPools $pool
 

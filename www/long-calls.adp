@@ -18,15 +18,16 @@ Connection Pools:&nbsp;
 </div>
 
 <div style="float:right">
-&nbsp;Lines: <a href="long-calls?lines=20">20</a>,
-<a href="long-calls?lines=50">50</a>,
-<a href="long-calls?lines=100">100</a>,
-<a href="long-calls?lines=200">200</a>,
-<a href="long-calls?lines=500">500</a>,
-<a href="long-calls?lines=1000">1000</a>,
-<a href="long-calls?lines=2000&amp;readsize=100000">2000</a>,
-<a href="long-calls?lines=5000&amp;readsize=500000">5000</a>,
-<a href="long-calls?lines=10000&amp;readsize=500000">10000</a>
+&nbsp;Lines:
+<a href="long-calls?lines=20@filterQuery;literal@">20</a>,
+<a href="long-calls?lines=50@filterQuery;literal@">50</a>,
+<a href="long-calls?lines=100@filterQuery;literal@">100</a>,
+<a href="long-calls?lines=200@filterQuery;literal@">200</a>,
+<a href="long-calls?lines=500@filterQuery;literal@">500</a>,
+<a href="long-calls?lines=1000@filterQuery;literal@">1000</a>,
+<a href="long-calls?lines=2000&amp;readsize=100000@filterQuery;literal@">2000</a>,
+<a href="long-calls?lines=5000&amp;readsize=500000@filterQuery;literal@">5000</a>,
+<a href="long-calls?lines=10000&amp;readsize=500000@filterQuery;literal@">10000</a>
 &nbsp;
 </div>
 
@@ -35,11 +36,11 @@ Connection Pools:&nbsp;
       <tr>
         <th class='text-right'>Queuetime</th>
         <th class='text-right'>Filtertime</th>
-	<th class='text-right'>Runtime</th>
-	<th class='text-right'>Totaltime</th>
+        <th class='text-right'>Runtime</th>
+        <th class='text-right'>Totaltime</th>
         <th>Date</th>
         <th>User ID</th>
-        <th>IP</th>	
+        <th>IP</th>
         <th>Pool</th>
         <th>URL</th>
       </tr>
