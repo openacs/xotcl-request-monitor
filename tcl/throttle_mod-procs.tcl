@@ -1951,6 +1951,10 @@ namespace eval ::xo {
 
   } {
     foreach s [ns_info servers] {
+      #
+      # Check default connection pool and remap slow request to the
+      # "slow" pool when defined.
+      #
       set reqs [ns_server -server $s -pool "" active]
       foreach req $reqs {
         set runtime [lindex $req end-1]
@@ -1961,17 +1965,28 @@ namespace eval ::xo {
           ::xo::remap_pool -runtime $runtime $method $url
         }
       }
-      set waiting [ns_server -server $s -pool "" waiting]
-      set running [llength $reqs]
-      if {$waiting >= $maxWaiting || $running >= $maxRunning} {
-        set threadInfo [ns_server -server $s -pool "" threads]
-        lappend threadInfo waiting $waiting
-        set message ""
-        append message \
-            "Server $s on [ad_system_name]: " \
-            "more than $maxWaiting requests are waiting ($threadInfo)" \n \
-            "Currently running requests:" \n \
-            "   " [join $reqs "\n   "] \n
+      #
+      # Check queueing situation for every connection pool and report
+      # to sysadmin when things pile up.
+      #
+      set message ""
+      foreach pool [ns_server -server $s pools] {
+        set reqs [ns_server -server $s -pool $pool active]
+        set waiting [ns_server -server $s -pool $pool waiting]
+        set running [llength $reqs]
+        if {$waiting >= $maxWaiting || $running >= $maxRunning} {
+          set threadInfo [ns_server -server $s -pool $pool threads]
+          lappend threadInfo waiting $waiting
+          set message ""
+          append message \
+              "Server $s on [ad_system_name]: " \
+              "more than $maxWaiting requests are waiting " \
+              "in connection pool '$pool' ($threadInfo)" \n \
+              "Currently running requests:" \n \
+              "   " [join $reqs "\n   "] \n
+        }
+      }
+      if {$message ne ""} {
         ns_log warning $message
         try {
           #
