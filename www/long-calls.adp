@@ -25,9 +25,9 @@ Connection Pools:&nbsp;
 <a href="long-calls?lines=200@filterQuery;literal@">200</a>,
 <a href="long-calls?lines=500@filterQuery;literal@">500</a>,
 <a href="long-calls?lines=1000@filterQuery;literal@">1000</a>,
-<a href="long-calls?lines=2000&amp;readsize=100000@filterQuery;literal@">2000</a>,
-<a href="long-calls?lines=5000&amp;readsize=500000@filterQuery;literal@">5000</a>,
-<a href="long-calls?lines=10000&amp;readsize=500000@filterQuery;literal@">10000</a>
+<a href="long-calls?lines=2000&amp;readsize=500000@filterQuery;literal@">2000</a>,
+<a href="long-calls?lines=5000&amp;readsize=1000000@filterQuery;literal@">5000</a>,
+<a href="long-calls?lines=10000&amp;readsize=2000000@filterQuery;literal@">10000</a>
 &nbsp;
 </div>
 
