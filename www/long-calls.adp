@@ -34,6 +34,7 @@ Connection Pools:&nbsp;
 <table class="table table-condensed table-bordered small">
     <thead>
       <tr>
+        <th class='text-right'>Request Start</th>
         <th class='text-right'>Queuetime</th>
         <th class='text-right'>Filtertime</th>
         <th class='text-right'>Runtime</th>

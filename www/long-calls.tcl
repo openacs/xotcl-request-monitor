@@ -119,14 +119,23 @@ foreach line $logLines {
         set queuetime  [dict get $time queuetime]
         set filtertime [dict get $time filtertime]
         set runtime    [dict get $time runtime]
+        if {[dict exists $time start]} {
+            set s0 [dict get $time start]
+            set start_secs [ns_time seconds $s0]
+            set start_msecs [string range [ns_time format $s0] end-6 end]
+            set start [clock format $start_secs -format %H:%M:%S]$start_msecs
+        } else {
+            set start ""
+        }
         set totaltime  [format %8.6f [expr {$queuetime + $filtertime + $runtime}]]
         set color(queuetime)  [::xo::colorize_slow_calls -fast 0.001 -warning 0.50 -danger 1.00 $queuetime]
         set color(filtertime) [::xo::colorize_slow_calls -fast 0.010 -warning 1.00 -danger 2.00 $filtertime]
         set color(runtime)    [::xo::colorize_slow_calls -fast 0.010 -warning 5.00 -danger 10.00 $runtime]
         set color(totaltime)  [::xo::colorize_slow_calls -fast 0.010 -warning 5.00 -danger 10.00 $totaltime]
+        set color(start)  "small info bg-info bg-opacity-10"
     } else {
-        lassign {"" "" ""} queuetime filtertime runtime
-        lassign {"" "" ""} color(queuetime) color(filtertime) color(runtime)
+        lassign {"" "" "" ""} start queuetime filtertime runtime
+        lassign {"" "" "" ""} color(start) color(queuetime) color(filtertime) color(runtime)
         set totaltime $time
         set color(totaltime)  [::xo::colorize_slow_calls -fast 0.010 -warning 3.00 -danger 10.00 $totaltime]
     }
@@ -140,12 +149,13 @@ foreach line $logLines {
     set request [ns_quotehtml $url]
     set request [::xo::regsub_eval {user_id=([0-9]+)} $request {::xo::subst_user_link user_id= \1} user_id=]
     append rows "<tr class=''>" \
-        "<td class='text-right $color(queuetime)'><span class='info'>$queuetime</span></td>" \
-        "<td class='text-right $color(filtertime)'>$filtertime</td>" \
-        "<td class='text-right $color(runtime)'>$runtime</td>" \
-        "<td class='text-right $color(totaltime)'><strong>$totaltime</strong></td>" \
-        "<td class='$color(totaltime)'>$year&nbsp;$mon&nbsp;$day&nbsp;$hours</td>" \
-        "<td class='text-right  $color(totaltime)'>$userinfo</td>" \
+        "<td class='text-right text-end $color(start)'><span class='info'>$start</span></td>" \
+        "<td class='text-right text-end $color(queuetime)'><span class='info'>$queuetime</span></td>" \
+        "<td class='text-right text-end $color(filtertime)'>$filtertime</td>" \
+        "<td class='text-right text-end $color(runtime)'>$runtime</td>" \
+        "<td class='text-right text-end $color(totaltime)'><strong>$totaltime</strong></td>" \
+        "<td class='text-right text-end $color(totaltime)'>$year&nbsp;$mon&nbsp;$day&nbsp;$hours</td>" \
+        "<td class='text-right text-end $color(totaltime)'>$userinfo</td>" \
         "<td class='$color(totaltime)'>$iplink</td>" \
         "<td class='$color(totaltime)'>$pool</td>" \
         "<td class='$color(totaltime)'>$request</td>" \

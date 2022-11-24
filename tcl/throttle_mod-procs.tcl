@@ -1683,18 +1683,22 @@ if {![::acs::icanuse "ns_conn partialtimes"]} {
   # Older version of NaviServer or AOLserver
   #
   throttle proc partialtimes {} {
-    set t [ns_time diff [ns_time get] [ns_conn start]]
+    set s [ns_conn start]
+    set t [ns_time diff [ns_time get] $s]
     set ms [expr {[ns_time seconds $t]*1000 + [ns_time microseconds $t]/1000}]
-    return [list ms $ms runtime [expr {$ms/1000.0}] filtertime 0 queuetime 0 accepttime 0]
+    return [list start $s ms $ms runtime [expr {$ms/1000.0}] filtertime 0 queuetime 0 accepttime 0]
   }
 } else {
   #
   # Use variant based on "ns_conn partialtimes"
   #
   throttle proc partialtimes {} {
+    set s [ns_conn start]
     set d [ns_conn partialtimes]
-    set t [ns_time diff [ns_time get] [ns_conn start]]
-    lappend d ms [expr {[ns_time seconds $t]*1000 + [ns_time microseconds $t]/1000}]
+    set t [ns_time diff [ns_time get] $s]
+    lappend d \
+        ms [expr {[ns_time seconds $t]*1000 + [ns_time microseconds $t]/1000}] \
+        start $s
     return $d
   }
 }
