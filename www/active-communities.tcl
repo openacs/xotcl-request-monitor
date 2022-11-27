@@ -1,5 +1,5 @@
 ad_page_contract {
-  Displays active commnities
+  Displays active communities
 
     @author Gustaf Neumann
 

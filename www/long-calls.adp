@@ -14,6 +14,7 @@ Connection Pools:&nbsp;
   </multiple>
   <button type="submit" class="btn btn-outline-secondary">Filter</button>
   <input type="hidden" name="lines" value="@lines@">
+  <input type="hidden" name="by_starttime" value="@by_starttime@">
 </form>
 </div>
 
@@ -34,12 +35,11 @@ Connection Pools:&nbsp;
 <table class="table table-condensed table-bordered small">
     <thead>
       <tr>
-        <th class='text-right'>Request Start</th>
+        <th class='text-right'><a href="@toggle_request_start_url@" title="@toggle_request_time_title@">@request_time_label@</a></th>
         <th class='text-right'>Queuetime</th>
         <th class='text-right'>Filtertime</th>
         <th class='text-right'>Runtime</th>
         <th class='text-right'>Totaltime</th>
-        <th>Date</th>
         <th>User ID</th>
         <th>IP</th>
         <th>Pool</th>
