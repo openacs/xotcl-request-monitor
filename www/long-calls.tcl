@@ -112,6 +112,14 @@ foreach name $foundPools {
 # in the loop.
 #
 set pools  [lmap p $inputPools {expr {$p eq "default" ? "" : $p}}]
+set now [clock seconds]
+
+template::head::add_style -style {
+    .daydiff {
+        font-size: 6pt;
+        vertical-align: super;
+    }
+}
 
 set rows ""
 foreach line $logLines {
@@ -179,9 +187,13 @@ foreach line $logLines {
     set request [::xo::regsub_eval {user_id=([0-9]+)} $request {::xo::subst_user_link user_id= \1} user_id=]
     #ns_log notice "start $start [string length $start] end $end [string length $end]"
     if {$by_starttime} {
-        set time $start
+        set daydiff [expr {[clock format $start_secs -format %J] - [clock format $now -format %J]}]
+        set prefix [expr {$daydiff == 0 ? "" : "<span class='daydiff'>${daydiff}d </span>"}]
+        set time $prefix$start
     } else {
-        set time $end
+        set daydiff [expr {[clock format $end_secs -format %J] - [clock format $now -format %J]}]
+        set prefix [expr {$daydiff == 0 ? "" : "<span class='daydiff'>${daydiff}d </span>"}]
+        set time $prefix$end
     }
     set row [subst {<tr class=''>
         <td class='text-right text-end $color(totaltime)' style='white-space: nowrap;'><span class='info' title='$request_time_title'>$time</span></td>
