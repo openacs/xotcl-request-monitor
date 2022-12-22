@@ -17,7 +17,7 @@ set title "Last Requests of "
 set context [list "Last Requests"]
 set hide_patterns [parameter::get -parameter hide-requests -default {*.css}]
 
-if {[string is integer $request_key]} {
+if {[nsf::is integer $request_key]} {
   set user_info   [xo::request_monitor_user_info $request_key]
   set user_string [dict get $user_info label]
   set tmp_url     [dict get $user_info url]

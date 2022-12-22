@@ -89,7 +89,7 @@ if {[ns_info name] eq "NaviServer"}  {
     set percentage [expr {$done*100.0/$size}]
     set progress [format {%5.2f%% of %5.2f MB} $percentage [expr {$size/1000000.0}]]
     set ms [format %.2f [expr {([clock milliseconds] - $starttime*1000)/-1000.0}]]
-    if {[string is integer $requestor]} {
+    if {[nsf::is integer $requestor]} {
       set user_string [person::name -person_id $requestor]
     } else {
       set user_string $requestor

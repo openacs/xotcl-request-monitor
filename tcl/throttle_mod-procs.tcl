@@ -2049,7 +2049,7 @@ namespace eval ::xo {
 
   ad_proc -private request_monitor_user_info {key} {
   } {
-    if {[string is integer $key]} {
+    if {[nsf::is integer $key]} {
       #
       # It looks like a user_id
       #

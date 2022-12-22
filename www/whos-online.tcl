@@ -68,7 +68,7 @@ foreach element [throttle users active -full] {
   set user_info [xo::request_monitor_user_info $user_id]
   set user_label [dict get $user_info label]
   set user_url   [dict get $user_info url]
-  if {![string is integer $user_id] && $all} {
+  if {![nsf::is integer $user_id] && $all} {
     # it was an IP address
     continue
   }
