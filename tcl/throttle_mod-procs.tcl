@@ -268,6 +268,7 @@ if {"async-cmd" ni [ns_job queues]} {
     }
 
     set var :running_url($requestKey,$url)
+    set overactive ov($requestKey,$url)
 
     #
     # Never block certain requests, such as embedded requests, range
@@ -307,11 +308,24 @@ if {"async-cmd" ni [ns_job queues]} {
     if {${:do_double_click_prevention} && [info exists $var]} {
       #
       # Request already running
-      # ns_log notice  "### already $var"
       #
+      # Keep value in per-minute counter
+      minutes incr $overactive
+      #
+      #ns_log notice  "### block $var overactive [minutes set $overactive]"
       return [list 0 0 1]
     } elseif {$::verbose_blocking && [info exists $var]} {
       ns_log notice "would block: fetchDest $fetchDest $requestKey $url"
+    }
+
+    #
+    # Check, if have blocked (429) this URL already 15 times for this
+    # user in this minute.  If so, block this URL for this user, until
+    # the minute is over.
+    #
+    if {[minutes exists $overactive] && [minutes set $overactive] > 15} {
+      ns_log notice  "### request $overactive blocked since user has issued in this minute too many repeated requests"
+      return [list 0 0 2]
     }
 
     set $var $conn_time
@@ -612,6 +626,14 @@ if {"async-cmd" ni [ns_job queues]} {
   Counter create hours -timeoutMs [expr {60000*60}] -logging 1
   Counter create minutes -timeoutMs 60000 -report hours -logging 1
   Counter create seconds -timeoutMs 1000 -report minutes
+
+  minutes proc end {} {
+    #
+    # Delete overactive counters.
+    #
+    array unset :ov
+    next
+  }
 
   # The counter user_count_day just records the number of active user
   # per day. It differs from other counters by keeping track of a pair
@@ -1791,10 +1813,14 @@ throttle ad_proc check {} {
       toMuch ms repeat
   #set t1 [clock milliseconds]
 
+  #
+  # result == 0 OK
+  # result < 0 blocked
+  # result > 0 This web server is only open for interactive usage
+  #
   if {$repeat > 0} {
     :add_statistics repeat ${:requestor} ${:pa} ${:url} ${:query}
     if {$repeat > 1} {
-      :log "*** requestor (user ${:requestor}) would be blocked, when parameter do_slowdown_overactive would be activated"
       set result 1
     } else {
       set result -1
