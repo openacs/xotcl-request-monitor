@@ -9,6 +9,7 @@ ad_page_contract {
     {readsize:naturalnum 100000}
     {pool:word,multiple ""}
     {by_starttime:boolean 0}
+    {order:word ""}
 } -properties {
     title:onevalue
     context:onevalue
@@ -82,6 +83,7 @@ ns_log notice "filterQuery = '$filterQuery'"
 set toggle_request_start [expr {!$by_starttime}]
 set toggle_request_start_url [export_vars -base long-calls {pool:multiple lines {by_starttime $toggle_request_start}}]
 set toggle_request_time_title [expr {$by_starttime ? "Click to order by endtime" : "Click to order by starttime"}]
+set base_sort_url [export_vars -base long-calls {pool:multiple lines}]
 
 #
 # Map in the found pools empty to "default"
@@ -207,23 +209,30 @@ foreach line $logLines {
         <td class='$color(totaltime)'>$request</td>
         </tr>
     }]
-    if {!$by_starttime} {
-        append rows $row
-    } else {
+    if {$by_starttime} {
         append order_start($timestamp_start) $row \n
+    } elseif {$order in {queuetime filtertime runtime totaltime}} {
+        append order_${order}([set $order]) $row \n
+    } else {
+        append rows $row
     }
 }
 
+set request_time_label "Request End"
 if {$by_starttime} {
+    set order ""
     foreach start_time [lsort -real -decreasing [array names order_start]] {
         append rows $order_start($start_time)
     }
     set request_time_label "Request Start"
+} elseif {$order in {queuetime filtertime runtime totaltime}} {
+    set ordersign_$order "↓"
+    foreach t [lsort -real -decreasing [array names order_${order}]] {
+        append rows [set order_${order}($t)]
+    }
 } else {
     # rows are already in the order of end time
-    set request_time_label "Request End"
 }
-
 
 set doc(title) "Long Calls"
 set context [list $doc(title)]

@@ -35,12 +35,12 @@ Connection Pools:&nbsp;
 <table class="table table-condensed table-bordered small">
     <thead>
       <tr>
-        <th class='text-right'><a href="@toggle_request_start_url@" title="@toggle_request_time_title@">@request_time_label@</a></th>
-        <th class='text-right'>Queuetime</th>
-        <th class='text-right'>Filtertime</th>
-        <th class='text-right'>Runtime</th>
-        <th class='text-right'>Totaltime</th>
-        <th>User ID</th>
+        <th class='text-right' nowrap><a href="@toggle_request_start_url@" title="@toggle_request_time_title@">@request_time_label@</a></th>
+        <th class='text-right' nowrap><a href="@base_sort_url@&order=queuetime">Queuetime<if @ordersign_queuetime@ not nil> @ordersign_queuetime@</if></a></a></th>
+        <th class='text-right' nowrap><a href="@base_sort_url@&order=filtertime">Filtertime<if @ordersign_filtertime@ not nil> @ordersign_filtertime@</if></a></th>
+        <th class='text-right' nowrap><a href="@base_sort_url@&order=runtime">Runtime<if @ordersign_runtime@ not nil> @ordersign_runtime@</if></a></th>
+        <th class='text-right' nowrap><a href="@base_sort_url@&order=totaltime">Totaltime<if @ordersign_totaltime@ not nil> @ordersign_totaltime@</if></a></th>
+        <th nowrap>User ID</th>
         <th>IP</th>
         <th>Pool</th>
         <th>URL</th>
