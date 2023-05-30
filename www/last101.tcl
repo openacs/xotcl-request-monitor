@@ -39,13 +39,13 @@ t1 orderby \
     $att
 
 foreach l $stat {
-  lassign $l timestamp c url ms requestor
-  set user_info   [xo::request_monitor_user_info $requestor]
+  lassign $l timestamp c url ms requester
+  set user_info   [xo::request_monitor_user_info $requester]
   set user_string [dict get $user_info label]
 
   t1 add -time [clock format $timestamp -format "%H:%M:%S"] \
       -user $user_string \
-      -user.href [export_vars -base last-requests {{request_key $requestor}}] \
+      -user.href [export_vars -base last-requests {{request_key $requester}}] \
       -ms $ms \
       -url $url
 }

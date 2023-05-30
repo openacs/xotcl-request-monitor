@@ -151,10 +151,10 @@ if {"async-cmd" ni [ns_job queues]} {
   #
   # A class to keep simple statistics
   #
-  Class create ThrottleStat -parameter { type requestor timestamp ip_address url }
+  Class create ThrottleStat -parameter { type requester timestamp ip_address url }
 
   #
-  # class for throtteling eager requestors or to block duplicate requests
+  # class for throtteling eager requesters or to block duplicate requests
   #
   Class create Throttle -parameter {
     {timeWindow 10}
@@ -172,12 +172,12 @@ if {"async-cmd" ni [ns_job queues]} {
     next
   }
 
-  Throttle instproc add_statistics { type requestor ip_address url query } {
+  Throttle instproc add_statistics { type requester ip_address url query } {
     #set furl [expr {$query ne "" ? "$url?$query" : $url}]
     incr :${type}s
-    # :log "++++ add_statistics   -type $type -user_id $requestor "
+    # :log "++++ add_statistics   -type $type -user_id $requester "
     set entry [ThrottleStat new -childof [self]::stats \
-                   -type $type -requestor $requestor \
+                   -type $type -requester $requester \
                    -timestamp [clock seconds] \
                    -ip_address $ip_address -url $url]
   }
@@ -191,7 +191,7 @@ if {"async-cmd" ni [ns_job queues]} {
       return ""
     } else {
       foreach stat $data {
-        lappend output [list [$stat type] [$stat requestor] \
+        lappend output [list [$stat type] [$stat requester] \
                             [$stat timestamp] [$stat ip_address] [$stat url]]
       }
       return $output
@@ -700,10 +700,10 @@ if {"async-cmd" ni [ns_job queues]} {
       } \
       -set seconds [clock seconds]
 
-  UrlCounter instproc add_url_stat {url ms requestor} {
-    #ns_log notice "UrlCounter.add_url_stat($url,$ms,$requestor)"
+  UrlCounter instproc add_url_stat {url ms requester} {
+    #ns_log notice "UrlCounter.add_url_stat($url,$ms,$requester)"
     my ++
-    # :log "[self proc] $url /$ms/ $requestor (${:c})"
+    # :log "[self proc] $url /$ms/ $requester (${:c})"
     incr :t $ms
     #
     # Set up a value for the right ordering in last 100.  We take the
@@ -713,7 +713,7 @@ if {"async-cmd" ni [ns_job queues]} {
     #
     set now [clock seconds]
     set order [expr {($now - [[self class] set seconds]) * 10000 + ${:c}}]
-    set :last100([expr {$order%99}]) [list $now $order $url $ms $requestor]
+    set :last100([expr {$order%99}]) [list $now $order $url $ms $requester]
 
     set has_param [regexp {^(.*)[?]} $url _ url]
     if {$has_param} {set url $url?...}
@@ -827,11 +827,11 @@ if {"async-cmd" ni [ns_job queues]} {
     Return a list of lists containing information about current
     users. If the switch 'full' is used this list contains these users
     who have used the server within the monitoring time window (per
-    default: 10 minutes). Otherwise, just a list of requestors
+    default: 10 minutes). Otherwise, just a list of requesters
     (user_ids or peer addresses for unauthenticated requests) is
     returned.
 
-    If "-full" is used for each requestor the last peer address, the
+    If "-full" is used for each requester the last peer address, the
     last timestamp, the number of hits, a list of values for the
     activity calculations and the number of ip-switches the user is
     returned.
@@ -1027,8 +1027,8 @@ if {"async-cmd" ni [ns_job queues]} {
     }
   }
 
-  Users proc community_access {requestor pa community_id} {
-    [:current_object] community_access $requestor $pa $community_id
+  Users proc community_access {requester pa community_id} {
+    [:current_object] community_access $requester $pa $community_id
   }
 
   Users proc entered_community {key now community_id data reason} {
@@ -1769,7 +1769,7 @@ throttle proc get_context {} {
     ::xo::ConnectionContext require -url ${:url}
   }
 
-  set :requestor [::xo::cc requestor]
+  set :requester [::xo::cc requester]
   set :user      [::xo::cc user]
   set :query     [ad_conn query]
   set :pa        [ad_conn peeraddr]
@@ -1803,7 +1803,7 @@ throttle ad_proc check {} {
   # actually needed.
   #
   set hdrs [ns_conn headers]
-  lassign [:throttle_check ${:requestor} ${:pa} ${:url} \
+  lassign [:throttle_check ${:requester} ${:pa} ${:url} \
                [ns_conn start] [ns_guesstype [ns_conn url]] ${:community_id} \
                [list \
                     pool [ns_conn pool] \
@@ -1819,21 +1819,21 @@ throttle ad_proc check {} {
   # result > 0 This web server is only open for interactive usage
   #
   if {$repeat > 0} {
-    :add_statistics repeat ${:requestor} ${:pa} ${:url} ${:query}
+    :add_statistics repeat ${:requester} ${:pa} ${:url} ${:query}
     if {$repeat > 1} {
       set result 1
     } else {
       set result -1
     }
   } elseif {$toMuch} {
-    :log "*** we have to refuse user ${:requestor} with $toMuch requests"
-    :add_statistics reject ${:requestor} ${:pa} ${:url} ${:query}
+    :log "*** we have to refuse user ${:requester} with $toMuch requests"
+    :add_statistics reject ${:requester} ${:pa} ${:url} ${:query}
     set result $toMuch
   } elseif {$ms} {
-    :log "*** we have to block user ${:requestor} for $ms ms"
-    :add_statistics throttle ${:requestor} ${:pa} ${:url} ${:query}
+    :log "*** we have to block user ${:requester} for $ms ms"
+    :add_statistics throttle ${:requester} ${:pa} ${:url} ${:query}
     after $ms
-    :log "*** continue for user ${:requestor}"
+    :log "*** continue for user ${:requester}"
     set result 0
   } else {
     set result 0
@@ -1875,7 +1875,7 @@ throttle forward user_is_active          %self do Users %proc
 ####
 throttle proc postauth args {
   # :log "+++ [self proc] [ad_conn url] auth ms [:partialtimes] [ns_conn isconnected]"
-  # :do set ::cookies(${:requestor}) [ns_set get [ns_conn headers] Cookie]
+  # :do set ::cookies(${:requester}) [ns_set get [ns_conn headers] Cookie]
   set r [:check]
   if {$r < 0} {
     set url ${:url}
@@ -1910,7 +1910,7 @@ throttle proc trace args {
   :get_context
   # :log "CT=[ns_set array [ns_conn outputheaders]] -- ${:url}"
 
-  :add_url_stat ${:method} ${:url} [:partialtimes] ${:requestor} ${:pa} \
+  :add_url_stat ${:method} ${:url} [:partialtimes] ${:requester} ${:pa} \
       [ns_set iget [ns_conn outputheaders] Content-Type] [ns_conn pool]
   unset :context_initialized
   return filter_ok
@@ -1919,7 +1919,7 @@ throttle proc trace args {
 throttle proc community_access {community_id} {
   :get_context
   if {${:community_id} eq ""} {
-    :users community_access ${:requestor} ${:pa} $community_id
+    :users community_access ${:requester} ${:pa} $community_id
   }
 }
 
