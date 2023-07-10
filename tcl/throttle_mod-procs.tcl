@@ -1144,7 +1144,7 @@ if {"async-cmd" ni [ns_job queues]} {
       #
       # Check, if the peer address changed. This might be some
       # indication, that multiple users are working under the same
-      # user_id, or that the identity was highjacked. Therefore, we
+      # user_id, or that the identity was hijacked. Therefore, we
       # note such occurrences.
       #
       if {[$class set pa($key)] ne $pa} {
