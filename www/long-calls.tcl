@@ -5,10 +5,10 @@ ad_page_contract {
 
     @cvs-id $Id$
 } -query {
-    {lines:naturalnum 20}
-    {readsize:naturalnum 100000}
+    {lines:naturalnum,notnull 20}
+    {readsize:naturalnum,notnull 100000}
     {pool:word,multiple ""}
-    {by_starttime:boolean 0}
+    {by_starttime:boolean,notnull 0}
     {order:word ""}
 } -properties {
     title:onevalue

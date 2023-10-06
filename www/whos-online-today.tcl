@@ -6,7 +6,7 @@ ad_page_contract {
   @cvs-id $Id$
 } -query {
   {orderby:token,optional "date,desc"}
-  {all:boolean,optional 0}
+  {all:boolean,optional,notnull 0}
 } -properties {
   title:onevalue
   context:onevalue
