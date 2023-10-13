@@ -49,14 +49,20 @@ set summary "We noticed in [expr {[llength $ip]+[llength $auth]}] users in total
 
 set now_ansi  [lc_clock_to_ansi [clock seconds]]
 
+set xowiki_p [expr {[namespace which ::xowiki::utility] ne ""}]
+
 foreach element $elements {
   lassign $element user_id timestamp
   set user_info [xo::request_monitor_user_info $user_id]
+
+  set last_activity [expr {$xowiki_p ?
+                           [::xowiki::utility pretty_age -timestamp $timestamp] :
+                           [lc_clock_to_ansi $timestamp]
+                         }]
   lappend users [list [dict get $user_info label] \
                      [dict get $user_info url] \
                      $timestamp \
-                     [::xowiki::utility pretty_age \
-                          -timestamp [clock scan [lc_clock_to_ansi $timestamp]]] \
+                     $last_activity \
                     ]
 }
 
