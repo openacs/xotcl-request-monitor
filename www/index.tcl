@@ -42,10 +42,10 @@ proc currentSystemLoad {} {
     set f [open $procloadavg]; set c [read $f]; close $f
     return $c
   }
-  if {![catch {exec sysctl vm.loadavg kern.boottime} result]} {
+  if {![catch {exec [::util::which sysctl] vm.loadavg kern.boottime} result]} {
       return $result
   }
-  if {[set uptime [util::which uptime]] ne ""} {
+  if {[set uptime [::util::which uptime]] ne ""} {
     return [exec $uptime]
   } else {
     set msg "'uptime' command not found on the system"
