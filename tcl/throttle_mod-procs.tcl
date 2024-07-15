@@ -2007,11 +2007,12 @@ namespace eval ::xo {
         if {$waiting >= $maxWaiting || $running >= $maxRunning} {
           set threadInfo [ns_server -server $s -pool $pool threads]
           lappend threadInfo waiting $waiting
+          set poolName [expr {$pool eq "" ? "default" : "'$pool'"}]
           set message ""
           append message \
-              "Server $s on [ad_system_name]: " \
+              "Server <strong>$s</strong> on [ad_system_name]: " \
               "more than $maxWaiting requests are waiting " \
-              "in connection pool '$pool' ($threadInfo)" \n \
+              "in connection pool $poolName ($threadInfo)" \n \
               "Currently running requests:" \n \
               "   " [join $reqs "\n   "] \n
         }
