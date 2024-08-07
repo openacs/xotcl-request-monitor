@@ -82,8 +82,28 @@ namespace eval ::request_monitor {
       }
     }
   }
-}
 
+  ad_proc -private after_mount {
+    -package_id:required
+    -node_id:required
+  } {
+    Modify default permissions after mount.
+  } {
+    ns_log notice "-- After mount callback package_id $package_id node_id $node_id"
+    
+    #
+    # Turn off inheritance from public site
+    #
+    permission::set_not_inherit -object_id $package_id
+    #
+    # Allow registered users to read
+    #
+    permission::grant -party_id [acs_magic_object registered_users] \
+        -object_id $package_id \
+        -privilege read
+  }
+}
+  
 ::xo::library source_dependent
 
 # Local variables:
