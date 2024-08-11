@@ -87,9 +87,12 @@ namespace eval ::request_monitor {
     -package_id:required
     -node_id:required
   } {
-    Modify default permissions after mount.
+
+    Modify default permissions after mount to restrict read access to
+    the package from public read to read access for registered users.
+
   } {
-    ns_log notice "-- After mount callback package_id $package_id node_id $node_id"
+    #ns_log notice "-- After mount callback package_id $package_id node_id $node_id"
     
     #
     # Turn off inheritance from public site
