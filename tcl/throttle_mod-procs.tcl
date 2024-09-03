@@ -2010,7 +2010,7 @@ namespace eval ::xo {
           set poolName [expr {$pool eq "" ? "default" : "'$pool'"}]
           set message ""
           append message \
-              "Server <strong>$s</strong> on [ad_system_name]: " \
+              "Server '$s' on [ad_system_name]: " \
               "more than $maxWaiting requests are waiting " \
               "in connection pool $poolName ($threadInfo)" \n \
               "Currently running requests:" \n \
