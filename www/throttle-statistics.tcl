@@ -17,12 +17,12 @@ set data [throttle url_statistics]
 
 template::list::create \
     -name url_statistics \
-    -elements { 
+    -elements {
       time {label Time}
       type {label Type}
       user {
-	label Userid
-	link_url_col user_url}
+        label Userid
+        link_url_col user_url}
       IPaddress  {label "IP Address"}
       URL {label "URL"}
     }
@@ -34,8 +34,9 @@ foreach l [lsort -index 2 $data] {
     set user "Anonymous"
     set user_url ""
   } else {
-    set user [person::name -person_id $uid]
-    set user_url [acs_community_member_admin_url -user_id $uid]
+    set user_info [xo::request_monitor_user_info $uid]
+    set user [dict get $user_info label]
+    set user_url [dict get $user_info url]
   }
   set time [clock format $time -format "%Y-%m-%d %H:%M:%S"]
   multirow append url_statistics $type $user $user_url $time $IPaddress $URL

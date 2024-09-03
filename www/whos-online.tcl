@@ -6,7 +6,7 @@ ad_page_contract {
   @cvs-id $Id$
 } -query {
   {orderby:token,optional "activity,desc"}
-  {all:boolean 0}
+  {all:boolean,notnull 0}
 } -properties {
   title:onevalue
   context:onevalue
@@ -19,7 +19,7 @@ set context [list "Who's online"]
 
 # get value from package parameters
 set peer_groups [parameter::get -parameter peer-groups \
-			 -default {*wlan* *dsl* *.com *.net *.org}]
+                         -default {*wlan* *dsl* *.com *.net *.org}]
 
 set admin [acs_user::site_wide_admin_p]
 #set admin 0
@@ -33,21 +33,21 @@ set url [export_vars -base [ad_conn url] {request_key all}]
 
 TableWidget create t1 \
     -actions [subst {
-      Action new -label "$label($all)" -url $url -tooltip "$tooltip($all)"
+      Action new -CSSclass "double-click-prevention btn" -label "$label($all)" -url $url -tooltip "$tooltip($all)"
     }] \
     -columns [subst {
       AnchorField name  -label "User" -orderby name
       Field online_time -label "Last Activity" -html { align right } \
-	  -orderby online_time
+          -orderby online_time
       Field vpm       -label "Views per min" -html { align center } -orderby vpm
       if {$admin} {
-	Field activity -label "Activity" -html { align right } -orderby activity
-	AnchorField hits -label "Hits" -orderby hits
-	Field switches  -label "Switches" -html { align center } -orderby switches
-	Field peer_address -label "Peer" -orderby peer_address
+        Field activity -label "Activity" -html { align right } -orderby activity
+        AnchorField hits -label "Hits" -orderby hits
+        Field switches  -label "Switches" -html { align center } -orderby switches
+        Field peer_address -label "Peer" -orderby peer_address
       }
     }] \
-    -no_data "no registered users online" 
+    -no_data "no registered users online"
 
 
 foreach cat $peer_groups {set peer_cat_count($cat) 0}
@@ -55,37 +55,36 @@ set peer_cat_count(others) 0
 
 # this proc is used only for caching purposes
 proc my_hostname pa {
-  if {[catch {set peer [ns_hostbyaddr $pa]}]} { return $pa } 
+  if {[catch {set peer [ns_hostbyaddr $pa]}]} { return $pa }
   return "$peer ($pa)"
   #return "$peer"
 }
 
+#ns_log notice USERS=[throttle users active -full]
 set users [list]
 foreach element [throttle users active -full] {
   lassign $element user_id pa timestamp hits smooth switches
-  if {[string is integer $user_id]} {
-    set person [person::get_person_info -person_id $user_id]
-    set user_label "[dict get $person last_name], [dict get $person first_names]"
-    set user_url [acs_community_member_url -user_id $user_id]
-  } else {
-    if {$all} continue
+
+  set user_info [xo::request_monitor_user_info $user_id]
+  set user_label [dict get $user_info label]
+  set user_url   [dict get $user_info url]
+  if {![nsf::is integer $user_id] && $all} {
     # it was an IP address
-    set user_label $user_id
-    set user_url ""
-  } 
+    continue
+  }
   set timestamp [lindex $smooth 2]
   set last_request_minutes [expr {[clock seconds]/60 - $timestamp}]
-  
+
   set peer $pa
   if {$admin} {
     catch {set peer [util_memoize [string tolower \
-				       [list ::template::my_hostname $pa]]]}
+                                       [list ::template::my_hostname $pa]]]}
     set match 0
     foreach cat $peer_groups {
       if {[string match "$cat *" $peer]} {
-	incr peer_cat_count($cat)
-	set match 1
-	break
+        incr peer_cat_count($cat)
+        set match 1
+        break
       }
       }
     if {!$match} {
@@ -97,60 +96,56 @@ foreach element [throttle users active -full] {
   set detail_url "last-requests?request_key=$user_id"
 
   lappend users [list $user_label \
-		     $user_url \
-		     $last_request_minutes "$last_request_minutes minutes ago" \
-		     [format %.2f [lindex $smooth 0]] \
-		     $hits $loadparam $detail_url \
-		     $switches \
-		     $peer \
-		     $user_id \
-		     [throttle views_per_minute $user_id] \
-		    ]
+                     $user_url \
+                     $last_request_minutes "$last_request_minutes minutes ago" \
+                     [format %.2f [lindex $smooth 0]] \
+                     $hits $loadparam $detail_url \
+                     $switches \
+                     $peer \
+                     $user_id \
+                     [throttle views_per_minute $user_id] \
+                    ]
 }
 
-switch -glob $orderby {
-  *,desc {set order -decreasing}
-  *,asc  {set order -increasing}
-} 
-switch -glob $orderby {
-  name,*         {set index 0; set type -dictionary}
-  online_time,*  {set index 3; set type -dictionary}
-  activity,*     {set index 5; set type -integer}
-  hits,*         {set index 5; set type -dictionary}
-  switches,*     {set index 8; set type -integer}
-  peer_address,* {set index 9; set type -dictionary}
-  vpm,*          {set index 11; set type -real}
-}
+lassign [split $orderby ,] att order
+set order [ad_decode $order desc decreasing asc increasing increasing]
+set type [ad_decode $att activity integer switches integer vpm real dictionary]
+
+ns_log notice "ORDERBY $orderby -> [list t1 orderby -order $order -type $type $att]"
+t1 orderby -order $order -type $type $att
 
 if {$admin} {
   set total $peer_cat_count(others)
   foreach cat $peer_groups {incr total $peer_cat_count($cat)}
-  set summarize_categories "$total users logged in from: "
-  foreach cat $peer_groups {
-    append summarize_categories "$cat [format %.2f [expr {$peer_cat_count($cat)*100.0/$total}]]%, "
+  if {$total > 0} {
+    set summarize_categories "$total users logged in from: "
+    foreach cat $peer_groups {
+      append summarize_categories "$cat [format %.2f [expr {$peer_cat_count($cat)*100.0/$total}]]%, "
+    }
+    append summarize_categories "others [format %.2f [expr {$peer_cat_count(others)*100.0/$total}]]%. "
+  } else {
+    set summarize_categories "$total users logged in"
   }
-  append summarize_categories "others [format %.2f [expr {$peer_cat_count(others)*100.0/$total}]]%. "
 } else {
   set summarize_categories ""
 }
 
-
-foreach e [lsort $type $order -index $index $users] {
+foreach e $users {
   if {$admin} {
-    t1 add 	-name         [lindex $e 0] \
-		-name.href    [lindex $e 1] \
-		-online_time  [lindex $e 3] \
-		-activity     [lindex $e 4] \
-		-hits         [lindex $e 6] \
-		-hits.href    [lindex $e 7] \
-		-switches     [lindex $e 8] \
-	        -vpm          [format %.2f [lindex $e 11]] \
-		-peer_address [lindex $e 9]
+    t1 add      -name         [lindex $e 0] \
+                -name.href    [lindex $e 1] \
+                -online_time  [lindex $e 3] \
+                -activity     [lindex $e 4] \
+                -hits         [lindex $e 6] \
+                -hits.href    [lindex $e 7] \
+                -switches     [lindex $e 8] \
+                -vpm          [format %.2f [lindex $e 11]] \
+                -peer_address [lindex $e 9]
   } else {
-    t1 add 	-name         [lindex $e 0] \
-		-name.href    [lindex $e 1] \
-		-online_time  [lindex $e 3] \
-        	-vpm 	      [format %.2f [lindex $e 11]]
+    t1 add      -name         [lindex $e 0] \
+                -name.href    [lindex $e 1] \
+                -online_time  [lindex $e 3] \
+                -vpm          [format %.2f [lindex $e 11]]
   }
 }
 

@@ -1,5 +1,5 @@
 ad_page_contract {
-  Displays active commnities
+  Displays active communities
 
     @author Gustaf Neumann
 
@@ -21,7 +21,10 @@ TableWidget create t1 \
     }
 
 lassign [split $orderby ,] att order
-t1 orderby -order [expr {$order eq "asc" ? "increasing" : "decreasing"}] $att
+t1 orderby \
+    -order [ad_decode $order desc decreasing asc increasing increasing] \
+    -type [ad_decode $att count integer dictionary] \
+    $att
 
 foreach {community_id users} [throttle users active_communities] {
   if {$community_id eq ""} continue
@@ -32,9 +35,9 @@ foreach {community_id users} [throttle users active_communities] {
     set community_name ""
   }
   if {$community_name eq ""} {
-    set community_name [::xo::db::sql::apm_package name -package_id $community_id]
+    set community_name [::acs::dc call apm_package name -package_id $community_id]
   }
-  
+
   t1 add \
       -community $community_name \
       -community.href [export_vars -base users-in-community {community_id community_name}] \

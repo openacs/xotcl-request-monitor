@@ -23,17 +23,13 @@ TableWidget create t1 \
     }
 
 foreach e [lsort -decreasing -index 0 \
-	       [throttle users in_community $community_id]] {
-  lassign $e timestamp requestor
-  if {[info exists listed($requestor)]} continue
-  set listed($requestor) 1
-  if {[string is integer -strict $requestor]} {
-    set user_string [person::name -person_id $requestor]
-  } else {
-    set user_string $requestor
-  }
+               [throttle users in_community $community_id]] {
+  lassign $e timestamp requester
+  if {[info exists listed($requester)]} continue
+  set listed($requester) 1
+  set user_info [xo::request_monitor_user_info $requester]
   set time [clock format $timestamp -format "%H:%M"]
-  t1 add -time $time -user $user_string
+  t1 add -time $time -user [dict get $user_info label]
 }
 
 set t1 [t1 asHTML]

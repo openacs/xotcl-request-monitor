@@ -1,22 +1,23 @@
-
 # we register the following filters only during startup, since
 # existing connection threads are not aware of the throttle object.
 if {[ns_server connections] == 0 && [info commands ::throttle] ne ""} {
-  # 
+  #
   # Register the filter progs for url statistics.
   # The methods to be called have the name of the filter type.
   #
-  ns_register_filter trace GET * throttle 
+  ns_register_filter trace GET * throttle
   ns_register_filter trace POST * throttle
-  
-  #ns_register_filter postauth GET * throttle 
-  #ns_register_filter postauth POST * throttle 
+  ns_register_filter trace HEAD * throttle  
+
+  #ns_register_filter postauth GET * throttle
+  #ns_register_filter postauth POST * throttle
   ad_register_filter -priority 1000 postauth GET * throttle
   ad_register_filter -priority 1000 postauth POST * throttle
+  ad_register_filter -priority 1000 postauth HEAD * throttle  
 }
 
 #
-# Check if we are running under OpenACS; if not, provide 
+# Check if we are running under OpenACS; if not, provide
 # minimal compatibility code.
 #
 if {[info commands ad_conn] eq ""} {
@@ -42,6 +43,12 @@ if {$do_track_activity && [info commands ::xo::job_dequeue] ne ""} {
   ad_schedule_proc -thread t 61 ::xo::job_dequeue
 }
 
+#
+# Launch the pool remapper background job to move requests to the slow
+# pool, even before these are finished. This is necessary for jobs
+# which are never finishing.
+# 
+ad_schedule_proc -thread t 59 ::xo::pool_remap_watchdog
 
 # Local variables:
 #    mode: tcl

@@ -4,7 +4,7 @@ ad_page_contract {
   @author Gustaf Neumann
   @cvs-id $Id$
 } -query {
-  {jsGraph:boolean 1}
+  {jsGraph:boolean,notnull 1}
 } -properties {
   title:onevalue
   context:onevalue
@@ -42,10 +42,10 @@ proc currentSystemLoad {} {
     set f [open $procloadavg]; set c [read $f]; close $f
     return $c
   }
-  if {![catch {exec sysctl vm.loadavg kern.boottime} result]} {
+  if {![catch {exec [::util::which sysctl] vm.loadavg kern.boottime} result]} {
       return $result
   }
-  if {[set uptime [util::which uptime]] ne ""} {
+  if {[set uptime [::util::which uptime]] ne ""} {
     return [exec $uptime]
   } else {
     set msg "'uptime' command not found on the system"
@@ -108,17 +108,36 @@ proc currentViews {} {
     set views_per_min_per_user "0"
   }
   set view_time [expr {$views_per_min_per_user>0 ?
-        " avg. view time: [format %4.1f [expr {60.0/$views_per_min_per_user}]]" : ""}]
+        " avg. view time: [format %4.1f [expr {60.0/$views_per_min_per_user}]] secs" : ""}]
   return "[format %4.1f $views_per_sec] views/sec, [format %4.3f $views_per_min_per_user] views/min/user,  $view_time"
 }
 
 
 if {$jsGraph} {
-  set nonce [::security::csp::nonce]
+  #set nonce [::security::csp::nonce]
+  #
+  # if {[template::head::can_resolve_urn urn:ad:js:jquery]} {
+  #   template::add_body_script -src urn:ad:js:jquery
+  # } else {
+  #   template::add_body_script -src "//code.jquery.com/jquery-1.12.3.min.js"
+  #   security::csp::require script-src code.jquery.com
+  # }
 
-  template::add_body_script -src "//code.jquery.com/jquery-1.12.3.min.js"
-  template::add_body_script -src "//code.highcharts.com/highcharts.js"
-  template::add_body_script -src "//code.highcharts.com/modules/exporting.js"
+  if {[template::head::can_resolve_urn urn:ad:js:highcharts]} {
+    #
+    # The highcharts package is available
+    #
+    template::add_body_script -src urn:ad:js:highcharts
+    template::add_body_script -src urn:ad:js:highcharts/modules/exporting
+    template::add_body_script -src urn:ad:js:highcharts/modules/accessibility
+  } else {
+    #
+    # The highcharts package is not available, go straight to the CDN.
+    #
+    template::add_body_script -src "//code.highcharts.com/highcharts.js"
+    template::add_body_script -src "//code.highcharts.com/modules/exporting.js"
+    security::csp::require script-src code.highcharts.com
+  }
 
   proc js_time {clock} {
     set year [clock format $clock -format %Y]
@@ -164,18 +183,13 @@ if {$jsGraph} {
       },
       name: '$label',
       data: \[ [join $data ,] \],
-      fillColor : {
-                    linearGradient : {
-                        x1: 0,
-                        y1: 0,
-                        x2: 0,
-                        y2: 1
-                    },
-                    stops : \[
-                        \[0, Highcharts.getOptions().colors\[0\]\],
-                        \[1, Highcharts.Color(Highcharts.getOptions().colors\[0\]).setOpacity(0).get('rgba')\]
-                    \]
-                }
+      fillColor: {
+                linearGradient: \[0, 0, 0, 300\],
+                stops: \[
+                    \[0, Highcharts.getOptions().colors\[0\]\],
+                    \[1, Highcharts.color(Highcharts.getOptions().colors\[0\]).setOpacity(0).get('rgba')\]
+                \]
+            }
     }}]
 
     #
@@ -216,22 +230,17 @@ if {$jsGraph} {
             name: '$label',
             colorIndex: 4,
             data: \[ [join $data ,] \],
-            fillColor : {
-                    linearGradient : {
-                        x1: 0,
-                        y1: 0,
-                        x2: 0,
-                        y2: 1
-                    },
-              stops : \[
-              \[0, Highcharts.getOptions().colors\[0\]\],
-              \[1, Highcharts.Color(Highcharts.getOptions().colors\[4\]).setOpacity(0).get('rgba')\]
-              \]
+            fillColor: {
+                linearGradient: \[0, 0, 0, 300\],
+                stops: \[
+                    \[0, Highcharts.getOptions().colors\[0\]\],
+                    \[1, Highcharts.color(Highcharts.getOptions().colors\[4\]).setOpacity(0).get('rgba')\]
+                \]
             }}}]
     }
 
     template::add_body_script -script [subst {
-    \$('#$graphID').highcharts({
+      Highcharts.chart('$graphID', {
         chart: {
             type: 'line'
         },
@@ -262,7 +271,7 @@ if {$jsGraph} {
             enabled: false
         },
         series: \[$series\]
-    });
+      });
     }]
 
     #ns_log notice diagram=$diagram
@@ -317,8 +326,7 @@ if {$jsGraph} {
   # Draw a graph in form of an HTML table of with 500 pixels.
   #
   proc graph values {
-    set max 1
-    foreach v $values {if {$v>$max} {set max $v}}
+    set max [tcl::mathfunc::max {*}$values]
     set graph "<table cellpadding=0 cellspacing=1 style='background: #EAF2FF;'>\n"
     foreach v $values {
       set bar "<div style='height: 2px; background-color: #859db8; width: [expr {340*$v/$max}]px;'>"
@@ -378,7 +386,7 @@ array set current_threads [throttle server_threads]
 
 set running_requests [throttle running]
 set running [expr {[llength $running_requests]/2}]
-if {![catch {ns_conn contentsentlength}]} {
+if {![catch {ns_conn contentsentlength}] && [nsv_array names ::xotcl::THREAD ::bgdelivery] ne ""} {
   set background_requests [bgdelivery running]
   set background  [expr {[llength $background_requests]/2}]
   append running /$background

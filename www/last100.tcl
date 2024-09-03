@@ -1,7 +1,7 @@
 ad_page_contract {
     Displays last 100 requests in the system
 
-    @author Gustaf Neumann 
+    @author Gustaf Neumann
 
     @cvs-id $Id$
 } -query {
@@ -21,9 +21,9 @@ foreach {key value} [throttle last100] {lappend stat $value}
 Class create CustomField -volatile \
     -instproc render-data {row} {
       html::div -style {
-	border: 1px solid #a1a5a9; padding: 0px 5px 0px 5px; background: #e2e2e2} {
-	  html::t  [$row set [:name]]
-	}
+        border: 1px solid #a1a5a9; padding: 0px 5px 0px 5px; background: #e2e2e2} {
+          html::t  [$row set ${:name}]
+        }
     }
 
 TableWidget create t1 -volatile \
@@ -35,15 +35,16 @@ TableWidget create t1 -volatile \
     }
 
 lassign [split $orderby ,] att order
-t1 orderby -order [expr {$order eq "asc" ? "increasing" : "decreasing"}] $att
+t1 orderby \
+    -order [ad_decode $order desc decreasing asc increasing increasing] \
+    -type [ad_decode $att ms integer dictionary] \
+    $att
 
 foreach l $stat {
-  lassign $l timestamp c url ms requestor
-  if {[string is integer $requestor]} {
-    set user_string [person::name -person_id $requestor]
-  } else {
-    set user_string $requestor
-  }
+  lassign $l timestamp c url ms requester
+
+  set user_info   [xo::request_monitor_user_info $requester]
+  set user_string [dict get $user_info label]
 
   #
   # Provide the URLs only to admins as links.
@@ -62,7 +63,7 @@ foreach l $stat {
   }
   t1 add -time [clock format $timestamp -format "%H:%M:%S"] \
       -user $user_string \
-      -user.href [export_vars -base last-requests {{request_key $requestor}}] \
+      -user.href [export_vars -base last-requests {{request_key $requester}}] \
       -ms $ms \
       -url $url \
       -url.href $href

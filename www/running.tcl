@@ -19,7 +19,7 @@ if {!$admin_p} {
 }
 
 set running_requests [throttle running]
-if {[info commands bgdelivery] ne ""} {
+if {[info commands bgdelivery] ne "" && [nsv_array names ::xotcl::THREAD ::bgdelivery] ne ""} {
   set background_requests [bgdelivery running]
 } else {
   set background_requests [list]
@@ -46,47 +46,55 @@ TableWidget create t1 -volatile \
       Field background -label "Background"
       Field progress   -label "Progress"
     } \
-    -no_data "Currently no running requests" 
+    -no_data "Currently no running requests"
 
 set sortable_requests [list]
 foreach {key elapsed} $running_requests {
-  lassign [split $key ,] requestor url
+  lassign [split $key ,] requester url
   set ms [format %.2f [expr {[throttle ms -start_time $elapsed]/1000.0}]]
-  if {[string is integer $requestor]} {
-    set user_string [person::name -person_id $requestor]
-  } else {
-    set user_string $requestor
-  }
-  set user_url "last-requests?request_key=$requestor"
+  set user_info [xo::request_monitor_user_info $requester]
+  set user_string [dict get $user_info label]
+  set user_url "last-requests?request_key=$requester"
   lappend sortable_requests [list $user_string $user_url $url $ms ""]
 }
 foreach {index entry} $background_requests {
   lassign $entry key elapsed
-  lassign [split $key ,] requestor url
+  lassign [split $key ,] requester url
   set ms [format %.2f [expr {[throttle ms -start_time $elapsed]/-1000.0}]]
-  if {[string is integer $requestor]} {
-    set user_string [person::name -person_id $requestor]
-  } else {
-    set user_string $requestor
-  }
-  set user_url "last-requests?request_key=$requestor"
+  set user_info [xo::request_monitor_user_info $requester]
+  set user_string [dict get $user_info label]
+  set user_url "last-requests?request_key=$requester"
   lappend sortable_requests [list $user_string $user_url $url $ms "::bgdelivery"]
 }
 if {[ns_info name] eq "NaviServer"}  {
   foreach {entry} $writer_requests {
-    if {[llength $entry] != 8} continue
-    lassign $entry starttime  thread driver ip fd remaining done clientdata
-    lassign $clientdata requestor url
+    if {[llength $entry] == 8} {
+      #
+      # Versions before rate management.
+      #
+      lassign $entry starttime thread driver ip fd remaining done clientdata
+    } elseif {[llength $entry] == 10} {
+      #
+      # In some versions of NaviServer, pool can be empty.
+      #
+      lassign $entry starttime thread driver ip fd remaining done targetRate actualRate clientdata
+    } elseif {[llength $entry] == 11} {
+      lassign $entry starttime thread driver pool ip fd remaining done targetRate actualRate clientdata
+    } else {
+      ns_log notice "ns_writer list returns unknown number ([llength $entry]) of elements"
+      continue
+    }
+    lassign $clientdata requester url
     set size [expr {$remaining+$done}]
     set percentage [expr {$done*100.0/$size}]
     set progress [format {%5.2f%% of %5.2f MB} $percentage [expr {$size/1000000.0}]]
     set ms [format %.2f [expr {([clock milliseconds] - $starttime*1000)/-1000.0}]]
-    if {[string is integer $requestor]} {
-      set user_string [person::name -person_id $requestor]      
+    if {[nsf::is integer $requester]} {
+      set user_string [person::name -person_id $requester]
     } else {
-      set user_string $requestor
+      set user_string $requester
     }
-    set user_url "last-requests?request_key=$requestor"
+    set user_url "last-requests?request_key=$requester"
     lappend sortable_requests [list $user_string $user_url $url $ms $thread $progress]
   }
 }
