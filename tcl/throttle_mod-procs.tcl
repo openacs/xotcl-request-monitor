@@ -633,7 +633,7 @@ if {"async-cmd" ni [ns_job queues]} {
     #
     # Delete overactive counters.
     #
-    array unset :ov
+    unset -nocomplain :ov
     next
   }
 
@@ -730,8 +730,8 @@ if {"async-cmd" ni [ns_job queues]} {
   }
   UrlCounter instproc flush_url_stats {} {
     :log "flush_url_stats"
-    array unset :stat
-    array unset :cnt
+    unset -nocomplain :stat
+    unset -nocomplain :cnt
   }
   UrlCounter instproc url_stats {} {
     set result [list]

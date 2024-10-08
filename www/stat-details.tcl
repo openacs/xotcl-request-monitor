@@ -50,7 +50,7 @@ set full_stat [list]
 if {$with_param == 0} {
   # without parameter
   # add up same URLs
-  array unset aggr_stat
+  unset -nocomplain aggr_stat
   foreach l $stat {
     lassign $l url time cnt
     set p ""
@@ -83,7 +83,7 @@ if {$with_param == 0} {
 }
 if {$with_apps == 1} {
   # reduce statistics to apps
-  array unset aggr_stat
+  unset -nocomplain aggr_stat
   foreach l $stat {
     lassign $l url time cnt
     set param ""
