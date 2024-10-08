@@ -6,13 +6,15 @@
     <pretty-plural>XOTcl Request Monitor</pretty-plural>
     <initial-install-p>f</initial-install-p>
     <singleton-p>t</singleton-p>
+    <implements-subsite-p>f</implements-subsite-p>
+    <inherit-templates-p>t</inherit-templates-p>
     <auto-mount>request-monitor</auto-mount>
 
-    <version name="0.66" url="http://media.wu-wien.ac.at/download/xotcl-request-monitor-0.66.apm">
+    <version name="0.67" url="http://media.wu-wien.ac.at/download/xotcl-request-monitor-0.67.apm">
         <owner url="mailto:neumann@wu-wien.ac.at">Gustaf Neumann</owner>
-        <vendor url="http://wu.ac.at">WU Vienna</vendor>
         <summary>Request Monitor with user tracking functionality</summary>
-        <release-date>2024-09-02</release-date>
+        <release-date>2024-10-08</release-date>
+        <vendor url="http://wu.ac.at">WU Vienna</vendor>
         <description format="text/html">&lt;pre&gt;
 This package provides a Request Monitor for OpenACS applications. It computes performance 
 summary information such as requests/views per second, average response time, number
@@ -33,43 +35,33 @@ Updated for circumventing handler calls OpenACS 5.2 for /resources/*.
 </description>
         <license>BSD-Style</license>
         <maturity>2</maturity>
-        <provides url="xotcl-request-monitor" version="0.66"/>
-	<requires url="acs-kernel" version="5.10.1"/>
-	<requires url="acs-tcl" version="5.10.1"/>
+
+        <provides url="xotcl-request-monitor" version="0.67"/>
+        <requires url="acs-kernel" version="5.10.1"/>
+        <requires url="acs-tcl" version="5.10.1"/>
+        <requires url="acs-templating" version="5.10.1"/>
+        <requires url="highcharts" version="0.10"/>
         <requires url="xotcl-core" version="5.10.1"/>
-	<requires url="acs-templating" version="5.10.1"/>
 
         <callbacks>
-          <callback type="after-upgrade" proc="::request_monitor::upgrade_callback"/>
-          <callback type="after-mount"   proc="::request_monitor::after_mount"/>
+            <callback type="after-mount"  proc="::request_monitor::after_mount"/>
+            <callback type="after-upgrade"  proc="::request_monitor::upgrade_callback"/>
         </callbacks>
         <parameters>
-            <parameter datatype="string"  min_n_values="1"
-                       max_n_values="1"  name="do_throttle"
-                       default="on"
-                       description="Turn request throttling on or off (default on).
+            <parameter scope="instance" datatype="string"  min_n_values="1"  max_n_values="1"  name="do_double_click_prevention"  default="on" description="Switch double-click-prevention on/off"/>
+            <parameter scope="instance" datatype="string"  min_n_values="0"  max_n_values="1"  name="do_slowdown_overactive"  default="off" description="Slowdown overactive users (default off)"/>
+            <parameter scope="instance" datatype="string"  min_n_values="1"  max_n_values="1"  name="do_throttle"  default="on" description="Turn request throttling on or off (default on).
                                     If this parameter is turned off, no user-counts
                                     etc are provided."/>
-            <parameter datatype="string"  min_n_values="1"
-		       max_n_values="1"  name="do_track_activity"
-		       default="off" description="Turn activity monitoring on or off (default off)"/>
-            <parameter datatype="string"  min_n_values="0"
-		       max_n_values="1"  name="do_slowdown_overactive"
-		       default="off" description="Slowdown overactive users (default off)"/>
-            <parameter datatype="string"  min_n_values="1"  max_n_values="1"  name="hide-requests"  default="*.css *.ico" description="List of glob patterns to be used for hiding entries from request lists. Only requests that do not match any of these patterns are displayed unless all requests are forced. Affected pages:   - stat-details (list of all recorded URLs with timings) - last-requests (tracking activity of a user)
+            <parameter scope="instance" datatype="string"  min_n_values="1"  max_n_values="1"  name="do_track_activity"  default="off" description="Turn activity monitoring on or off (default off)"/>
+            <parameter scope="instance" datatype="string"  min_n_values="1"  max_n_values="1"  name="hide-requests"  default="*.css *.ico" description="List of glob patterns to be used for hiding entries from request lists. Only requests that do not match any of these patterns are displayed unless all requests are forced. Affected pages:   - stat-details (list of all recorded URLs with timings) - last-requests (tracking activity of a user)
 "/>
-            <parameter datatype="number"  min_n_values="1"  max_n_values="1"  name="max-stats-elements"  default="5" description="Number of highest data points in the reporting period. The default of 5 will e.g. show you the top 5 times of requests per minute, hour aso."/>
-            <parameter datatype="number"  min_n_values="1"  max_n_values="1"  name="max-url-stats"  default="100" description="Number of URL entries to be kept in the detailed view of the request statistics"/>
-            <parameter datatype="string"  min_n_values="1"  max_n_values="1"  name="peer-groups"  default="*wlan* *dsl* *.com *.net *.org" description="List of glob patterns for the summary of sites when an admin uses .../whos-online/. These patterns are matched against the domain names of the peer addresses."/>
-            <parameter datatype="string"  min_n_values="1"
-                       max_n_values="1"
-                       name="do_double_click_prevention" default="on"
-                       description="Switch double-click-prevention on/off"/>
-            <parameter datatype="string"  min_n_values="1"
-                       max_n_values="1" name="monitor_urls" default="/ /register/ /dotlrn/"
-                       description="Monitor performance of the provided URLs (in munin responsetime)"/>
-            <parameter datatype="number"  min_n_values="1"  max_n_values="1"  name="time-window"  default="10" description="Defines the time window in minutes which is used for detailed monitoring (e.g. calculate the number of active uses and the history of the requests of these users, the number of ip switches, etc.)"/>
-            <parameter datatype="number"  min_n_values="1"  max_n_values="1"  name="trend-elements"  default="48" description="Number of data points used for displaying the trend graphs. The default will show the trend for the last 48 seconds,minutes,hours. It is also the maximum reporting period possible"/>
+            <parameter scope="instance" datatype="number"  min_n_values="1"  max_n_values="1"  name="max-stats-elements"  default="5" description="Number of highest data points in the reporting period. The default of 5 will e.g. show you the top 5 times of requests per minute, hour aso."/>
+            <parameter scope="instance" datatype="number"  min_n_values="1"  max_n_values="1"  name="max-url-stats"  default="100" description="Number of URL entries to be kept in the detailed view of the request statistics"/>
+            <parameter scope="instance" datatype="string"  min_n_values="1"  max_n_values="1"  name="monitor_urls"  default="/ /register/ /dotlrn/" description="Monitor performance of the provided URLs (in munin responsetime)"/>
+            <parameter scope="instance" datatype="string"  min_n_values="1"  max_n_values="1"  name="peer-groups"  default="*wlan* *dsl* *.com *.net *.org" description="List of glob patterns for the summary of sites when an admin uses .../whos-online/. These patterns are matched against the domain names of the peer addresses."/>
+            <parameter scope="instance" datatype="number"  min_n_values="1"  max_n_values="1"  name="time-window"  default="10" description="Defines the time window in minutes which is used for detailed monitoring (e.g. calculate the number of active uses and the history of the requests of these users, the number of ip switches, etc.)"/>
+            <parameter scope="instance" datatype="number"  min_n_values="1"  max_n_values="1"  name="trend-elements"  default="48" description="Number of data points used for displaying the trend graphs. The default will show the trend for the last 48 seconds,minutes,hours. It is also the maximum reporting period possible"/>
         </parameters>
 
     </version>
