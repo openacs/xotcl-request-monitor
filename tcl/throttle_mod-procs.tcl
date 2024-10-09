@@ -1501,7 +1501,7 @@ if {"async-cmd" ni [ns_job queues]} {
     # very recent (e.g. younger than 3 munutes)
     #
     if {[ad_file readable ${:file}] && ([clock seconds] - [ad_file mtime ${:file}] > 180)} {
-      Users array unset user_in_community
+      Users unset -nocomplain user_in_community
     }
   }
   dump proc collect {} {
