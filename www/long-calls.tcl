@@ -35,13 +35,13 @@ proc ::xo::subst_user_link {prefix uid} {
 
 nsf::proc ::xo::colorize_slow_calls {-fast:required -warning:required -danger:required value} {
     if {$value > $danger} {
-        return "danger bg-danger bg-opacity-10"
+        return "danger bg-danger bg-opacity-10 w3-pale-red w3-opacity-min"
     } elseif {$value > $warning} {
-        return "warning bg-warning bg-opacity-10"
+        return "warning bg-warning bg-opacity-10 w3-pale-yellow w3-opacity-min"
     } elseif {$value > $fast} {
-        return "info bg-info bg-opacity-10"
+        return "info bg-info bg-opacity-10 w3-pale-blue w3-opacity-min"
     } else {
-        return "success bg-success bg-opacity-10"
+        return "success bg-success bg-opacity-10 w3-pale-green w3-opacity-min"
     }
 }
 
@@ -234,25 +234,14 @@ if {$by_starttime} {
     # rows are already in the order of end time
 }
 
+#
+# The table coloring is dependent on classes from CSS frameworks. The
+# markup in the .adp file is supposed to render reasonably for
+# Bootstrap 3, Bootstrap 5 and W3.CSS.
+#
+
 set doc(title) "Long Calls"
 set context [list $doc(title)]
-
-#
-# We always want bootstrap for the coloring and the filter. The markup
-# in the .adp file is supposed to render reasonably for Bootstrap 3
-# and Bootstrap 5 themes to ease maintenance.
-#
-if {[template::head::can_resolve_urn urn:ad:css:bootstrap5] && [string match "*bootstrap5*" [subsite::get_theme]]} {
-    template::head::add_css -href urn:ad:css:bootstrap5 -media all
-} elseif {[template::head::can_resolve_urn urn:ad:css:bootstrap3]} {
-    template::head::add_css -href urn:ad:css:bootstrap3 -media all
-} else {
-    #
-    # We have no Bootstrap based theme installed, so load it manually.
-    #
-    template::head::add_css -href //maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css -media all
-    security::csp::require style-src maxcdn.bootstrapcdn.com
-}
 
 # Local variables:
 #    mode: tcl

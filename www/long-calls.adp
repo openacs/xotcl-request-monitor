@@ -4,22 +4,31 @@
 
   <h1>Long Calls</h1>
   <div style="float:left">
-    <form action="./long-calls" class="form-inline">
-      Connection Pools:&nbsp;
-      <multiple name="poolcheckboxes">
-        <div class="form-check form-check-inline form-group">
-          <input class="form-check-input"
-                 type="checkbox"
-                 id="inlineCheckbox-@poolcheckboxes.name@"
-                 name="pool"
-                 value="@poolcheckboxes.name@" @poolcheckboxes.checked@>
-          <label class="form-check-label"
-                 for="inlineCheckbox-$pool">@poolcheckboxes.name@</label>
-        </div>
-      </multiple>
-      <button type="submit" class="btn btn-outline-secondary">Filter</button>
-      <input type="hidden" name="lines" value="@lines@">
-      <input type="hidden" name="by_starttime" value="@by_starttime@">
+    <form style="float:left;" action="./long-calls" class="form-inline w3-padding-small">
+      <div class="w3-cell-row">
+        <span class="w3-cell">
+          Connection Pools:&nbsp;
+        </span>
+        <multiple name="poolcheckboxes">
+          <div class="form-check form-check-inline form-group w3-cell w3-padding-small">
+            <input class="form-check-input w3-check"
+                   type="checkbox"
+                   id="inlineCheckbox-@poolcheckboxes.name@"
+                   name="pool"
+                   value="@poolcheckboxes.name@" @poolcheckboxes.checked@>
+            <label class="form-check-label"
+                   for="inlineCheckbox-$pool">@poolcheckboxes.name@</label>
+          </div>
+        </multiple>
+        <span class="w3-cell">
+          <button type="submit"
+                  class="btn btn-outline-secondary w3-btn w3-white w3-border w3-border-grey w3-round">
+            Filter
+          </button>
+        </span>
+        <input type="hidden" name="lines" value="@lines@">
+        <input type="hidden" name="by_starttime" value="@by_starttime@">
+      </div>
     </form>
   </div>
 
@@ -37,7 +46,7 @@
     &nbsp;
   </div>
 
-  <table class="table table-condensed table-bordered small">
+  <table class="table table-condensed table-bordered small w3-table-all">
     <thead>
       <tr>
         <th class='text-right' nowrap>
