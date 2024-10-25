@@ -78,7 +78,7 @@ foreach line $logLines {
 # Remember pool settings for the number-of-lines filter
 #
 set filterQuery &[export_vars {pool:multiple lines by_starttime}]
-ns_log notice "filterQuery = '$filterQuery'"
+#ns_log notice "filterQuery = '$filterQuery'"
 
 set toggle_request_start [expr {!$by_starttime}]
 set toggle_request_start_url [export_vars -base long-calls {pool:multiple lines {by_starttime $toggle_request_start}}]
