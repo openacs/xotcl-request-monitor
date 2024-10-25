@@ -21,8 +21,7 @@
           </div>
         </multiple>
         <span class="w3-cell">
-          <button type="submit"
-                  class="btn btn-outline-secondary w3-btn w3-white w3-border w3-border-grey w3-round">
+          <button type="submit" class="btn <adp:class name='btn-outline-secondary'>">
             Filter
           </button>
         </span>
