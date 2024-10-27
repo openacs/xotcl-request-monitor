@@ -21,9 +21,7 @@
           </div>
         </multiple>
         <span class="w3-cell">
-          <button type="submit" class="btn <adp:class name='btn-outline-secondary'>">
-            Filter
-          </button>
+          <adp:button type="submit" class="btn btn-outline-secondary">Filter</adp:button>
         </span>
         <input type="hidden" name="lines" value="@lines@">
         <input type="hidden" name="by_starttime" value="@by_starttime@">
