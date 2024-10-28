@@ -1463,7 +1463,9 @@ if {"async-cmd" ni [ns_job queues]} {
     dump write
   }
 
-  ad_proc -private ::unmap_pool {
+  namespace eval throttle_mod {}
+
+  ad_proc -private ::throttle_mod::unmap_pool {
     {-pool slow}
     {-ms}
     method
@@ -1967,7 +1969,7 @@ namespace eval ::xo {
       # monitor thread to do so.
       #
       set prefix [expr {[ns_thread name] eq "::throttle" ? {} : {::throttle do}}]
-      {*}$prefix ::unmap_pool -pool $pool $method $url
+      {*}$prefix ::throttle_mod::unmap_pool -pool $pool $method $url
     }
   }
 
