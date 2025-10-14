@@ -39,8 +39,12 @@ if {"async-cmd" ni [ns_job queues]} {
                         -default ${:default}]
       }
 
+  set defaultLogDir [file dirname [file rootname [ns_config ns/parameters ServerLog]]]
+  if {$defaultLogDir eq "."} {
+    set defaultLogDir [ns_config ns/parameters logdir]
+  }
   package_parameter log-dir \
-      -default [file dirname [file rootname [ns_config ns/parameters ServerLog]]]
+      -default $defaultLogDir
 
   package_parameter do_double_click_prevention -default on
   package_parameter do_slowdown_overactive     -default off
@@ -95,6 +99,19 @@ if {"async-cmd" ni [ns_job queues]} {
       set :filename $::logdir/[namespace tail [self]]
     }
     :open
+  }
+
+  Class create AsyncLogFile -parameter {filename {mode a}}
+
+  AsyncLogFile instproc init {} {
+    try {
+      if {![info exists :filename]} {
+        set :filename $::logdir/[namespace tail [self]]
+      }
+      :open
+    } on error {errorMsg} {
+      ns_log Error opening async log lead to: '$errorMsg'
+    }
   }
 
   if {[acs::icanuse ns_asynclogfile]} {
