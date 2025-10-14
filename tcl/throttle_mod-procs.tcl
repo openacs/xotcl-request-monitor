@@ -39,8 +39,12 @@ if {"async-cmd" ni [ns_job queues]} {
                         -default ${:default}]
       }
 
+  set defaultLogDir [file dirname [file rootname [ns_config ns/parameters ServerLog]]]
+  if {$defaultLogDir eq "."} {
+    set defaultLogDir [ns_config ns/parameters logdir]
+  }
   package_parameter log-dir \
-      -default [file dirname [file rootname [ns_config ns/parameters ServerLog]]]
+      -default $defaultLogDir
 
   package_parameter do_double_click_prevention -default on
   package_parameter do_slowdown_overactive     -default off
@@ -95,6 +99,19 @@ if {"async-cmd" ni [ns_job queues]} {
       set :filename $::logdir/[namespace tail [self]]
     }
     :open
+  }
+
+  Class create AsyncLogFile -parameter {filename {mode a}}
+
+  AsyncLogFile instproc init {} {
+    try {
+      if {![info exists :filename]} {
+        set :filename $::logdir/[namespace tail [self]]
+      }
+      :open
+    } on error {errorMsg} {
+      ns_log Error opening async log lead to: '$errorMsg'
+    }
   }
 
   if {[acs::icanuse ns_asynclogfile]} {
@@ -256,8 +273,9 @@ if {"async-cmd" ni [ns_job queues]} {
     seconds ++
     :update_threads_state
 
-    set fetchDest [expr {[dict exists $context Sec-Fetch-Dest] ? [dict get $context Sec-Fetch-Dest] : "document"}]
-    set range     [expr {[dict exists $context Range]          ? [dict get $context Range]          : ""}]
+    set fetchDest [expr {[dict exists $context Sec-Fetch-Dest]   ? [dict get $context Sec-Fetch-Dest] : "document"}]
+    set range     [expr {[dict exists $context Range]            ? [dict get $context Range]          : ""}]
+    set ajax_p    [expr {[dict get $context X-Requested-With] eq "XMLHttpRequest"}]
 
     #
     # Check whether all request monitor performance tracking is turned
@@ -278,6 +296,7 @@ if {"async-cmd" ni [ns_job queues]} {
         $fetchDest in $::never_blocked_fetchDest
         || $range ne ""
         || [dict get $context pool] eq "fast"
+        || $ajax_p
         || [string match "image/*" $content_type]
         || [string match "video/*" $content_type]
         || $content_type in {
@@ -1808,6 +1827,7 @@ throttle ad_proc check {} {
                [list \
                     pool [ns_conn pool] \
                     Sec-Fetch-Dest [ns_set iget $hdrs Sec-Fetch-Dest] \
+                    X-Requested-With [ns_set iget $hdrs X-Requested-With] \
                     Range [ns_set iget $hdrs Range] \
                    ]] \
       toMuch ms repeat
