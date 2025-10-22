@@ -95,15 +95,6 @@ if {"async-cmd" ni [ns_job queues]} {
   Class create AsyncLogFile -parameter {filename {mode a}}
 
   AsyncLogFile instproc init {} {
-    if {![info exists :filename]} {
-      set :filename $::logdir/[namespace tail [self]]
-    }
-    :open
-  }
-
-  Class create AsyncLogFile -parameter {filename {mode a}}
-
-  AsyncLogFile instproc init {} {
     try {
       if {![info exists :filename]} {
         set :filename $::logdir/[namespace tail [self]]
