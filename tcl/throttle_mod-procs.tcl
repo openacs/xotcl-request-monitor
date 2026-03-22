@@ -1998,14 +1998,16 @@ namespace eval ::xo {
       # Check default connection pool and remap slow request to the
       # "slow" pool when defined.
       #
-      set reqs [ns_server -server $s -pool "" active]
-      foreach req $reqs {
-        set runtime [lindex $req end-1]
-        if {$runtime >= 3.0} {
-          set method [lindex $req 3]
-          set url [lindex $req 4]
-          ns_log notice "CALL TRY REMAP ::xo::remap_pool -runtime $runtime $method $url"
-          ::xo::remap_pool -runtime $runtime $method $url
+      if {"slow" in [ns_server pools]} {
+        set reqs [ns_server -server $s -pool "" active]
+        foreach req $reqs {
+          set runtime [lindex $req end-1]
+          if {$runtime >= 3.0} {
+            set method [lindex $req 3]
+            set url [lindex $req 4]
+            ns_log notice "CALL TRY REMAP ::xo::remap_pool -runtime $runtime $method $url"
+            ::xo::remap_pool -pool slow -runtime $runtime $method $url
+          }
         }
       }
       #
