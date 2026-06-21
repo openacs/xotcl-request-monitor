@@ -1824,6 +1824,7 @@ throttle ad_proc check {} {
                     Range [ns_set iget $hdrs Range] \
                    ]] \
       toMuch ms repeat
+
   #set t1 [clock milliseconds]
 
   #
@@ -1831,7 +1832,11 @@ throttle ad_proc check {} {
   # result < 0 blocked
   # result > 0 This web server is only open for interactive usage
   #
-  if {$repeat > 0} {
+
+  if {$repeat eq ""} {
+    :log "invalid result from throtte thread. Server is probably shutting down"
+    set result -1
+  } elseif {$repeat > 0} {
     :add_statistics repeat ${:requester} ${:pa} ${:url} ${:query}
     if {$repeat > 1} {
       set result 1
