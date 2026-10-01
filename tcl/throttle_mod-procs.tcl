@@ -1986,7 +1986,7 @@ namespace eval ::xo {
     }
   }
 
-  ad_proc -private ::xo::pool_remap_watchdog {{-maxWaiting 10} {-maxRunning 100}} {
+  ad_proc -private ::xo::pool_remap_watchdog {{-maxWaiting 50} {-maxRunning 100}} {
 
     Watchdoc function to ensure liveliness of the server.
 
@@ -2048,7 +2048,7 @@ namespace eval ::xo {
               -to_addr [ad_host_administrator] \
               -from_addr [ad_system_owner] \
               -subject "High load warning on [ad_system_name]" \
-              -body "$message\nVisit:  [ad_url]/admin/nsstats/admin/nsstats"
+              -body "$message\nVisit:  [ad_url]/admin/nsstats"
         } on error {errorMsg} {
           ns_log error "Could not send high-load warning: $errorMsg"
         }
