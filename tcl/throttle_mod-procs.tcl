@@ -1986,7 +1986,7 @@ namespace eval ::xo {
     }
   }
 
-  ad_proc -private ::xo::pool_remap_watchdog {{-maxWaiting 50} {-maxRunning 100}} {
+  ad_proc -private ::xo::pool_remap_watchdog {{-maxWaiting 50} {-maxRunning 100} {-excludePools bots}} {
 
     Watchdoc function to ensure liveliness of the server.
 
@@ -2021,6 +2021,9 @@ namespace eval ::xo {
       #
       set message ""
       foreach pool [ns_server -server $s pools] {
+        if {$pool in $excludePools} {
+          continue
+        }
         set reqs [ns_server -server $s -pool $pool active]
         set waiting [ns_server -server $s -pool $pool waiting]
         set running [llength $reqs]
