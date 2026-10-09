@@ -126,7 +126,9 @@ template::head::add_style -style {
 set rows ""
 foreach line $logLines {
     if {$line eq ""} continue
-    lassign $line wday mon day hours tz year dash url time uid ip contentType pool
+    # The trailing request identifier is absent in older log records;
+    # lassign sets it to an empty string in that case.
+    lassign $line wday mon day hours tz year dash url time uid ip contentType pool requestIdentifier
     if {$pool ni $pools} {
         continue
     }

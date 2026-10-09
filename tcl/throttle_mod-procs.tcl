@@ -505,9 +505,11 @@ if {"async-cmd" ni [ns_job queues]} {
       }
 
       #
-      # Finally, log the entry with to log/long-calls.log
+      # Log to log/long-calls.log. Append the connection thread name,
+      # which is also the request identifier used in the access log.
+      # Keep the existing fields in place for readers of older records.
       #
-      if {[catch {:log [list $loggedUrl $partialtimes $key $pa $content_type $pool]} errorMsg]} {
+      if {[catch {:log [list $loggedUrl $partialtimes $key $pa $content_type $pool [ns_thread name]]} errorMsg]} {
         ns_log error "long-call error: $errorMsg"
       }
 
