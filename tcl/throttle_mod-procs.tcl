@@ -20,6 +20,18 @@ if {"async-cmd" ni [ns_job queues]} {
   set ::never_blocked_fetchDest {image iframe script}
   set ::monitor_urls {/ /register/ /dotlrn/}
 
+  #
+  # MCP clients issue concurrent calls to the same endpoint. Exempt the
+  # configured endpoint from repeated-request blocking when nsmcp is enabled.
+  #
+  set ::mcp_path ""
+  set mcpSection ns/server/[ns_info server]/module/nsmcp
+  if {[ns_config ns/server/[ns_info server]/modules nsmcp ""] ne ""
+      && [ns_config -bool $mcpSection enableHttp false]} {
+    set ::mcp_path [ns_config $mcpSection path /mcp]
+  }
+  unset mcpSection
+
   set ::verbose_blocking 0
 
   #
@@ -299,6 +311,7 @@ if {"async-cmd" ni [ns_job queues]} {
         || [string match "/SYSTEM/*" $url]
         || [string match "/shared/*" $url]
         || "/proctoring/upload" eq $url
+        || ($::mcp_path ne "" && $url eq $::mcp_path)
       } {
 
       if {$::verbose_blocking && [info exists $var]} {
