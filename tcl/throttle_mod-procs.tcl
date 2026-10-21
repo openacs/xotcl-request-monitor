@@ -1662,7 +1662,7 @@ if {"async-cmd" ni [ns_job queues]} {
   # down.
   #
   ::xotcl::Object setExitHandler {
-    ns_log notice "::throttle: exiting"
+    ns_log notice "::throttle: shutting down"
     dump write -sync true
     #
     # Delete all users objects, that will flush all activity data to
@@ -1670,7 +1670,7 @@ if {"async-cmd" ni [ns_job queues]} {
     #
     foreach obj [Users info instances] {$obj destroy}
 
-    ns_log notice "::throttle specific exist handler finished"
+    ns_log notice "::throttle: shutdown complete"
   }
 
   #ns_log notice "============== Thread initialized ===================="
@@ -1706,19 +1706,11 @@ if {"async-cmd" ni [ns_job queues]} {
   @cvs-id $Id$
 }
 
+# The persistent throttle thread is released by ::xotcl::THREAD's
+# at-shutdown callback, after connection workers have drained. Request
+# interpreter cleanup must not release this shared service.
 throttle proc destroy {} {
-  #puts stderr throttle-DESTROY
-  ns_log notice throttle-DESTROY-shutdownpending->[ns_info shutdownpending]
-  #::xo::show_stack
-  if {[ns_info shutdownpending] && [nsv_exists ::xotcl::THREAD [self]]} {
-    set tid [nsv_get ::xotcl::THREAD [self]]
-    ns_log notice =========throttle-DESTROY-shutdown==========================$tid-??[::thread::exists $tid]
-    if {[::thread::exists $tid]} {
-      ns_log notice =========throttle-DESTROY-shutdown==========================THREAD-EXISTS
-      set refcount [::thread::release $tid]
-      ns_log notice throttle-DESTROY-shutdownpending->[ns_info shutdownpending]-refCount$refcount
-    }
-  }
+  ns_log notice "::throttle: destroying object (shutdownpending [ns_info shutdownpending])"
   next
 }
 
